@@ -30,7 +30,9 @@ func main() {
 		port = "8080"
 	}
 	log.Printf("listening on port %s", port)
-	http.ListenAndServe(":"+port, http.HandlerFunc(handler))
+	if err := http.ListenAndServe(":"+port, http.HandlerFunc(handler)); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
