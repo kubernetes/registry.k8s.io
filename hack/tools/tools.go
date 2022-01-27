@@ -29,4 +29,7 @@ import (
 
 	// test runner
 	_ "gotest.tools/gotestsum"
+
+	// image builder
+	_ "github.com/google/ko"
 )

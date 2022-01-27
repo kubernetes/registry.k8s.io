@@ -58,6 +58,12 @@ archeio:
 	go build -v -o "$(OUT_DIR)/$(ARCHEIO_BINARY_NAME)" $(ARCHEIO_BUILD_FLAGS) ./cmd/archeio
 # alias for building archeio
 build: archeio
+# build images
+images:
+	hack/make-rules/images.sh
+# build image for archeio
+archeio-image:
+	IMAGES=cmd/archeio hack/make-rules/images.sh
 ################################################################################
 # ================================= Testing ====================================
 # unit tests (hermetic)
