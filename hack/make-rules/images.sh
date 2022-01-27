@@ -25,6 +25,13 @@ source hack/tools/setup-go.sh
 # overridable list of binaries to build images for
 IMAGES="${IMAGES:-cmd/archeio}"
 IFS=" " read -r -a images <<< "$IMAGES"
+# overridable registry to use
+KO_DOCKER_REPO="${KO_DOCKER_REPO:-gcr.io/k8s-staging-infra-tools}"
+export KO_DOCKER_REPO
+# push or local tar?
+PUSH="${PUSH:-false}"
+# overridable auto-tag
+TAG="${TAG:-"$(date +v%Y%m%d)-$(git describe --always --dirty)"}"
 
 # build ko
 cd 'hack/tools'
@@ -32,8 +39,16 @@ go build -o "${REPO_ROOT}/bin/ko" github.com/google/ko
 cd "${REPO_ROOT}"
 
 # build images
-# TODO configure this more appropriately
+# TODO: bake commit info into binaries consistently
 for image in ${images[@]}; do
     name="$(basename "${image}")"
-    KO_DOCKER_REPO=todo bin/ko publish --tarball=bin/"${name}".tar --push=false ./"${image}"
+    # push or local tarball
+    publish_args=(--tarball=bin/"${name}".tar --push=false)
+    if [[ "${PUSH}" != 'false' ]]; then
+        publish_args=(--push=true)
+    fi
+    # specify tag
+    publish_args+=(--base-import-paths --tags="${TAG}")
+    # actually build
+    (set -x; bin/ko publish "${publish_args[@]}" ./"${image}")
 done

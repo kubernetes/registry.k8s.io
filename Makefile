@@ -58,9 +58,12 @@ archeio:
 	go build -v -o "$(OUT_DIR)/$(ARCHEIO_BINARY_NAME)" $(ARCHEIO_BUILD_FLAGS) ./cmd/archeio
 # alias for building archeio
 build: archeio
-# build images
+# build images to local tarball
 images:
 	hack/make-rules/images.sh
+# push images
+push-images:
+	PUSH=true hack/make-rules/images.sh
 # build image for archeio
 archeio-image:
 	IMAGES=cmd/archeio hack/make-rules/images.sh
