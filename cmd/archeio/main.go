@@ -57,18 +57,18 @@ func doV2(w http.ResponseWriter, r *http.Request) {
 		// Blob requests are the fun ones.
 		log.Printf("v2 blob request: %q", path)
 		//FIXME: look up the best backend
-		http.Redirect(w, r, "https://public.ecr.aws"+path, http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "https://k8s.gcr.io"+path, http.StatusTemporaryRedirect)
 		return
 	}
 
 	// Anything else (manifests in particular) go to the canonical registry.
 	log.Printf("v2 request: %q", path)
-	http.Redirect(w, r, "https://index.docker.io"+path, http.StatusPermanentRedirect)
+	http.Redirect(w, r, "https://k8s.gcr.io"+path, http.StatusPermanentRedirect)
 }
 
 func doV1(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	log.Printf("v1 request: %q", path)
 	//FIXME: look up backend?
-	http.Redirect(w, r, "https://index.docker.io"+path, http.StatusPermanentRedirect)
+	http.Redirect(w, r, "https://k8s.gcr.io"+path, http.StatusPermanentRedirect)
 }
