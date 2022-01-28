@@ -40,7 +40,7 @@ cd "${REPO_ROOT}"
 
 # build images
 # TODO: bake commit info into binaries consistently
-for image in ${images[@]}; do
+for image in "${images[@]}"; do
     name="$(basename "${image}")"
     # push or local tarball
     publish_args=(--tarball=bin/"${name}".tar --push=false)
