@@ -27,13 +27,13 @@ res=0
 
 if [[ "${VERIFY_LINT:-true}" == "true" ]]; then
   echo "verifying lints ..."
-  hack/make-rules/verify/lint.sh || res=1
+  hack/make-rules/lint.sh || res=1
   cd "${REPO_ROOT}"
 fi
 
 if [[ "${VERIFY_SHELLCHECK:-true}" == "true" ]]; then
   echo "verifying shellcheck ..."
-  hack/make-rules/verify/shellcheck.sh || res=1
+  hack/make-rules/shellcheck.sh || res=1
   cd "${REPO_ROOT}"
 fi
 
