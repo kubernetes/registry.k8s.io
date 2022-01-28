@@ -26,18 +26,20 @@ cd "${REPO_ROOT}"
 # get version from shellcheck script
 scversion="v$(sed -nr 's/SHELLCHECK_VERSION="(.*)"/\1/p' hack/make-rules/shellcheck.sh)"
 echo "Installing shellcheck ${scversion} from upstream to ensure CI version ..."
+echo ""
 
 # install xz so we can untar the upstream release
 export DEBIAN_FRONTEND=noninteractive
-apt update
-apt install xz-utils
+apt-get -qq update
+DEBCONF_NOWARNINGS="yes" apt-get -qq install --no-install-recommends xz-utils >/dev/null
 
-# untar in tempdir
-tmp_dir="$(mktemp -d)"
-trap 'rm -rf "${tmp_dir:?}"' EXIT
-cd "${tmp_dir}"
-wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${scversion?}/shellcheck-${scversion?}.linux.x86_64.tar.xz" | tar -xJv
-mv "shellcheck-${scversion}/shellcheck" /usr/bin/
+# download and untar shellcheck into /usr/bin
+wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${scversion?}/shellcheck-${scversion?}.linux.x86_64.tar.xz" \
+  | tar -C /usr/bin --strip-components=1 -xJ -f - "shellcheck-${scversion}/shellcheck"
 
 # debug installed version
 shellcheck --version
+
+echo ""
+echo "Done installing shellcheck ..."
+echo ""
