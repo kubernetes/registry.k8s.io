@@ -17,25 +17,37 @@ limitations under the License.
 package main
 
 import (
-	"log"
+	"flag"
 	"net/http"
 	"os"
-	"regexp"
 	"strings"
+
+	"k8s.io/klog/v2"
 )
 
 func main() {
+	// cloud run expects us to listen to HTTP on $PORT
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-	log.Printf("listening on port %s", port)
+
+	// klog setup
+	klog.InitFlags(nil)
+	flag.Parse()
+	defer klog.Flush()
+
+	// actually serve traffic
+	klog.V(0).InfoS("listening", "port", port)
 	if err := http.ListenAndServe(":"+port, http.HandlerFunc(handler)); err != nil {
-		log.Fatal(err)
+		klog.Fatal(err)
 	}
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	// right now we just need to serve a redirect, but all
+	// valid requests should be at /v2/ or /v1/, so we leave this check
+	// in the future we will selectively redirect clients to different copies
 	path := r.URL.Path
 	switch {
 	case strings.HasPrefix(path, "/v2/"):
@@ -43,32 +55,20 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(path, "/v1/"):
 		doV1(w, r)
 	default:
-		log.Printf("unknown request: %q", path)
+		klog.V(2).InfoS("unknown request", "path", path)
 		http.NotFound(w, r)
 	}
 }
 
-var reBlob = regexp.MustCompile("^/v2/.*/blobs/sha256:[0-9a-f]{64}$")
-
 func doV2(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
-
-	if reBlob.MatchString(path) {
-		// Blob requests are the fun ones.
-		log.Printf("v2 blob request: %q", path)
-		//FIXME: look up the best backend
-		http.Redirect(w, r, "https://k8s.gcr.io"+path, http.StatusTemporaryRedirect)
-		return
-	}
-
-	// Anything else (manifests in particular) go to the canonical registry.
-	log.Printf("v2 request: %q", path)
+	klog.V(2).InfoS("v2 request", "path", path)
 	http.Redirect(w, r, "https://k8s.gcr.io"+path, http.StatusPermanentRedirect)
 }
 
+// TODO: should we even be supporting v1 API anymore?
 func doV1(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
-	log.Printf("v1 request: %q", path)
-	//FIXME: look up backend?
+	klog.V(2).InfoS("v1 request", "path", path)
 	http.Redirect(w, r, "https://k8s.gcr.io"+path, http.StatusPermanentRedirect)
 }
