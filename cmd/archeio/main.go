@@ -26,19 +26,19 @@ import (
 )
 
 func main() {
+	// klog setup
+	klog.InitFlags(nil)
+	flag.Parse()
+	defer klog.Flush()
+
 	// cloud run expects us to listen to HTTP on $PORT
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	// klog setup
-	klog.InitFlags(nil)
-	flag.Parse()
-	defer klog.Flush()
-
 	// actually serve traffic
-	klog.V(0).InfoS("listening", "port", port)
+	klog.InfoS("listening", "port", port)
 	if err := http.ListenAndServe(":"+port, http.HandlerFunc(handler)); err != nil {
 		klog.Fatal(err)
 	}
