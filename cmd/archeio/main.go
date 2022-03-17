@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -26,7 +27,40 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"k8s.io/klog/v2"
+)
+
+type metrics struct {
+	Requests       *prometheus.CounterVec
+	ActiveRequests *prometheus.GaugeVec
+}
+
+func newMetrics() *metrics {
+	m := &metrics{
+		Requests: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "requests",
+				Help: "The processed requests",
+			},
+			[]string{"code", "method", "version"},
+		),
+		ActiveRequests: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "active_requests",
+				Help: "The amount of requests that are current",
+			},
+			[]string{},
+		),
+	}
+	prometheus.MustRegister(m.Requests)
+	prometheus.MustRegister(m.ActiveRequests)
+	return m
+}
+
+var (
+	serverMetrics = newMetrics()
 )
 
 func main() {
@@ -40,17 +74,26 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-
-	// actually serve traffic
-	klog.InfoS("listening", "port", port)
-	server := &http.Server{
-		Addr:        ":" + port,
-		Handler:     http.HandlerFunc(handler),
-		ReadTimeout: 10 * time.Second,
+	metricsPort := os.Getenv("METRICS_PORT")
+	if metricsPort == "" {
+		metricsPort = "2112"
 	}
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	// actually serve traffic
+	klog.InfoS("listening", "port", port)
+	handlerFromFunc := http.HandlerFunc(handler)
+	handlerWithMetrics := promhttp.InstrumentHandlerInFlight(
+		serverMetrics.ActiveRequests.With(prometheus.Labels{}),
+		handlerFromFunc,
+	)
+	server := &http.Server{
+		Addr:        ":" + port,
+		Handler:     handlerWithMetrics,
+		ReadTimeout: 10 * time.Second,
+	}
 
 	// start serving
 	go func() {
@@ -60,13 +103,31 @@ func main() {
 	}()
 	klog.Infof("Server started")
 
+	klog.InfoS("metrics", "port", metricsPort)
+	metricsServer := &http.Server{
+		Addr:        ":" + metricsPort,
+		Handler:     promhttp.Handler(),
+		ReadTimeout: 10 * time.Second,
+	}
+
+	go func() {
+		if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			klog.Fatal(err)
+		}
+	}()
+	klog.Infof("Metrics server started")
+
 	// Graceful shutdown
 	<-done
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	klog.Infof("Shutting down server")
 	if err := server.Shutdown(ctx); err != nil {
 		klog.Fatalf("Server didn't exit gracefully %v", err)
+	}
+	if err := metricsServer.Shutdown(ctx); err != nil {
+		klog.Fatalf("Metrics server didn't exit gracefully %v", err)
 	}
 }
 
@@ -77,11 +138,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	switch {
 	case strings.HasPrefix(path, "/v2/"):
+		serverMetrics.Requests.With(prometheus.Labels{"code": fmt.Sprintf("%v", http.StatusPermanentRedirect), "method": "GET", "version": "v2"}).Inc()
 		doV2(w, r)
 	case strings.HasPrefix(path, "/v1/"):
+		serverMetrics.Requests.With(prometheus.Labels{"code": fmt.Sprintf("%v", http.StatusPermanentRedirect), "method": "GET", "version": "v2"}).Inc()
 		doV1(w, r)
 	default:
 		klog.V(2).InfoS("unknown request", "path", path)
+		serverMetrics.Requests.With(prometheus.Labels{"code": fmt.Sprintf("%v", http.StatusNotFound), "method": "GET", "version": "unknown"}).Inc()
 		http.NotFound(w, r)
 	}
 }
