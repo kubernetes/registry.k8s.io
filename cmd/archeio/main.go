@@ -17,10 +17,13 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"k8s.io/klog/v2"
@@ -45,8 +48,25 @@ func main() {
 		Handler:     http.HandlerFunc(handler),
 		ReadTimeout: 10 * time.Second,
 	}
-	if err := server.ListenAndServe(); err != nil {
-		klog.Fatal(err)
+
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	// start serving
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			klog.Fatal(err)
+		}
+	}()
+	klog.Infof("Server started")
+
+	// Graceful shutdown
+	<-done
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		klog.Fatalf("Server didn't exit gracefully %v", err)
 	}
 }
 
