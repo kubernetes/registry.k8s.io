@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"k8s.io/klog/v2"
 )
@@ -39,7 +40,12 @@ func main() {
 
 	// actually serve traffic
 	klog.InfoS("listening", "port", port)
-	if err := http.ListenAndServe(":"+port, http.HandlerFunc(handler)); err != nil {
+	server := &http.Server{
+		Addr:        ":" + port,
+		Handler:     http.HandlerFunc(handler),
+		ReadTimeout: 10 * time.Second,
+	}
+	if err := server.ListenAndServe(); err != nil {
 		klog.Fatal(err)
 	}
 }
