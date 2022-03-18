@@ -135,17 +135,18 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	// right now we just need to serve a redirect, but all
 	// valid requests should be at /v2/ or /v1/, so we leave this check
 	// in the future we will selectively redirect clients to different copies
+	method := r.Method
 	path := r.URL.Path
 	switch {
 	case strings.HasPrefix(path, "/v2/"):
-		serverMetrics.Requests.With(prometheus.Labels{"code": fmt.Sprintf("%v", http.StatusPermanentRedirect), "method": "GET", "version": "v2"}).Inc()
+		serverMetrics.Requests.With(prometheus.Labels{"code": fmt.Sprintf("%v", http.StatusPermanentRedirect), "method": method, "version": "v2"}).Inc()
 		doV2(w, r)
 	case strings.HasPrefix(path, "/v1/"):
-		serverMetrics.Requests.With(prometheus.Labels{"code": fmt.Sprintf("%v", http.StatusPermanentRedirect), "method": "GET", "version": "v2"}).Inc()
+		serverMetrics.Requests.With(prometheus.Labels{"code": fmt.Sprintf("%v", http.StatusPermanentRedirect), "method": method, "version": "v2"}).Inc()
 		doV1(w, r)
 	default:
 		klog.V(2).InfoS("unknown request", "path", path)
-		serverMetrics.Requests.With(prometheus.Labels{"code": fmt.Sprintf("%v", http.StatusNotFound), "method": "GET", "version": "unknown"}).Inc()
+		serverMetrics.Requests.With(prometheus.Labels{"code": fmt.Sprintf("%v", http.StatusNotFound), "method": method, "version": "unknown"}).Inc()
 		http.NotFound(w, r)
 	}
 }
