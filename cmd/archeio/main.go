@@ -142,7 +142,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		serverMetrics.Requests.With(prometheus.Labels{"code": fmt.Sprintf("%v", http.StatusPermanentRedirect), "method": method, "version": "v2"}).Inc()
 		doV2(w, r)
 	case strings.HasPrefix(path, "/v1/"):
-		serverMetrics.Requests.With(prometheus.Labels{"code": fmt.Sprintf("%v", http.StatusPermanentRedirect), "method": method, "version": "v2"}).Inc()
+		serverMetrics.Requests.With(prometheus.Labels{"code": fmt.Sprintf("%v", http.StatusPermanentRedirect), "method": method, "version": "v1"}).Inc()
 		doV1(w, r)
 	default:
 		klog.V(2).InfoS("unknown request", "path", path)
