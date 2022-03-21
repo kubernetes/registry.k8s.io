@@ -41,11 +41,17 @@ func main() {
 		port = "8080"
 	}
 
+	// make it possible to override k8s.gcr.io without rebuilding in the future
+	upstreamRegistry := os.Getenv("UPSTREAM_REGISTRY")
+	if upstreamRegistry == "" {
+		upstreamRegistry = "https://k8s.gcr.io"
+	}
+
 	// actually serve traffic
 	klog.InfoS("listening", "port", port)
 	server := &http.Server{
 		Addr:        ":" + port,
-		Handler:     http.HandlerFunc(handler),
+		Handler:     makeHandler(upstreamRegistry),
 		ReadTimeout: 10 * time.Second,
 	}
 
@@ -70,31 +76,33 @@ func main() {
 	}
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	// right now we just need to serve a redirect, but all
-	// valid requests should be at /v2/ or /v1/, so we leave this check
-	// in the future we will selectively redirect clients to different copies
-	path := r.URL.Path
-	switch {
-	case strings.HasPrefix(path, "/v2/"):
-		doV2(w, r)
-	case strings.HasPrefix(path, "/v1/"):
-		doV1(w, r)
-	default:
-		klog.V(2).InfoS("unknown request", "path", path)
-		http.NotFound(w, r)
-	}
+func makeHandler(upstreamRegistry string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// right now we just need to serve a redirect, but all
+		// valid requests should be at /v2/ or /v1/, so we leave this check
+		// in the future we will selectively redirect clients to different copies
+		path := r.URL.Path
+		switch {
+		case strings.HasPrefix(path, "/v2/"):
+			doV2(w, r, upstreamRegistry)
+		case strings.HasPrefix(path, "/v1/"):
+			doV1(w, r, upstreamRegistry)
+		default:
+			klog.V(2).InfoS("unknown request", "path", path)
+			http.NotFound(w, r)
+		}
+	})
 }
 
-func doV2(w http.ResponseWriter, r *http.Request) {
+func doV2(w http.ResponseWriter, r *http.Request, upstreamRegistry string) {
 	path := r.URL.Path
 	klog.V(2).InfoS("v2 request", "path", path)
-	http.Redirect(w, r, "https://k8s.gcr.io"+path, http.StatusPermanentRedirect)
+	http.Redirect(w, r, upstreamRegistry+path, http.StatusPermanentRedirect)
 }
 
 // TODO: should we even be supporting v1 API anymore?
-func doV1(w http.ResponseWriter, r *http.Request) {
+func doV1(w http.ResponseWriter, r *http.Request, upstreamRegistry string) {
 	path := r.URL.Path
 	klog.V(2).InfoS("v1 request", "path", path)
-	http.Redirect(w, r, "https://k8s.gcr.io"+path, http.StatusPermanentRedirect)
+	http.Redirect(w, r, upstreamRegistry+path, http.StatusPermanentRedirect)
 }
