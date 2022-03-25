@@ -17,6 +17,7 @@ linters:
     # additional lints
     - gochecknoinits
     - gofmt
+    - gosec
     - revive # replaces golint for now
     - misspell
     - exportloopref
