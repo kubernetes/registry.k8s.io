@@ -6,6 +6,10 @@ import (
 	"testing"
 )
 
+var (
+	defaultUpstreamRegistry = "https://k8s.gcr.io"
+)
+
 type request struct {
 	path     string
 	redirect bool
@@ -13,6 +17,7 @@ type request struct {
 
 type expected struct {
 	url        string
+	path       string
 	statusCode int
 }
 
@@ -20,10 +25,6 @@ type scenario struct {
 	request  request
 	expected expected
 }
-
-var (
-	defaultUpstreamRegistry = "https://k8s.gcr.io"
-)
 
 type suite struct {
 	handler   http.Handler
@@ -51,45 +52,52 @@ func (s *suite) runTestSuite(t *testing.T) {
 	}
 }
 
+func defaultTestFuncs(t *testing.T) []func(resp *http.Response, sc scenario) {
+	return []func(resp *http.Response, sc scenario){
+		func(resp *http.Response, sc scenario) {
+			if resp.StatusCode != sc.expected.statusCode {
+				t.Errorf("Expected status code '%v' but received '%v', scenario: %#v, resp: %#v", resp.StatusCode, sc.expected.statusCode, sc, resp)
+			}
+		},
+		func(resp *http.Response, sc scenario) {
+			if sc.expected.path != "" && resp.Request.URL.Path != sc.expected.path {
+				t.Errorf("Expected path '%v' but received '%v', scenario: %#v, resp: %#v", resp.Request.URL.Path, sc.expected.url, sc, resp)
+			}
+			if sc.expected.url != "" && defaultUpstreamRegistry+resp.Request.URL.Path != sc.expected.url {
+				t.Errorf("Expected url '%v' but received '%v', scenario: %#v, resp: %#v", defaultUpstreamRegistry+resp.Request.URL.Path, sc.expected.url, sc, resp)
+			}
+		},
+	}
+}
+
 func TestMakeHandler(t *testing.T) {
 	suite := &suite{
 		handler: makeHandler(defaultUpstreamRegistry),
 		scenarios: []scenario{
 			{
 				request:  request{path: "/", redirect: false},
-				expected: expected{url: "/", statusCode: http.StatusNotFound},
+				expected: expected{path: "/", statusCode: http.StatusNotFound},
 			},
 			// when not redirecting
 			{
 				request:  request{path: "/v2/", redirect: false},
-				expected: expected{url: "/v2/", statusCode: http.StatusPermanentRedirect},
+				expected: expected{url: defaultUpstreamRegistry + "/v2/", statusCode: http.StatusPermanentRedirect},
 			},
 			{
 				request:  request{path: "/v1/", redirect: false},
-				expected: expected{url: "/v1/", statusCode: http.StatusPermanentRedirect},
+				expected: expected{url: defaultUpstreamRegistry + "/v1/", statusCode: http.StatusPermanentRedirect},
 			},
 			// when redirecting, results from k8s.gcr.io
 			{
 				request:  request{path: "/v2/", redirect: true},
-				expected: expected{url: "/v2/", statusCode: http.StatusUnauthorized},
+				expected: expected{url: defaultUpstreamRegistry + "/v2/", statusCode: http.StatusUnauthorized},
 			},
 			{
 				request:  request{path: "/v1/", redirect: true},
-				expected: expected{url: "/v1/", statusCode: http.StatusNotFound},
+				expected: expected{url: defaultUpstreamRegistry + "/v1/", statusCode: http.StatusNotFound},
 			},
 		},
-		tests: []func(resp *http.Response, sc scenario){
-			func(resp *http.Response, sc scenario) {
-				if resp.StatusCode != sc.expected.statusCode {
-					t.Errorf("Expected status code '%v' but received '%v', scenario: %#v, resp: %#v", resp.StatusCode, sc.expected.statusCode, sc, resp)
-				}
-			},
-			func(resp *http.Response, sc scenario) {
-				if resp.Request.URL.Path != sc.expected.url {
-					t.Errorf("Expected path '%v' but received '%v', scenario: %#v, resp: %#v", resp.Request.URL.Path, sc.expected.url, sc, resp)
-				}
-			},
-		},
+		tests: defaultTestFuncs(t),
 	}
 	suite.runTestSuite(t)
 }
@@ -102,21 +110,10 @@ func TestDoV2(t *testing.T) {
 		scenarios: []scenario{
 			{
 				request:  request{path: "/v2/", redirect: false},
-				expected: expected{url: "/v2/", statusCode: http.StatusPermanentRedirect},
+				expected: expected{url: defaultUpstreamRegistry + "/v2/", statusCode: http.StatusPermanentRedirect},
 			},
 		},
-		tests: []func(resp *http.Response, sc scenario){
-			func(resp *http.Response, sc scenario) {
-				if resp.StatusCode != sc.expected.statusCode {
-					t.Errorf("Expected status code '%v' but received '%v', scenario: %#v, resp: %#v", resp.StatusCode, sc.expected.statusCode, sc, resp)
-				}
-			},
-			func(resp *http.Response, sc scenario) {
-				if resp.Request.URL.Path != sc.expected.url {
-					t.Errorf("Expected path '%v' but received '%v', scenario: %#v, resp: %#v", resp.Request.URL.Path, sc.expected.url, sc, resp)
-				}
-			},
-		},
+		tests: defaultTestFuncs(t),
 	}
 	suite.runTestSuite(t)
 }
@@ -129,21 +126,10 @@ func TestDoV1(t *testing.T) {
 		scenarios: []scenario{
 			{
 				request:  request{path: "/v1/", redirect: false},
-				expected: expected{url: "/v1/", statusCode: http.StatusPermanentRedirect},
+				expected: expected{url: defaultUpstreamRegistry + "/v1/", statusCode: http.StatusPermanentRedirect},
 			},
 		},
-		tests: []func(resp *http.Response, sc scenario){
-			func(resp *http.Response, sc scenario) {
-				if resp.StatusCode != sc.expected.statusCode {
-					t.Errorf("Expected status code '%v' but received '%v', scenario: %#v, resp: %#v", resp.StatusCode, sc.expected.statusCode, sc, resp)
-				}
-			},
-			func(resp *http.Response, sc scenario) {
-				if resp.Request.URL.Path != sc.expected.url {
-					t.Errorf("Expected path '%v' but received '%v', scenario: %#v, resp: %#v", resp.Request.URL.Path, sc.expected.url, sc, resp)
-				}
-			},
-		},
+		tests: defaultTestFuncs(t),
 	}
 	suite.runTestSuite(t)
 }
