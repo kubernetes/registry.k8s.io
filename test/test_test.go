@@ -1,10 +1,9 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"log"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 
@@ -18,19 +17,21 @@ var (
 	craneOptions            = crane.WithUserAgent(defaultUserAgent)
 	vendorRegistries        = []string{"k8s.gcr.io", "some-url.aws"}
 
-	testOptions = &TestOptions{}
+	testOptions = &TestOptions{
+		upstreamRegistry: envOrDefault("UPSTREAM_REGISTRY", defaultUpstreamRegistry),
+	}
 )
 
 type TestOptions struct {
 	upstreamRegistry string
 }
 
-func init() {
-	testing.Init()
-	flag.StringVar(&testOptions.upstreamRegistry, "upstream-registry", defaultUpstreamRegistry, "the registry to make requests against")
-	flag.Parse()
-
-	log.Printf("TestOptions: %#v\n", testOptions)
+func envOrDefault(env, defaultValue string) (output string) {
+	output = os.Getenv(env)
+	if output == "" {
+		output = defaultValue
+	}
+	return output
 }
 
 func TestPullPause(t *testing.T) {
