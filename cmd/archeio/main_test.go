@@ -34,26 +34,28 @@ type suite struct {
 }
 
 func (s *suite) runTestSuite(t *testing.T) {
-	for _, sc := range s.scenarios {
-		t.Run(sc.name, func(t *testing.T) {
-			t.Parallel()
-			server := httptest.NewServer(s.handler)
-			defer server.Close()
-			client := server.Client()
-			if sc.request.redirect == false {
-				client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-					return http.ErrUseLastResponse
+	t.Run("test suite", func(t *testing.T) {
+		for _, sc := range s.scenarios {
+			t.Run(sc.name, func(t *testing.T) {
+				t.Parallel()
+				server := httptest.NewServer(s.handler)
+				defer server.Close()
+				client := server.Client()
+				if sc.request.redirect == false {
+					client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+						return http.ErrUseLastResponse
+					}
 				}
-			}
-			resp, err := client.Get(server.URL + sc.request.path)
-			if err != nil {
-				t.Errorf("Error requesting fake backend, %v", err)
-			}
-			for _, test := range s.tests {
-				test(resp, sc)
-			}
-		})
-	}
+				resp, err := client.Get(server.URL + sc.request.path)
+				if err != nil {
+					t.Errorf("Error requesting fake backend, %v", err)
+				}
+				for _, test := range s.tests {
+					test(resp, sc)
+				}
+			})
+		}
+	})
 }
 
 func defaultTestFuncs(t *testing.T) []func(resp *http.Response, sc scenario) {
