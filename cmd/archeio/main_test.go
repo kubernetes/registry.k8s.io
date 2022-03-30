@@ -35,22 +35,23 @@ type suite struct {
 
 func (s *suite) runTestSuite(t *testing.T) {
 	for _, sc := range s.scenarios {
-		t.Logf("Running scenario '%v'\n", sc.name)
-		server := httptest.NewServer(s.handler)
-		defer server.Close()
-		client := server.Client()
-		if sc.request.redirect == false {
-			client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse
+		t.Run(sc.name, func(t *testing.T) {
+			server := httptest.NewServer(s.handler)
+			defer server.Close()
+			client := server.Client()
+			if sc.request.redirect == false {
+				client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+					return http.ErrUseLastResponse
+				}
 			}
-		}
-		resp, err := client.Get(server.URL + sc.request.path)
-		if err != nil {
-			t.Errorf("Error requesting fake backend, %v", err)
-		}
-		for _, test := range s.tests {
-			test(resp, sc)
-		}
+			resp, err := client.Get(server.URL + sc.request.path)
+			if err != nil {
+				t.Errorf("Error requesting fake backend, %v", err)
+			}
+			for _, test := range s.tests {
+				test(resp, sc)
+			}
+		})
 	}
 }
 
