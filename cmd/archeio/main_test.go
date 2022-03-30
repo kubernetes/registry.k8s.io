@@ -22,6 +22,7 @@ type expected struct {
 }
 
 type scenario struct {
+	name     string
 	request  request
 	expected expected
 }
@@ -34,6 +35,7 @@ type suite struct {
 
 func (s *suite) runTestSuite(t *testing.T) {
 	for _, sc := range s.scenarios {
+		t.Logf("Running scenario '%v'\n", sc.name)
 		server := httptest.NewServer(s.handler)
 		defer server.Close()
 		client := server.Client()
@@ -75,24 +77,29 @@ func TestMakeHandler(t *testing.T) {
 		handler: makeHandler(defaultUpstreamRegistry),
 		scenarios: []scenario{
 			{
+				name:     "root is not found",
 				request:  request{path: "/", redirect: false},
 				expected: expected{path: "/", statusCode: http.StatusNotFound},
 			},
 			// when not redirecting
 			{
+				name:     "/v2/ returns 308 without following redirect",
 				request:  request{path: "/v2/", redirect: false},
 				expected: expected{url: defaultUpstreamRegistry + "/v2/", statusCode: http.StatusPermanentRedirect},
 			},
 			{
+				name:     "/v1/ returns 308 without following redirect",
 				request:  request{path: "/v1/", redirect: false},
 				expected: expected{url: defaultUpstreamRegistry + "/v1/", statusCode: http.StatusPermanentRedirect},
 			},
 			// when redirecting, results from k8s.gcr.io
 			{
+				name:     "/v2/ returns 401 from gcr, with following redirect",
 				request:  request{path: "/v2/", redirect: true},
 				expected: expected{url: defaultUpstreamRegistry + "/v2/", statusCode: http.StatusUnauthorized},
 			},
 			{
+				name:     "/v1/ returns 404 from gcr, with following redirect",
 				request:  request{path: "/v1/", redirect: true},
 				expected: expected{url: defaultUpstreamRegistry + "/v1/", statusCode: http.StatusNotFound},
 			},
@@ -109,6 +116,7 @@ func TestDoV2(t *testing.T) {
 		}),
 		scenarios: []scenario{
 			{
+				name:     "v2 handler returns 308 without following redirect",
 				request:  request{path: "/v2/", redirect: false},
 				expected: expected{url: defaultUpstreamRegistry + "/v2/", statusCode: http.StatusPermanentRedirect},
 			},
@@ -125,6 +133,7 @@ func TestDoV1(t *testing.T) {
 		}),
 		scenarios: []scenario{
 			{
+				name:     "v1 handler returns 308 without following redirect",
 				request:  request{path: "/v1/", redirect: false},
 				expected: expected{url: defaultUpstreamRegistry + "/v1/", statusCode: http.StatusPermanentRedirect},
 			},
