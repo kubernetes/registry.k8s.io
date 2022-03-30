@@ -36,6 +36,7 @@ type suite struct {
 func (s *suite) runTestSuite(t *testing.T) {
 	for _, sc := range s.scenarios {
 		t.Run(sc.name, func(t *testing.T) {
+			t.Parallel()
 			server := httptest.NewServer(s.handler)
 			defer server.Close()
 			client := server.Client()
