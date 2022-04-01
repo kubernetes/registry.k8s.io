@@ -22,6 +22,7 @@ cd "${REPO_ROOT}"
 TAG="${TAG:-"$(date +v%Y%m%d)-$(git describe --always --dirty)"}"
 SERVICE_BASENAME="${SERVICE_BASENAME:-k8s-infra-oci-proxy}"
 IMAGE_REPO="${IMAGE_REPO:-gcr.io/k8s-staging-infra-tools/archeio}"
+PROJECT="${PROJECT:-k8s-infra-oci-proxy}"
 
 REGIONS=(
     us-central1
@@ -30,7 +31,8 @@ REGIONS=(
 
 # shellcheck disable=SC2048
 for REGION in ${REGIONS[*]}; do
-    gcloud run services update "${SERVICE_BASENAME}-${REGION}" \
+    gcloud --project="${PROJECT}" \
+        run services update "${SERVICE_BASENAME}-${REGION}" \
         --image "${IMAGE_REPO}:${TAG}" \
         --region "${REGION}"
 done
