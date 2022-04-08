@@ -1,10 +1,19 @@
 # See https://cloud.google.com/cloud-build/docs/build-config
 steps:
-- name: gcr.io/cloud-builders/docker
-  entrypoint: /usr/bin/make
-  args:
-    - push-images
-    - TAG=$_GIT_TAG
+  - id: build-image
+    name: gcr.io/cloud-builders/docker
+    entrypoint: "/usr/bin/make"
+    args:
+      - "push-images"
+      - "TAG=$_GIT_TAG"
+  - id: deploy-staging
+    name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "/usr/bin/make"
+    args:
+      - "deploy"
+      - "TAG=$_GIT_TAG"
+    waitFor:
+      - build-image
 substitutions:
   # variables set by kubernetes/test-infra/images/builder
   # set by image-builder to vYYYYMMDD-hash

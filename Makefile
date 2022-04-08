@@ -67,6 +67,10 @@ push-images:
 # build image for archeio
 archeio-image:
 	IMAGES=cmd/archeio hack/make-rules/images.sh
+# deploy to registry-sandbox staging services
+deploy:
+	hack/make-rules/deploy.sh
+
 ################################################################################
 # ================================= Testing ====================================
 # unit tests (hermetic)
