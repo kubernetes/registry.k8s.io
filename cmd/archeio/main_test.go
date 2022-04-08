@@ -91,21 +91,11 @@ func TestMakeHandler(t *testing.T) {
 				request:  request{path: "/v2/", redirect: false},
 				expected: expected{url: defaultUpstreamRegistry + "/v2/", statusCode: http.StatusPermanentRedirect},
 			},
-			{
-				name:     "/v1/ returns 308 without following redirect",
-				request:  request{path: "/v1/", redirect: false},
-				expected: expected{url: defaultUpstreamRegistry + "/v1/", statusCode: http.StatusPermanentRedirect},
-			},
 			// when redirecting, results from k8s.gcr.io
 			{
 				name:     "/v2/ returns 401 from gcr, with following redirect",
 				request:  request{path: "/v2/", redirect: true},
 				expected: expected{url: defaultUpstreamRegistry + "/v2/", statusCode: http.StatusUnauthorized},
-			},
-			{
-				name:     "/v1/ returns 404 from gcr, with following redirect",
-				request:  request{path: "/v1/", redirect: true},
-				expected: expected{url: defaultUpstreamRegistry + "/v1/", statusCode: http.StatusNotFound},
 			},
 		},
 		tests: defaultTestFuncs(t),
@@ -123,23 +113,6 @@ func TestDoV2(t *testing.T) {
 				name:     "v2 handler returns 308 without following redirect",
 				request:  request{path: "/v2/", redirect: false},
 				expected: expected{url: defaultUpstreamRegistry + "/v2/", statusCode: http.StatusPermanentRedirect},
-			},
-		},
-		tests: defaultTestFuncs(t),
-	}
-	suite.runTestSuite(t)
-}
-
-func TestDoV1(t *testing.T) {
-	suite := &suite{
-		handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			doV1(w, r, defaultUpstreamRegistry)
-		}),
-		scenarios: []scenario{
-			{
-				name:     "v1 handler returns 308 without following redirect",
-				request:  request{path: "/v1/", redirect: false},
-				expected: expected{url: defaultUpstreamRegistry + "/v1/", statusCode: http.StatusPermanentRedirect},
 			},
 		},
 		tests: defaultTestFuncs(t),
