@@ -24,20 +24,22 @@ import (
 // compares all netip.Prefix
 //
 // This type exists purely for testing and benchmarking
-func NewBruteForceMapper[V comparable](mapping map[netip.Prefix]V) IPMapper[V] {
+func NewBruteForceMapper[V comparable](mapping map[V][]netip.Prefix) IPMapper[V] {
 	return &bruteForceMapper[V]{
 		mapping: mapping,
 	}
 }
 
 type bruteForceMapper[V comparable] struct {
-	mapping map[netip.Prefix]V
+	mapping map[V][]netip.Prefix
 }
 
 func (b *bruteForceMapper[V]) GetIP(addr netip.Addr) (value V, matched bool) {
-	for cidr, v := range b.mapping {
-		if cidr.Contains(addr) {
-			return v, true
+	for v, cidrs := range b.mapping {
+		for _, cidr := range cidrs {
+			if cidr.Contains(addr) {
+				return v, true
+			}
 		}
 	}
 	return

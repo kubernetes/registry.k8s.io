@@ -29,6 +29,8 @@ import "net/netip"
 // Currently this is a simple TrieMap, in the future it may have compression.
 //
 // See: https://vincent.bernat.ch/en/blog/2017-ipv4-route-lookup-linux
+//
+// For benchmarks with real data see ./aws/mapper_test.go
 type TrieMap[V comparable] struct {
 	// This is the real triemap, but it only maps netip.Prefix / netip.Addr : int
 	// see: https://planetscale.com/blog/generics-can-make-your-go-code-slower

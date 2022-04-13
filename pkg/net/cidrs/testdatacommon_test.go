@@ -21,21 +21,30 @@ import (
 )
 
 // common test data
-var testCIDRS = map[netip.Prefix]string{
-	netip.MustParsePrefix("35.180.0.0/16"):    "eu-west-3",
-	netip.MustParsePrefix("52.94.76.0/22"):    "us-west-2",
-	netip.MustParsePrefix("52.93.127.17/32"):  "eu-west-3",
-	netip.MustParsePrefix("52.93.127.172/31"): "eu-west-3",
-	netip.MustParsePrefix("52.93.127.173/32"): "us-east-1",
-	netip.MustParsePrefix("52.93.127.174/32"): "ap-northeast-1",
-	netip.MustParsePrefix("52.93.127.175/32"): "ap-northeast-1",
-	netip.MustParsePrefix("52.93.127.176/32"): "ap-northeast-1",
-	netip.MustParsePrefix("52.93.127.177/32"): "ap-northeast-1",
-	netip.MustParsePrefix("52.93.127.178/32"): "ap-northeast-1",
-	netip.MustParsePrefix("52.93.127.179/32"): "ap-northeast-1",
-	// ipv6
-	netip.MustParsePrefix("2400:6500:0:9::2/128"): "ap-southeast-3",
-	netip.MustParsePrefix("2600:1f01:4874::/47"):  "us-west-2",
+var testCIDRS = map[string][]netip.Prefix{
+	"eu-west-3": {
+		netip.MustParsePrefix("35.180.0.0/16"),
+		netip.MustParsePrefix("52.93.127.17/32"),
+		netip.MustParsePrefix("52.93.127.172/31"),
+	},
+	"us-east-1": {
+		netip.MustParsePrefix("52.93.127.173/32"),
+	},
+	"us-west-2": {
+		netip.MustParsePrefix("2600:1f01:4874::/47"),
+		netip.MustParsePrefix("52.94.76.0/22"),
+	},
+	"ap-northeast-1": {
+		netip.MustParsePrefix("52.93.127.174/32"),
+		netip.MustParsePrefix("52.93.127.175/32"),
+		netip.MustParsePrefix("52.93.127.176/32"),
+		netip.MustParsePrefix("52.93.127.177/32"),
+		netip.MustParsePrefix("52.93.127.178/32"),
+		netip.MustParsePrefix("52.93.127.179/32"),
+	},
+	"ap-southeast-3": {
+		netip.MustParsePrefix("2400:6500:0:9::2/128"),
+	},
 }
 
 // common test cases

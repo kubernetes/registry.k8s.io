@@ -22,8 +22,10 @@ import (
 
 func TestTrieMap(t *testing.T) {
 	trieMap := NewTrieMap[string]()
-	for cidr, value := range testCIDRS {
-		trieMap.Insert(cidr, value)
+	for value, cidrs := range testCIDRS {
+		for _, cidr := range cidrs {
+			trieMap.Insert(cidr, value)
+		}
 	}
 	for i := range testCases {
 		tc := testCases[i]
