@@ -22,6 +22,8 @@ import (
 	"testing"
 )
 
+// TODO: exhaustive tests for new functionality
+
 var (
 	defaultUpstreamRegistry = "https://k8s.gcr.io"
 )
@@ -94,7 +96,7 @@ func defaultTestFuncs(t *testing.T) []func(resp *http.Response, sc scenario) {
 
 func TestMakeHandler(t *testing.T) {
 	suite := &suite{
-		handler: makeHandler(defaultUpstreamRegistry),
+		handler: MakeHandler(defaultUpstreamRegistry),
 		scenarios: []scenario{
 			{
 				name:     "root is not found",
@@ -120,10 +122,9 @@ func TestMakeHandler(t *testing.T) {
 }
 
 func TestDoV2(t *testing.T) {
+	doV2 := makeV2Handler(defaultUpstreamRegistry)
 	suite := &suite{
-		handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			doV2(w, r, defaultUpstreamRegistry)
-		}),
+		handler: http.HandlerFunc(doV2),
 		scenarios: []scenario{
 			{
 				name:     "v2 handler returns 308 without following redirect",
