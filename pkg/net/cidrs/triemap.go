@@ -16,7 +16,9 @@ limitations under the License.
 
 package cidrs
 
-import "net/netip"
+import (
+	"net/netip"
+)
 
 // TrieMap contains an efficient trie structure of netip.Prefix that can
 // match a netip.Addr to the associated Prefix if any and return the value
@@ -129,10 +131,12 @@ func (t *trieMap) insertIPV4(cidr netip.Prefix, key int) {
 	// walk bits high to low, inserting matching ip path up to mask bits
 	curr := t.ipv4Root
 	ip := cidr.Addr().As4()
+	// first cast to uint32 for fast bit access
+	// NOTE: IP addresses are big endian, so the low bits are in the last byte
 	ipInt := uint32(ip[3]) | uint32(ip[2])<<8 | uint32(ip[1])<<16 | uint32(ip[0])<<24
 	bits := cidr.Bits()
 	for i := 31; i >= (32 - bits); i-- {
-		if (ipInt>>i)&1 == 1 {
+		if (ipInt & (uint32(1) << i)) != 0 {
 			if curr.child1 == nil {
 				curr.child1 = &trieNode{}
 			}
@@ -160,8 +164,20 @@ func (t *trieMap) insertIPV6(cidr netip.Prefix, key int) {
 	curr := t.ipv6Root
 	ip := cidr.Addr().As16()
 	bits := cidr.Bits()
+	// first cast ip to two uint64 for fast bit access
+	// NOTE: IP addresses are big endian, so the low bits are in the last byte
+	ipLo := uint64(ip[15]) | uint64(ip[14])<<8 | uint64(ip[13])<<16 | uint64(ip[12])<<24 |
+		uint64(ip[11])<<32 | uint64(ip[10])<<40 | uint64(ip[9])<<48 | uint64(ip[8])<<56
+	ipHi := uint64(ip[7]) | uint64(ip[6])<<8 | uint64(ip[5])<<16 | uint64(ip[4])<<24 |
+		uint64(ip[3])<<32 | uint64(ip[2])<<40 | uint64(ip[1])<<48 | uint64(ip[0])<<56
 	for i := 127; i >= (128 - bits); i-- {
-		if (uint8(ip[15-i/8])>>(i%8))&1 == 1 {
+		bit := false
+		if i > 63 {
+			bit = (ipHi & (uint64(1) << (i - 64))) != 0
+		} else {
+			bit = (ipLo & (uint64(1) << i)) != 0
+		}
+		if bit {
 			if curr.child1 == nil {
 				curr.child1 = &trieNode{}
 			}
@@ -197,10 +213,12 @@ func (t *trieMap) getIPv4(addr netip.Addr) (int, bool) {
 	}
 	// walk IP bits high to low, checking if current node matches
 	ip := addr.As4()
+	// first cast to uint32 for fast bit access
+	// NOTE: IP addresses are big endian, so the low bits are in the last byte
 	ipInt := uint32(ip[3]) | uint32(ip[2])<<8 | uint32(ip[1])<<16 | uint32(ip[0])<<24
 	for i := 31; i >= 0; i-- {
 		// walk based on current address bit
-		if (ipInt>>i)&1 == 1 {
+		if (ipInt & (uint32(1) << i)) != 0 {
 			if curr.child1 != nil {
 				curr = curr.child1
 			} else {
@@ -234,10 +252,22 @@ func (t *trieMap) getIPv6(addr netip.Addr) (int, bool) {
 		return curr.value.key, true
 	}
 	// walk IP bits high to low, checking if current node matches
+	// first cast ip to two uint64 for fast bit access
 	ip := addr.As16()
+	// NOTE: IP addresses are big endian, so the low bits are in the last byte
+	ipLo := uint64(ip[15]) | uint64(ip[14])<<8 | uint64(ip[13])<<16 | uint64(ip[12])<<24 |
+		uint64(ip[11])<<32 | uint64(ip[10])<<40 | uint64(ip[9])<<48 | uint64(ip[8])<<56
+	ipHi := uint64(ip[7]) | uint64(ip[6])<<8 | uint64(ip[5])<<16 | uint64(ip[4])<<24 |
+		uint64(ip[3])<<32 | uint64(ip[2])<<40 | uint64(ip[1])<<48 | uint64(ip[0])<<56
 	for i := 127; i >= 0; i-- {
+		bit := false
+		if i > 63 {
+			bit = (ipHi & (uint64(1) << (i - 64))) != 0
+		} else {
+			bit = (ipLo & (uint64(1) << i)) != 0
+		}
 		// walk based on current address bit
-		if (uint8(ip[15-i/8])>>(i%8))&1 == 1 {
+		if bit {
 			if curr.child1 != nil {
 				curr = curr.child1
 			} else {
