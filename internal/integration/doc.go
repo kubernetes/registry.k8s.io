@@ -1,6 +1,3 @@
-//go:build tools
-// +build tools
-
 /*
 Copyright 2022 The Kubernetes Authors.
 
@@ -17,22 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-/*
-Package tools is used to track binary dependencies with go modules
-https://github.com/golang/go/wiki/Modules#how-can-i-track-tool-dependencies-for-a-module
-*/
-package tools
-
-import (
-	// linter(s)
-	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
-
-	// test runner
-	_ "gotest.tools/gotestsum"
-
-	// image builder
-	_ "github.com/google/ko"
-
-	// for testing
-	_ "github.com/google/go-containerregistry/cmd/crane"
-)
+// package integration provides integration testing helpers
+//
+// Integration tests should be written like go unit tests but with the
+// following constraints:
+//
+// 1. They should be named TestIntegration* instead of just Test*
+// 2. They should call MaybeSkip(t) at the beginning of the method
+// 3. The source file should have builtags !nointegration
+//
+// See also: hack/make-rules/test.sh
+package integration
