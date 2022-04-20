@@ -30,7 +30,7 @@ func main() {
 		panic(err)
 	}
 	// emit file
-	f, err := os.Create("./../../zz_generated_range_data.go")
+	f, err := os.Create("./zz_generated_range_data.go")
 	if err != nil {
 		panic(err)
 	}

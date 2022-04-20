@@ -14,9 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# wrapper script so we can go:generate with this tool
+
 set -o errexit -o nounset -o pipefail
 
-# cd to self
-cd "$(dirname "${BASH_SOURCE[0]}")"
+SELF_DIR="$(dirname "${BASH_SOURCE[0]}")"
+REPO_ROOT="$(cd "${SELF_DIR}/../../../../../.." && pwd -P)"
+BIN_PATH="${REPO_ROOT}/bin/ranges2go"
 
-go run ./*.go
+go build -o "${BIN_PATH}" "${SELF_DIR}"
+"${BIN_PATH}" "$@"
