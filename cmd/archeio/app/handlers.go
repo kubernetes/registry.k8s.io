@@ -33,9 +33,8 @@ import (
 func MakeHandler(upstreamRegistry string) http.Handler {
 	doV2 := makeV2Handler(upstreamRegistry)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// right now we just need to serve a redirect, but all
-		// valid requests should be at /v2/, so we leave this check
-		// in the future we will selectively redirect clients to different copies
+		// all valid registry requests should be at /v2/
+		// v1 API is super old and not supported by GCR anymore.
 		path := r.URL.Path
 		switch {
 		case strings.HasPrefix(path, "/v2/"):
