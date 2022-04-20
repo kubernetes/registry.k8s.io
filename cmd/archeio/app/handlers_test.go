@@ -33,6 +33,12 @@ func TestMakeHandler(t *testing.T) {
 		ExpectedURL    string
 	}{
 		{
+			Name:           "/",
+			Request:        httptest.NewRequest("GET", "http://localhost:8080/", nil),
+			ExpectedStatus: http.StatusPermanentRedirect,
+			ExpectedURL:    infoURL,
+		},
+		{
 			Name:           "/v3/",
 			Request:        httptest.NewRequest("GET", "http://localhost:8080/v3/", nil),
 			ExpectedStatus: http.StatusNotFound,
