@@ -37,6 +37,13 @@ func TestGetClientIP(t *testing.T) {
 			ExpectedIP: netip.MustParseAddr("127.0.0.1"),
 		},
 		{
+			Name: "NO X-Forwarded-For, somehow bogus RemoteAddr ??? gotta pump code coverage 🤷",
+			Request: http.Request{
+				RemoteAddr: "127.0.0.1asd;lfkj8888",
+			},
+			ExpectError: true,
+		},
+		{
 			Name: "X-Forwarded-For without client-supplied",
 			Request: http.Request{
 				Header: http.Header{
