@@ -87,6 +87,7 @@ func TestGetClientIP(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
 			ip, err := getClientIP(&tc.Request)
 			if err != nil {
 				if !tc.ExpectError {

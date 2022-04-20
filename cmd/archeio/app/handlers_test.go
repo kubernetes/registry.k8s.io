@@ -17,122 +17,91 @@ limitations under the License.
 package app
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-// TODO: exhaustive tests for new functionality
-
-var (
-	defaultUpstreamRegistry = "https://k8s.gcr.io"
-)
-
-type request struct {
-	path     string
-	redirect bool
-}
-
-type expected struct {
-	url        string
-	path       string
-	statusCode int
-}
-
-type scenario struct {
-	name     string
-	request  request
-	expected expected
-}
-
-type suite struct {
-	handler   http.Handler
-	scenarios []scenario
-	tests     []func(resp *http.Response, scenario scenario)
-}
-
-func (s *suite) runTestSuite(t *testing.T) {
-	t.Run("test suite", func(t *testing.T) {
-		for _, sc := range s.scenarios {
-			t.Run(sc.name, func(t *testing.T) {
-				t.Parallel()
-				server := httptest.NewServer(s.handler)
-				defer server.Close()
-				client := server.Client()
-				if sc.request.redirect == false {
-					client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-						return http.ErrUseLastResponse
-					}
-				}
-				resp, err := client.Get(server.URL + sc.request.path)
-				if err != nil {
-					t.Errorf("Error requesting fake backend, %v", err)
-				}
-				for _, test := range s.tests {
-					test(resp, sc)
-				}
-			})
-		}
-	})
-}
-
-func defaultTestFuncs(t *testing.T) []func(resp *http.Response, sc scenario) {
-	return []func(resp *http.Response, sc scenario){
-		func(resp *http.Response, sc scenario) {
-			if resp.StatusCode != sc.expected.statusCode {
-				t.Errorf("Expected status code '%v' but received '%v', scenario: %#v, resp: %#v", resp.StatusCode, sc.expected.statusCode, sc, resp)
-			}
-		},
-		func(resp *http.Response, sc scenario) {
-			if sc.expected.path != "" && resp.Request.URL.Path != sc.expected.path {
-				t.Errorf("Expected path '%v' but received '%v', scenario: %#v, resp: %#v", resp.Request.URL.Path, sc.expected.url, sc, resp)
-			}
-			if sc.expected.url != "" && defaultUpstreamRegistry+resp.Request.URL.Path != sc.expected.url {
-				t.Errorf("Expected url '%v' but received '%v', scenario: %#v, resp: %#v", defaultUpstreamRegistry+resp.Request.URL.Path, sc.expected.url, sc, resp)
-			}
-		},
-	}
-}
-
 func TestMakeHandler(t *testing.T) {
-	suite := &suite{
-		handler: MakeHandler(defaultUpstreamRegistry),
-		scenarios: []scenario{
-			{
-				name:     "root is not found",
-				request:  request{path: "/", redirect: false},
-				expected: expected{path: "/", statusCode: http.StatusNotFound},
-			},
-			// when not redirecting
-			{
-				name:     "/v2/ returns 308 without following redirect",
-				request:  request{path: "/v2/", redirect: false},
-				expected: expected{url: defaultUpstreamRegistry + "/v2/", statusCode: http.StatusPermanentRedirect},
-			},
-			// when redirecting, results from k8s.gcr.io
-			{
-				name:     "/v2/ returns 401 from gcr, with following redirect",
-				request:  request{path: "/v2/", redirect: true},
-				expected: expected{url: defaultUpstreamRegistry + "/v2/", statusCode: http.StatusUnauthorized},
-			},
+	const upstreamRegistry = "https://k8s.gcr.io"
+	handler := MakeHandler(upstreamRegistry)
+	testCases := []struct {
+		Name           string
+		Request        *http.Request
+		ExpectedStatus int
+		ExpectedURL    string
+	}{
+		{
+			Name:           "/v3/",
+			Request:        httptest.NewRequest("GET", "http://localhost:8080/v3/", nil),
+			ExpectedStatus: http.StatusNotFound,
 		},
-		tests: defaultTestFuncs(t),
-	}
-	suite.runTestSuite(t)
-}
-
-func TestDoV2(t *testing.T) {
-	doV2 := makeV2Handler(defaultUpstreamRegistry)
-	suite := &suite{
-		handler: http.HandlerFunc(doV2),
-		scenarios: []scenario{
-			{
-				name:     "v2 handler returns 308 without following redirect",
-				request:  request{path: "/v2/", redirect: false},
-				expected: expected{url: defaultUpstreamRegistry + "/v2/", statusCode: http.StatusPermanentRedirect},
-			},
+		{
+			Name:           "/v2/",
+			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/", nil),
+			ExpectedStatus: http.StatusPermanentRedirect,
+			ExpectedURL:    "https://k8s.gcr.io/v2/",
 		},
-		tests: defaultTestFuncs(t),
+		{
+			Name:           "/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil),
+			ExpectedStatus: http.StatusPermanentRedirect,
+			ExpectedURL:    "https://k8s.gcr.io/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+		},
+		{
+			Name: "Somehow bogus remote addr, /v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			Request: func() *http.Request {
+				r := httptest.NewRequest("GET", "http://localhost:8080/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil)
+				r.RemoteAddr = "35.180.1.1asdfasdfsd:888"
+				return r
+			}(),
+			// NOTE: this one really shouldn't happen, but we want full test coverage
+			// This should only happen with a bug in the stdlib http server ...
+			ExpectedStatus: http.StatusBadRequest,
+		},
+		{
+			Name: "AWS IP, /v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			Request: func() *http.Request {
+				r := httptest.NewRequest("GET", "http://localhost:8080/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil)
+				r.RemoteAddr = "35.180.1.1:888"
+				return r
+			}(),
+			ExpectedStatus: http.StatusPermanentRedirect,
+			ExpectedURL:    "https://painfully-really-suddenly-many-raccoon-image-layers.s3.us-west-2.amazonaws.com/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+		},
 	}
-	suite.runTestSuite(t)
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, tc.Request)
+			response := recorder.Result()
+			if response == nil {
+				t.Fatalf("nil response")
+			}
+			if response.StatusCode != tc.ExpectedStatus {
+				t.Fatalf(
+					"expected status: %v, but got status: %v",
+					http.StatusText(tc.ExpectedStatus),
+					http.StatusText(response.StatusCode),
+				)
+			}
+			location, err := response.Location()
+			if err != nil {
+				if !errors.Is(err, http.ErrNoLocation) {
+					t.Fatalf("failed to get response location with error: %v", err)
+				} else if tc.ExpectedURL != "" {
+					t.Fatalf("expected url: %q but no location was available", tc.ExpectedURL)
+				}
+			} else if location.String() != tc.ExpectedURL {
+				t.Fatalf(
+					"expected url: %q, but got: %q",
+					tc.ExpectedURL,
+					location,
+				)
+			}
+		})
+	}
 }
