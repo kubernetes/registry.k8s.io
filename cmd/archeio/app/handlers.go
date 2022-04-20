@@ -26,6 +26,11 @@ import (
 	"sigs.k8s.io/oci-proxy/pkg/net/cidrs/aws"
 )
 
+const (
+	// hard coded for now
+	infoURL = "https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io"
+)
+
 // MakeHandler returns the root archeio HTTP handler
 //
 // upstream registry should be the url to the primary registry
@@ -39,6 +44,8 @@ func MakeHandler(upstreamRegistry string) http.Handler {
 		switch {
 		case strings.HasPrefix(path, "/v2/"):
 			doV2(w, r)
+		case path == "/":
+			http.Redirect(w, r, infoURL, http.StatusPermanentRedirect)
 		default:
 			klog.V(2).InfoS("unknown request", "path", path)
 			http.NotFound(w, r)
