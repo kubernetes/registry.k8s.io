@@ -17,6 +17,7 @@ limitations under the License.
 package cidrs
 
 import (
+	"net/netip"
 	"testing"
 )
 
@@ -30,6 +31,7 @@ func TestTrieMap(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.Addr.String(), func(t *testing.T) {
+			t.Parallel()
 			// NOTE: we set region == "" for no-contains
 			expectedContains := tc.ExpectedRegion != ""
 			ip := tc.Addr
@@ -41,5 +43,32 @@ func TestTrieMap(t *testing.T) {
 				)
 			}
 		})
+	}
+}
+
+func TestTrieMapEmpty(t *testing.T) {
+	trieMap := NewTrieMap[string]()
+	v, contains := trieMap.GetIP(netip.MustParseAddr("127.0.0.1"))
+	if contains || v != "" {
+		t.Fatalf("empty TrieMap should not contain anything")
+	}
+	v, contains = trieMap.GetIP(netip.MustParseAddr("::1"))
+	if contains || v != "" {
+		t.Fatalf("empty TrieMap should not contain anything")
+	}
+}
+
+func TestTrieMapSlashZero(t *testing.T) {
+	// test the ??? case that we insert into the root with a /0
+	trieMap := NewTrieMap[string]()
+	trieMap.Insert(netip.MustParsePrefix("0.0.0.0/0"), "all-ipv4")
+	trieMap.Insert(netip.MustParsePrefix("::/0"), "all-ipv6")
+	v, contains := trieMap.GetIP(netip.MustParseAddr("127.0.0.1"))
+	if !contains || v != "all-ipv4" {
+		t.Fatalf("TrieMap failed to match IPv4 with all IPs in one /0")
+	}
+	v, contains = trieMap.GetIP(netip.MustParseAddr("::1"))
+	if !contains || v != "all-ipv6" {
+		t.Fatalf("TrieMap failed to match IPv6 with all IPs in one /0")
 	}
 }

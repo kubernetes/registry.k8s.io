@@ -223,14 +223,14 @@ func (t *trieMap) getIPv4(addr netip.Addr) (int, bool) {
 				curr = curr.child1
 			} else {
 				// dead end
-				return -1, false
+				break
 			}
 		} else {
 			if curr.child0 != nil {
 				curr = curr.child0
 			} else {
 				// dead end
-				return -1, false
+				break
 			}
 		}
 		// check for a match in the current node
@@ -238,7 +238,6 @@ func (t *trieMap) getIPv4(addr netip.Addr) (int, bool) {
 			return curr.value.key, true
 		}
 	}
-	// we walked to the final IP bit without a match
 	return -1, false
 }
 
@@ -272,14 +271,14 @@ func (t *trieMap) getIPv6(addr netip.Addr) (int, bool) {
 				curr = curr.child1
 			} else {
 				// dead end
-				return -1, false
+				break
 			}
 		} else {
 			if curr.child0 != nil {
 				curr = curr.child0
 			} else {
 				// dead end
-				return -1, false
+				break
 			}
 		}
 		// check for a match in the current node
@@ -287,6 +286,5 @@ func (t *trieMap) getIPv6(addr netip.Addr) (int, bool) {
 			return curr.value.key, true
 		}
 	}
-	// we walked to the final IP bit without a match
 	return -1, false
 }
