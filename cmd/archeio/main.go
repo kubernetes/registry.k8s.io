@@ -26,7 +26,10 @@ import (
 	"time"
 
 	"k8s.io/klog/v2"
+	"sigs.k8s.io/oci-proxy/cmd/archeio/app"
 )
+
+const defaultUpstreamRegistry = "https://k8s.gcr.io"
 
 func main() {
 	// klog setup
@@ -35,25 +38,21 @@ func main() {
 	defer klog.Flush()
 
 	// cloud run expects us to listen to HTTP on $PORT
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	// https://cloud.google.com/run/docs/container-contract#port
+	port := getEnv("PORT", "8080")
 
 	// make it possible to override k8s.gcr.io without rebuilding in the future
-	upstreamRegistry := os.Getenv("UPSTREAM_REGISTRY")
-	if upstreamRegistry == "" {
-		upstreamRegistry = "https://k8s.gcr.io"
-	}
+	upstreamRegistry := getEnv("UPSTREAM_REGISTRY", defaultUpstreamRegistry)
 
-	// actually serve traffic
-	klog.InfoS("listening", "port", port)
+	// configure server with reasonable timeout
+	// we only serve redirects, 10s should be sufficient
 	server := &http.Server{
 		Addr:        ":" + port,
-		Handler:     MakeHandler(upstreamRegistry),
+		Handler:     app.MakeHandler(upstreamRegistry),
 		ReadTimeout: 10 * time.Second,
 	}
 
+	// signal handler for graceful shutdown
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
@@ -63,14 +62,21 @@ func main() {
 			klog.Fatal(err)
 		}
 	}()
-	klog.Infof("Server started")
+	klog.InfoS("listening", "port", port)
 
 	// Graceful shutdown
 	<-done
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-
 	if err := server.Shutdown(ctx); err != nil {
 		klog.Fatalf("Server didn't exit gracefully %v", err)
 	}
+}
+
+// getEnv returns defaultValue if key is not set, else the value of os.LookupEnv(key)
+func getEnv(key, defaultValue string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return defaultValue
 }

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package app
 
 import (
 	"net/http"
@@ -26,6 +26,10 @@ import (
 	"sigs.k8s.io/oci-proxy/pkg/net/cidrs/aws"
 )
 
+// MakeHandler returns the root archeio HTTP handler
+//
+// upstream registry should be the url to the primary registry
+// archeio is fronting.
 func MakeHandler(upstreamRegistry string) http.Handler {
 	doV2 := makeV2Handler(upstreamRegistry)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

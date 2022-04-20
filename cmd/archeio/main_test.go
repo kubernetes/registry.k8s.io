@@ -30,6 +30,8 @@ import (
 	"sigs.k8s.io/oci-proxy/internal/integration"
 )
 
+// TestIntegrationMain tests the entire, built binary with an integration
+// test, pulling images with crane
 func TestIntegrationMain(t *testing.T) {
 	integration.MaybeSkip(t)
 
