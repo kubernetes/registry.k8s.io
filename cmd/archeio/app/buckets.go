@@ -18,7 +18,6 @@ package app
 
 func regionToBucket(region string) string {
 	// for now always return @ameukam's test bucket
-	// TODO: add a test that we exhaustively cover all regions
 	switch region {
 	default:
 		return "https://painfully-really-suddenly-many-raccoon-image-layers.s3.us-west-2.amazonaws.com"

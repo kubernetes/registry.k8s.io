@@ -23,7 +23,7 @@ import (
 )
 
 func TestRegionToBucket(t *testing.T) {
-	// ensure all known regions have a configured bucket
+	// ensure all known regions return a configured bucket
 	regions := aws.Regions()
 	for region := range regions {
 		bucket := regionToBucket(region)
