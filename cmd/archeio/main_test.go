@@ -1,3 +1,6 @@
+//go:build !nointegration
+// +build !nointegration
+
 /*
 Copyright 2022 The Kubernetes Authors.
 
@@ -17,121 +20,99 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"net/http"
-	"net/http/httptest"
+	"os"
+	"os/exec"
 	"testing"
+	"time"
+
+	"sigs.k8s.io/oci-proxy/internal/integration"
 )
 
-var (
-	defaultUpstreamRegistry = "https://k8s.gcr.io"
-)
+// TestIntegrationMain tests the entire, built binary with an integration
+// test, pulling images with crane
+func TestIntegrationMain(t *testing.T) {
+	integration.MaybeSkip(t)
 
-type request struct {
-	path     string
-	redirect bool
-}
+	// setup crane
+	rootDir, err := integration.ModuleRootDir()
+	if err != nil {
+		t.Fatalf("Failed to detect module root dir: %v", err)
+	}
+	// NOTE: also ensures rootDir/bin is in front of $PATH
+	if err := integration.EnsureCrane(rootDir); err != nil {
+		t.Fatalf("Failed to ensure crane: %v", err)
+	}
 
-type expected struct {
-	url        string
-	path       string
-	statusCode int
-}
+	// build binary
+	buildCmd := exec.Command("make", "archeio")
+	buildCmd.Dir = rootDir
+	if err := buildCmd.Run(); err != nil {
+		t.Fatalf("Failed to build archeio for integration testing: %v", err)
+	}
 
-type scenario struct {
-	name     string
-	request  request
-	expected expected
-}
+	// start server in background
+	testPort := "61337"
+	testAddr := "localhost:" + testPort
+	serverErrChan := make(chan error)
+	cmdContext, serverCancel := context.WithCancel(context.TODO())
+	serverCmd := exec.CommandContext(cmdContext, "archeio")
+	serverCmd.Env = append(serverCmd.Env, "PORT="+testPort)
+	// serverCmd.Stderr = os.Stderr
+	defer serverCancel()
+	go func() {
+		serverErrChan <- serverCmd.Start()
+		serverErrChan <- serverCmd.Wait()
+	}()
 
-type suite struct {
-	handler   http.Handler
-	scenarios []scenario
-	tests     []func(resp *http.Response, scenario scenario)
-}
+	// wait for server to be up and running
+	startErr := <-serverErrChan
+	if startErr != nil {
+		t.Fatalf("Failed to start archeio: %v", err)
+	}
+	if !tryUntil(time.Now().Add(time.Second), func() bool {
+		_, err := http.Get("http://" + testAddr + "/v2/")
+		return err == nil
+	}) {
+		t.Fatal("timed out waiting for archeio to be ready")
+	}
 
-func (s *suite) runTestSuite(t *testing.T) {
-	t.Run("test suite", func(t *testing.T) {
-		for _, sc := range s.scenarios {
-			t.Run(sc.name, func(t *testing.T) {
-				t.Parallel()
-				server := httptest.NewServer(s.handler)
-				defer server.Close()
-				client := server.Client()
-				if sc.request.redirect == false {
-					client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-						return http.ErrUseLastResponse
-					}
-				}
-				resp, err := client.Get(server.URL + sc.request.path)
-				if err != nil {
-					t.Errorf("Error requesting fake backend, %v", err)
-				}
-				for _, test := range s.tests {
-					test(resp, sc)
-				}
-			})
+	// TODO: fake being on AWS
+	testPull := func(image string) {
+		// nolint:gosec // this is not user suplied input ...
+		cmd := exec.Command("crane", "pull", testAddr+"/"+image, os.DevNull)
+		//cmd.Stderr = os.Stderr
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Errorf("pull for %q failed: %v", image, err)
+			t.Error("output: ")
+			t.Error(string(out))
+			t.Fail()
 		}
-	})
-}
+	}
 
-func defaultTestFuncs(t *testing.T) []func(resp *http.Response, sc scenario) {
-	return []func(resp *http.Response, sc scenario){
-		func(resp *http.Response, sc scenario) {
-			if resp.StatusCode != sc.expected.statusCode {
-				t.Errorf("Expected status code '%v' but received '%v', scenario: %#v, resp: %#v", resp.StatusCode, sc.expected.statusCode, sc, resp)
-			}
-		},
-		func(resp *http.Response, sc scenario) {
-			if sc.expected.path != "" && resp.Request.URL.Path != sc.expected.path {
-				t.Errorf("Expected path '%v' but received '%v', scenario: %#v, resp: %#v", resp.Request.URL.Path, sc.expected.url, sc, resp)
-			}
-			if sc.expected.url != "" && defaultUpstreamRegistry+resp.Request.URL.Path != sc.expected.url {
-				t.Errorf("Expected url '%v' but received '%v', scenario: %#v, resp: %#v", defaultUpstreamRegistry+resp.Request.URL.Path, sc.expected.url, sc, resp)
-			}
-		},
+	// test pulling pause image
+	// TODO: test pulling more things
+	testPull("pause:3.1")
+
+	// we're done, cleanup
+	if err := serverCmd.Process.Signal(os.Interrupt); err != nil {
+		t.Fatalf("failed to signal archeio: %v", err)
+	}
+	if err := <-serverErrChan; err != nil {
+		t.Fatalf("archeio did not exit cleanly: %v", err)
 	}
 }
 
-func TestMakeHandler(t *testing.T) {
-	suite := &suite{
-		handler: makeHandler(defaultUpstreamRegistry),
-		scenarios: []scenario{
-			{
-				name:     "root is not found",
-				request:  request{path: "/", redirect: false},
-				expected: expected{path: "/", statusCode: http.StatusNotFound},
-			},
-			// when not redirecting
-			{
-				name:     "/v2/ returns 308 without following redirect",
-				request:  request{path: "/v2/", redirect: false},
-				expected: expected{url: defaultUpstreamRegistry + "/v2/", statusCode: http.StatusPermanentRedirect},
-			},
-			// when redirecting, results from k8s.gcr.io
-			{
-				name:     "/v2/ returns 401 from gcr, with following redirect",
-				request:  request{path: "/v2/", redirect: true},
-				expected: expected{url: defaultUpstreamRegistry + "/v2/", statusCode: http.StatusUnauthorized},
-			},
-		},
-		tests: defaultTestFuncs(t),
+// helper that calls `try()`` in a loop until the deadline `until`
+// has passed or `try()`returns true, returns whether try ever returned true
+func tryUntil(until time.Time, try func() bool) bool {
+	for until.After(time.Now()) {
+		if try() {
+			return true
+		}
+		time.Sleep(time.Millisecond * 10)
 	}
-	suite.runTestSuite(t)
-}
-
-func TestDoV2(t *testing.T) {
-	suite := &suite{
-		handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			doV2(w, r, defaultUpstreamRegistry)
-		}),
-		scenarios: []scenario{
-			{
-				name:     "v2 handler returns 308 without following redirect",
-				request:  request{path: "/v2/", redirect: false},
-				expected: expected{url: defaultUpstreamRegistry + "/v2/", statusCode: http.StatusPermanentRedirect},
-			},
-		},
-		tests: defaultTestFuncs(t),
-	}
-	suite.runTestSuite(t)
+	return false
 }

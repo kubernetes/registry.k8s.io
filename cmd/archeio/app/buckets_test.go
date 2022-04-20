@@ -1,6 +1,3 @@
-//go:build tools
-// +build tools
-
 /*
 Copyright 2022 The Kubernetes Authors.
 
@@ -17,22 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-/*
-Package tools is used to track binary dependencies with go modules
-https://github.com/golang/go/wiki/Modules#how-can-i-track-tool-dependencies-for-a-module
-*/
-package tools
+package app
 
 import (
-	// linter(s)
-	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
+	"testing"
 
-	// test runner
-	_ "gotest.tools/gotestsum"
-
-	// image builder
-	_ "github.com/google/ko"
-
-	// for testing
-	_ "github.com/google/go-containerregistry/cmd/crane"
+	"sigs.k8s.io/oci-proxy/pkg/net/cidrs/aws"
 )
+
+func TestRegionToBucket(t *testing.T) {
+	// ensure all known regions return a configured bucket
+	regions := aws.Regions()
+	for region := range regions {
+		bucket := regionToBucket(region)
+		if bucket == "" {
+			t.Fatalf("received empty string for known region %q bucket", region)
+		}
+	}
+}

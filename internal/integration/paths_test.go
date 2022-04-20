@@ -1,6 +1,3 @@
-//go:build tools
-// +build tools
-
 /*
 Copyright 2022 The Kubernetes Authors.
 
@@ -17,22 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-/*
-Package tools is used to track binary dependencies with go modules
-https://github.com/golang/go/wiki/Modules#how-can-i-track-tool-dependencies-for-a-module
-*/
-package tools
+package integration
 
-import (
-	// linter(s)
-	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
+import "testing"
 
-	// test runner
-	_ "gotest.tools/gotestsum"
-
-	// image builder
-	_ "github.com/google/ko"
-
-	// for testing
-	_ "github.com/google/go-containerregistry/cmd/crane"
-)
+func TestModuleRootDir(t *testing.T) {
+	root, err := ModuleRootDir()
+	if err != nil {
+		t.Fatalf("unexpected error getting root dir: %v", err)
+	}
+	if root == "" {
+		t.Fatalf("expected root dir to be non-empty string")
+	}
+}

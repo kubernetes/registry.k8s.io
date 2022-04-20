@@ -7,6 +7,7 @@ require (
 	// temporary until https://github.com/golangci/golangci-lint/issues/2649
 	// is resolved, then we will go back to released versions
 	github.com/golangci/golangci-lint v1.45.3-0.20220405150459-f5b92e1ae287
+	github.com/google/go-containerregistry v0.8.1-0.20220209165246-a44adc326839
 	github.com/google/ko v0.11.2
 	github.com/prometheus/client_golang v1.12.0 // indirect
 	github.com/quasilyte/gogrep v0.0.0-20220120141003-628d8b3623b5 // indirect

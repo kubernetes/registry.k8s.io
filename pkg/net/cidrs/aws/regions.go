@@ -1,6 +1,3 @@
-//go:build tools
-// +build tools
-
 /*
 Copyright 2022 The Kubernetes Authors.
 
@@ -17,22 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-/*
-Package tools is used to track binary dependencies with go modules
-https://github.com/golang/go/wiki/Modules#how-can-i-track-tool-dependencies-for-a-module
-*/
-package tools
+package aws
 
-import (
-	// linter(s)
-	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
-
-	// test runner
-	_ "gotest.tools/gotestsum"
-
-	// image builder
-	_ "github.com/google/ko"
-
-	// for testing
-	_ "github.com/google/go-containerregistry/cmd/crane"
-)
+// Regions returns a set-like map of all known AWS regions
+// based on the same underlying data as the rest of this package
+func Regions() map[string]bool {
+	regions := map[string]bool{}
+	for region := range regionToRanges {
+		regions[region] = true
+	}
+	return regions
+}
