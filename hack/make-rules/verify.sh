@@ -26,24 +26,30 @@ res=0
 # run all verify scripts, optionally skipping any of them
 
 if [[ "${VERIFY_LINT:-true}" == "true" ]]; then
-  echo "verifying lints ..."
+  >&2 echo "verifying lints ..."
   hack/make-rules/lint.sh || res=1
   cd "${REPO_ROOT}"
 fi
 
 if [[ "${VERIFY_SHELLCHECK:-true}" == "true" ]]; then
-  echo "verifying shellcheck ..."
+  >&2 echo "verifying shellcheck ..."
   hack/make-rules/shellcheck.sh || res=1
+  cd "${REPO_ROOT}"
+fi
+
+if [[ "${VERIFY_GENERATED:-true}" == "true" ]]; then
+  >&2 echo "Verifying generated ..."
+  hack/make-rules/verify-generated.sh || res=1
   cd "${REPO_ROOT}"
 fi
 
 # exit based on verify scripts
 if [[ "${res}" = 0 ]]; then
-  echo ""
-  echo "All verify checks passed, congrats!"
+  >&2 echo ""
+  >&2 echo "All verify checks passed, congrats!"
 else
-  echo ""
-  echo "One or more verify checks failed! See output above..."
+  >&2 echo ""
+  >&2 echo "One or more verify checks failed! See output above..."
 fi
 exit "${res}"
 
