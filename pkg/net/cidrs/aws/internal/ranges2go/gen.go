@@ -19,6 +19,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"sort"
 )
 
 const fileHeader = `/*
@@ -55,7 +56,14 @@ func generateRangesGo(w io.Writer, rtp regionsToPrefixes) error {
 		return err
 	}
 
-	for region, prefixes := range rtp {
+	// ensure iteration order is predictable
+	regions := make([]string, 0, len(rtp))
+	for region := range rtp {
+		regions = append(regions, region)
+	}
+	sort.Strings(regions)
+	for _, region := range regions {
+		prefixes := rtp[region]
 		if _, err := fmt.Fprintf(w, "\t%q: {\n", region); err != nil {
 			return err
 		}
