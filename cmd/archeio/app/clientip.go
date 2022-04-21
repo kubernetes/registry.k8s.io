@@ -71,5 +71,6 @@ func getClientIP(r *http.Request) (netip.Addr, error) {
 		return netip.Addr{}, fmt.Errorf("invalid X-Forwarded-For value: %s", rawXFwdFor)
 	}
 	secondLastComma := strings.LastIndex(rawXFwdFor[:lastComma], ",")
-	return netip.ParseAddr(rawXFwdFor[secondLastComma+1 : lastComma])
+	ipString := strings.TrimSpace(rawXFwdFor[secondLastComma+1 : lastComma])
+	return netip.ParseAddr(ipString)
 }
