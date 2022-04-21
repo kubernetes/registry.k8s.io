@@ -29,7 +29,8 @@ REGIONS=(
     us-west1
 )
 
-for REGION in "${REGIONS[@]}"; do
+# shellcheck disable=SC2048
+for REGION in ${REGIONS[*]}; do
     gcloud --project="${PROJECT}" \
         run services update "${SERVICE_BASENAME}-${REGION}" \
         --image "${IMAGE_REPO}:${TAG}" \
