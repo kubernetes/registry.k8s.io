@@ -33,5 +33,7 @@ for REGION in "${REGIONS[@]}"; do
     gcloud --project="${PROJECT}" \
         run services update "${SERVICE_BASENAME}-${REGION}" \
         --image "${IMAGE_REPO}:${TAG}" \
-        --region "${REGION}"
+        --region "${REGION}" \
+        `# TODO: if we use this to deploy prod, we need to handle this differently` \
+        --args=-v=2
 done
