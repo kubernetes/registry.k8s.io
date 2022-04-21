@@ -27,11 +27,7 @@ func main() {
 		outputPath = "./zz_generated_range_data.go"
 	}
 	// parse raw AWS IP range data
-	parsed, err := parseIPRangesJSON([]byte(ipRangesRaw))
-	if err != nil {
-		panic(err)
-	}
-	rtp, err := regionsToPrefixesFromData(parsed)
+	rtp, err := regionsToPrefixesFromRaw(ipRangesRaw)
 	if err != nil {
 		panic(err)
 	}
