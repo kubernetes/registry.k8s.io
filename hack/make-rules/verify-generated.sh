@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Copyright 2022 The Kubernetes Authors.
 #
@@ -14,13 +14,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# wrapper script so we can go:generate with this tool
-
+# script to verify generated files
 set -o errexit -o nounset -o pipefail
 
-SELF_DIR="$(dirname "${BASH_SOURCE[0]}")"
-REPO_ROOT="$(cd "${SELF_DIR}/../../../../../.." && pwd -P)"
-BIN_PATH="${REPO_ROOT}/bin/ranges2go"
+# cd to the repo root and setup go
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." &> /dev/null && pwd -P)"
+cd "${REPO_ROOT}"
+source hack/tools/setup-go.sh
 
-go build -o "${BIN_PATH}" "${SELF_DIR}"
-"${BIN_PATH}" "$@"
+tmpdir=$(mktemp -d)
+trap 'rm -rf ${tmpdir?}' EXIT
+
+# generate and compare
+OUT_FILE="${tmpdir}"/zz_generated_range_data.go
+export OUT_FILE
+./pkg/net/cidrs/aws/internal/ranges2go/run.sh
+
+if ! diff "${OUT_FILE}" ./pkg/net/cidrs/aws/zz_generated_range_data.go; then
+    >&2 echo ""
+    >&2 echo "generated file is out of date, please run 'go generate ./...' to regenerate"
+    exit 1
+fi

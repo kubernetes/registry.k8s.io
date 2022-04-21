@@ -102,6 +102,9 @@ gofmt:
 # run linters, ensure generated code, etc.
 verify:
 	hack/make-rules/verify.sh
+# verify generated files, subset of verify
+verify-generated:
+	hack/make-rules/verify-generated.sh
 # code linters
 lint:
 	hack/make-rules/lint.sh
@@ -109,4 +112,4 @@ lint:
 shellcheck:
 	hack/make-rules/shellcheck.sh
 #################################################################################
-.PHONY: all archeio build unit integration clean update gofmt verify lint shellcheck
+.PHONY: all archeio build unit integration clean update gofmt verify verify-generated lint shellcheck

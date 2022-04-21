@@ -21,6 +21,12 @@ package main
 import "os"
 
 func main() {
+	// overridable for make verify
+	outputPath := os.Getenv("OUT_FILE")
+	if outputPath == "" {
+		outputPath = "./zz_generated_range_data.go"
+	}
+	// parse raw AWS IP range data
 	parsed, err := parseIPRangesJSON([]byte(ipRangesRaw))
 	if err != nil {
 		panic(err)
@@ -30,7 +36,7 @@ func main() {
 		panic(err)
 	}
 	// emit file
-	f, err := os.Create("./../../zz_generated_range_data.go")
+	f, err := os.Create(outputPath)
 	if err != nil {
 		panic(err)
 	}
