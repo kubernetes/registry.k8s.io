@@ -61,12 +61,12 @@ func makeV2Handler(upstreamRegistry string) func(w http.ResponseWriter, r *http.
 	// capture these in a http handler lambda
 	return func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		klog.V(2).InfoS("v2 request", "path", path)
 
 		// check if blob request
 		matches := reBlob.FindStringSubmatch(path)
 		if len(matches) != 2 {
 			// doesn't match so just forward it to the main upstream registry
+			klog.V(2).InfoS("redirecting non-blob request to upstream registry", "path", path)
 			http.Redirect(w, r, upstreamRegistry+path, http.StatusPermanentRedirect)
 			return
 		}
@@ -74,6 +74,7 @@ func makeV2Handler(upstreamRegistry string) func(w http.ResponseWriter, r *http.
 		// for matches, identify the appropriate backend
 		clientIP, err := getClientIP(r)
 		if err != nil {
+			klog.ErrorS(err, "failed to get client IP")
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
@@ -81,6 +82,7 @@ func makeV2Handler(upstreamRegistry string) func(w http.ResponseWriter, r *http.
 		region, matched := regionMapper.GetIP(clientIP)
 		if !matched {
 			// no region match, redirect to main upstream registry
+			klog.V(2).InfoS("redirecting blob request to upstream registry", "path", path)
 			http.Redirect(w, r, upstreamRegistry+path, http.StatusPermanentRedirect)
 			return
 		}
@@ -89,6 +91,7 @@ func makeV2Handler(upstreamRegistry string) func(w http.ResponseWriter, r *http.
 		hash := matches[1]
 		// blobs are in the buckets are stored at /containers/images/sha256:$hash
 		// this matches the GCS bucket backing GCR
+		klog.V(2).InfoS("redirecting blob request to AWS", "region", region, "path", path)
 		http.Redirect(w, r, bucket+"/containers/images/sha256%3A"+hash, http.StatusPermanentRedirect)
 	}
 }
