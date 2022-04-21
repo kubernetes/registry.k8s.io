@@ -36,7 +36,7 @@ go_test_opts=(
   '-coverpkg' 'sigs.k8s.io/oci-proxy/...'
 )
 if [[ "${MODE}" = 'unit' ]]; then
-  go_test_opts+=('-short' '-tags=nointegration')
+  go_test_opts+=('-tags=nointegration')
 elif [[ "${MODE}" = 'integration' ]]; then
   go_test_opts+=('-run' '^TestIntegration')
 fi

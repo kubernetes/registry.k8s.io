@@ -20,8 +20,7 @@ limitations under the License.
 // following constraints:
 //
 // 1. They should be named TestIntegration* instead of just Test*
-// 2. They should call MaybeSkip(t) at the beginning of the method
-// 3. The source file should have builtags !nointegration
+// 2. The source file should have builtags !nointegration
 //
 // See also: hack/make-rules/test.sh
 package integration
