@@ -75,6 +75,7 @@ func makeV2Handler(upstreamRegistry string) func(w http.ResponseWriter, r *http.
 		clientIP, err := getClientIP(r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
 		region, matched := regionMapper.GetIP(clientIP)

@@ -57,7 +57,7 @@ func TestGetClientIP(t *testing.T) {
 			Name: "X-Forwarded-For with clean client-supplied",
 			Request: http.Request{
 				Header: http.Header{
-					"X-Forwarded-For": []string{"127.0.0.1,8.8.8.8,8.8.8.9"},
+					"X-Forwarded-For": []string{"127.0.0.1, 8.8.8.8, 8.8.8.9"},
 				},
 				RemoteAddr: "127.0.0.1:8888",
 			},
