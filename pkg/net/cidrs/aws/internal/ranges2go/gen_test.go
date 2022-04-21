@@ -79,14 +79,10 @@ func TestGenerateRangesGo(t *testing.T) {
     }
   ]
 }
-    `
-	parsed, err := parseIPRangesJSON([]byte(rawData))
+`
+	rtp, err := regionsToPrefixesFromRaw(rawData)
 	if err != nil {
 		t.Fatalf("unexpected error parsing test data: %v", err)
-	}
-	rtp, err := regionsToPrefixesFromData(parsed)
-	if err != nil {
-		t.Fatalf("unexpected error processing test data: %v", err)
 	}
 
 	// expected generated result

@@ -22,6 +22,16 @@ import (
 	"sort"
 )
 
+// regionsToPrefixesFromRaw parses raw AWS IP ranges JSON data
+// and processes it to a regionsToPrefixes map
+func regionsToPrefixesFromRaw(raw string) (regionsToPrefixes, error) {
+	parsed, err := parseIPRangesJSON([]byte(raw))
+	if err != nil {
+		return nil, err
+	}
+	return regionsToPrefixesFromData(parsed)
+}
+
 /*
 	For more on these datatypes see:
 	https://docs.aws.amazon.com/general/latest/gr/aws-ip-ranges.html
