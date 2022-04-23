@@ -79,10 +79,6 @@ func makeV2Handler(upstreamRegistry string) func(w http.ResponseWriter, r *http.
 			return
 		}
 
-		// TODO: revert this!
-		// we just need some real data to debug
-		klog.InfoS("blob request client info", "clientIP", clientIP, "headers", r.Header, "path", path)
-
 		region, matched := regionMapper.GetIP(clientIP)
 		if !matched {
 			// no region match, redirect to main upstream registry
