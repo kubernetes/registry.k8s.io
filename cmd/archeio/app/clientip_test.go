@@ -54,10 +54,30 @@ func TestGetClientIP(t *testing.T) {
 			ExpectedIP: netip.MustParseAddr("8.8.8.8"),
 		},
 		{
+			Name: "X-Forwarded-For without client-supplied + cloud-run bug",
+			Request: http.Request{
+				Header: http.Header{
+					"X-Forwarded-For": []string{"8.8.8.8,8.8.8.9,8.8.8.8"},
+				},
+				RemoteAddr: "127.0.0.1:8888",
+			},
+			ExpectedIP: netip.MustParseAddr("8.8.8.8"),
+		},
+		{
 			Name: "X-Forwarded-For with clean client-supplied",
 			Request: http.Request{
 				Header: http.Header{
 					"X-Forwarded-For": []string{"127.0.0.1, 8.8.8.8, 8.8.8.9"},
+				},
+				RemoteAddr: "127.0.0.1:8888",
+			},
+			ExpectedIP: netip.MustParseAddr("8.8.8.8"),
+		},
+		{
+			Name: "X-Forwarded-For with clean client-supplied + cloud-run bug",
+			Request: http.Request{
+				Header: http.Header{
+					"X-Forwarded-For": []string{"127.0.0.1, 8.8.8.8, 8.8.8.9,8.8.8.8"},
 				},
 				RemoteAddr: "127.0.0.1:8888",
 			},
@@ -87,7 +107,7 @@ func TestGetClientIP(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.Name, func(t *testing.T) {
-			t.Parallel()
+			//t.Parallel()
 			ip, err := getClientIP(&tc.Request)
 			if err != nil {
 				if !tc.ExpectError {
