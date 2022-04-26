@@ -16,7 +16,10 @@ limitations under the License.
 
 package app
 
-import "net/http"
+import (
+	"net/http"
+	"sync"
+)
 
 // awsRegionToS3URL returns the base S3 bucket URL for an OCI layer blob given the AWS region
 //
@@ -31,20 +34,60 @@ func awsRegionToS3URL(region string) string {
 
 // blobChecker are used to check if a blob exists, possibly with caching
 type blobChecker interface {
-	// layerHash may be used for caching purposes
-	BlobExists(blobURL, layerHash string) bool
+	// BlobExists should check that blobURL exists
+	// bucket and layerHash may be used for caching purposes
+	BlobExists(blobURL, bucket, layerHash string) bool
 }
 
-// simpleBlobChecker just performs an HTTP HEAD check against the blob
+// cachedBlobChecker just performs an HTTP HEAD check against the blob
 //
 // TODO: potentially replace with a caching implementation
 // should be plenty fast for now, HTTP HEAD on s3 is cheap
-type simpleBlobChecker struct {
+type cachedBlobChecker struct {
 	http.Client
+	blobCache
 }
 
-func (s *simpleBlobChecker) BlobExists(blobURL, layerHash string) bool {
-	r, err := s.Client.Head(blobURL)
+func newCachedBlobChecker() *cachedBlobChecker {
+	return &cachedBlobChecker{
+		blobCache: blobCache{
+			cache: make(map[string]map[string]struct{}),
+		},
+	}
+}
+
+type blobCache struct {
+	// cache contains bucket:key for observed keys
+	// it is not bounded, we can afford to store all keys if need be
+	// and the cloud run container will spin down after an idle period
+	cache map[string]map[string]struct{}
+	lock  sync.RWMutex
+}
+
+func (b *blobCache) Get(bucket, layerHash string) bool {
+	b.lock.RLock()
+	defer b.lock.RUnlock()
+	if m, exists := b.cache[bucket]; exists {
+		_, exists = m[layerHash]
+		return exists
+	}
+	return false
+}
+
+func (b *blobCache) Put(bucket, layerHash string) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+	if _, exists := b.cache[bucket]; !exists {
+		b.cache[bucket] = make(map[string]struct{})
+	}
+	b.cache[bucket][layerHash] = struct{}{}
+}
+
+func (c *cachedBlobChecker) BlobExists(blobURL, bucket, layerHash string) bool {
+	if c.blobCache.Get(bucket, layerHash) {
+		return true
+	}
+	r, err := c.Client.Head(blobURL)
 	// fallback to assuming blob is unavailable on errors
 	if err != nil {
 		return false
@@ -52,5 +95,9 @@ func (s *simpleBlobChecker) BlobExists(blobURL, layerHash string) bool {
 	r.Body.Close()
 	// if the blob exists it HEAD should return 200 OK
 	// this is true for S3 and for OCI registries
-	return r.StatusCode == http.StatusOK
+	if r.StatusCode == http.StatusOK {
+		c.blobCache.Put(bucket, layerHash)
+		return true
+	}
+	return false
 }

@@ -36,7 +36,7 @@ const (
 // upstream registry should be the url to the primary registry
 // archeio is fronting.
 func MakeHandler(upstreamRegistry string) http.Handler {
-	blobs := &simpleBlobChecker{}
+	blobs := newCachedBlobChecker()
 	doV2 := makeV2Handler(upstreamRegistry, blobs)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// all valid registry requests should be at /v2/
@@ -95,7 +95,7 @@ func makeV2Handler(upstreamRegistry string, blobs blobChecker) func(w http.Respo
 		hash := matches[1]
 		// this matches GCR's GCS layout, which we will use for other buckets
 		blobURL := bucketURL + "/containers/images/sha256%3A" + hash
-		if blobs.BlobExists(blobURL, hash) {
+		if blobs.BlobExists(blobURL, bucketURL, hash) {
 			// blob known to be available in S3, redirect client there
 			klog.V(2).InfoS("redirecting blob request to S3", "path", path)
 			http.Redirect(w, r, blobURL, http.StatusPermanentRedirect)
