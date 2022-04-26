@@ -22,11 +22,11 @@ import (
 	"sigs.k8s.io/oci-proxy/pkg/net/cidrs/aws"
 )
 
-func TestRegionToBucket(t *testing.T) {
+func TestRegionToAWSRegionToS3URL(t *testing.T) {
 	// ensure all known regions return a configured bucket
 	regions := aws.Regions()
 	for region := range regions {
-		bucket := regionToBucket(region)
+		bucket := awsRegionToS3URL(region)
 		if bucket == "" {
 			t.Fatalf("received empty string for known region %q bucket", region)
 		}

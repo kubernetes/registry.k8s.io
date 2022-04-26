@@ -16,10 +16,41 @@ limitations under the License.
 
 package app
 
-func regionToBucket(region string) string {
+import "net/http"
+
+// awsRegionToS3URL returns the base S3 bucket URL for an OCI layer blob given the AWS region
+//
+// blobs in the buckets should be stored at /containers/images/sha256:$hash
+func awsRegionToS3URL(region string) string {
 	// for now always return @ameukam's test bucket
 	switch region {
 	default:
 		return "https://painfully-really-suddenly-many-raccoon-image-layers.s3.us-west-2.amazonaws.com"
 	}
+}
+
+// blobChecker are used to check if a blob exists, possibly with caching
+type blobChecker interface {
+	// layerHash may be used for caching purposes
+	BlobExists(blobURL, layerHash string) bool
+}
+
+// simpleBlobChecker just performs an HTTP HEAD check against the blob
+//
+// TODO: potentially replace with a caching implementation
+// should be plenty fast for now, HTTP HEAD on s3 is cheap
+type simpleBlobChecker struct {
+	http.Client
+}
+
+func (s *simpleBlobChecker) BlobExists(blobURL, layerHash string) bool {
+	r, err := s.Client.Head(blobURL)
+	// fallback to assuming blob is unavailable on errors
+	if err != nil {
+		return false
+	}
+	r.Body.Close()
+	// if the blob exists it HEAD should return 200 OK
+	// this is true for S3 and for OCI registries
+	return r.StatusCode == http.StatusOK
 }
