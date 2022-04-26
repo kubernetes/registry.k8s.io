@@ -19,6 +19,8 @@ package app
 import (
 	"net/http"
 	"sync"
+
+	"k8s.io/klog/v2"
 )
 
 // awsRegionToS3URL returns the base S3 bucket URL for an OCI layer blob given the AWS region
@@ -85,8 +87,10 @@ func (b *blobCache) Put(bucket, layerHash string) {
 
 func (c *cachedBlobChecker) BlobExists(blobURL, bucket, layerHash string) bool {
 	if c.blobCache.Get(bucket, layerHash) {
+		klog.V(3).InfoS("blob existence cache hit", "url", blobURL)
 		return true
 	}
+	klog.V(3).InfoS("blob existence cache miss", "url", blobURL)
 	r, err := c.Client.Head(blobURL)
 	// fallback to assuming blob is unavailable on errors
 	if err != nil {

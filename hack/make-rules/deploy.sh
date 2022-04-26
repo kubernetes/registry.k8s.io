@@ -35,5 +35,5 @@ for REGION in "${REGIONS[@]}"; do
         --image "${IMAGE_REPO}:${TAG}" \
         --region "${REGION}" \
         `# TODO: if we use this to deploy prod, we need to handle this differently` \
-        --args=-v=2
+        --args=-v=3
 done
