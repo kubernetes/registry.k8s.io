@@ -33,6 +33,8 @@ For a rough TLDR of the current design:
 *only* when requesting content blobs, *not* manifests, manifest lists, tags etc.
 - All other requests are redirected to the original upstream registry
 
+For more detail: see [docs/request-handling.md](./docs/request-handling.md)
+
 In addition, in order to get the registry.k8s.io domain in place, initially this
 binary is *only* serving the trivial redirect to the existing registry 
 (https://k8s.gcr.io), so we can safely move users / clients to the new domain

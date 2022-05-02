@@ -35,6 +35,8 @@ const (
 //
 // upstream registry should be the url to the primary registry
 // archeio is fronting.
+//
+// Exact behavior should be documented in docs/request-handling.md
 func MakeHandler(upstreamRegistry string) http.Handler {
 	blobs := newCachedBlobChecker()
 	doV2 := makeV2Handler(upstreamRegistry, blobs)
