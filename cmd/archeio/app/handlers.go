@@ -45,7 +45,7 @@ func MakeHandler(upstreamRegistry string) http.Handler {
 		// v1 API is super old and not supported by GCR anymore.
 		path := r.URL.Path
 		switch {
-		case strings.HasPrefix(path, "/v2/"):
+		case strings.HasPrefix(path, "/v2"):
 			doV2(w, r)
 		case path == "/":
 			http.Redirect(w, r, infoURL, http.StatusPermanentRedirect)
@@ -64,6 +64,27 @@ func makeV2Handler(upstreamRegistry string, blobs blobChecker) func(w http.Respo
 	// capture these in a http handler lambda
 	return func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
+
+		// we only care about publicly readable GCR as the backing registry
+		// or publicly readable blob storage
+		//
+		// when the client attempts to probe the API for auth, we always return
+		// 200 OK so it will not attempt to request an auth token
+		//
+		// this makes it easier to redirect to backends with different
+		// repo namespacing without worrying about incorrect token scope
+		//
+		// it turns out publicly readable GCR repos do not actually care about
+		// the presence of a token for any API calls, despite the /v2/ API call
+		// returning 401, prompting token auth
+		if path == "/v2/" || path == "/v2" {
+			klog.V(2).InfoS("serving 200 OK for /v2/ check", "path", path)
+			// NOTE: OCI does not require this, but the docker v2 spec include it, and GCR sets this
+			// Docker distribution v2 clients may fallback to an older version if this is not set.
+			w.Header().Set("Docker-Distribution-Api-Version", "registry/2.0")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 
 		// check if blob request
 		matches := reBlob.FindStringSubmatch(path)
