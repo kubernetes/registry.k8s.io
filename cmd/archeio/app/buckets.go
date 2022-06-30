@@ -17,6 +17,7 @@ limitations under the License.
 package app
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -28,6 +29,8 @@ import (
 // blobs in the buckets should be stored at /containers/images/sha256:$hash
 func awsRegionToS3URL(region string) string {
 	switch region {
+	case "us-west-1", "us-west-2", "us-east-1", "us-east-2", "eu-central-1", "ap-southeast-1", "ap-northeast-1", "ap-south-1":
+		return fmt.Sprintf("https://prod-registry-k8s-io-%v.s3.%v.amazonaws.com", region, region)
 	default:
 		return "https://prod-registry-k8s-io-us-east-2.s3.dualstack.us-east-2.amazonaws.com"
 	}
