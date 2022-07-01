@@ -28,7 +28,7 @@ import (
 
 const (
 	// hard coded for now
-	infoURL    = "https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io"
+	infoURL = "https://github.com/kubernetes/k8s.io/wiki/New-Registry-url-for-Kubernetes-(registry.k8s.io)"
 	privacyURL = "https://www.linuxfoundation.org/privacy-policy/"
 )
 
