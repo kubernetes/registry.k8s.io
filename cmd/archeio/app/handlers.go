@@ -48,7 +48,7 @@ func MakeHandler(upstreamRegistry string) http.Handler {
 		case strings.HasPrefix(path, "/v2"):
 			doV2(w, r)
 		case path == "/":
-			http.Redirect(w, r, infoURL, http.StatusPermanentRedirect)
+			http.Redirect(w, r, infoURL, http.StatusTemporaryRedirect)
 		default:
 			klog.V(2).InfoS("unknown request", "path", path)
 			http.NotFound(w, r)
@@ -91,7 +91,7 @@ func makeV2Handler(upstreamRegistry string, blobs blobChecker) func(w http.Respo
 		if len(matches) != 2 {
 			// not a blob request so forward it to the main upstream registry
 			klog.V(2).InfoS("redirecting non-blob request to upstream registry", "path", path)
-			http.Redirect(w, r, upstreamRegistry+path, http.StatusPermanentRedirect)
+			http.Redirect(w, r, upstreamRegistry+path, http.StatusTemporaryRedirect)
 			return
 		}
 
@@ -109,7 +109,7 @@ func makeV2Handler(upstreamRegistry string, blobs blobChecker) func(w http.Respo
 		if !ipIsKnown {
 			// no region match, redirect to main upstream registry
 			klog.V(2).InfoS("redirecting blob request to upstream registry", "path", path)
-			http.Redirect(w, r, upstreamRegistry+path, http.StatusPermanentRedirect)
+			http.Redirect(w, r, upstreamRegistry+path, http.StatusTemporaryRedirect)
 			return
 		}
 
@@ -121,12 +121,12 @@ func makeV2Handler(upstreamRegistry string, blobs blobChecker) func(w http.Respo
 		if blobs.BlobExists(blobURL, bucketURL, hash) {
 			// blob known to be available in S3, redirect client there
 			klog.V(2).InfoS("redirecting blob request to S3", "path", path)
-			http.Redirect(w, r, blobURL, http.StatusPermanentRedirect)
+			http.Redirect(w, r, blobURL, http.StatusTemporaryRedirect)
 			return
 		}
 
 		// fall back to redirect to upstream
 		klog.V(2).InfoS("redirecting blob request to upstream registry", "path", path)
-		http.Redirect(w, r, upstreamRegistry+path, http.StatusPermanentRedirect)
+		http.Redirect(w, r, upstreamRegistry+path, http.StatusTemporaryRedirect)
 	}
 }
