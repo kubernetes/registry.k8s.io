@@ -39,6 +39,12 @@ func TestMakeHandler(t *testing.T) {
 			ExpectedURL:    infoURL,
 		},
 		{
+			Name:           "/privacy",
+			Request:        httptest.NewRequest("GET", "http://localhost:8080/privacy", nil),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    privacyURL,
+		},
+		{
 			Name:           "/v3/",
 			Request:        httptest.NewRequest("GET", "http://localhost:8080/v3/", nil),
 			ExpectedStatus: http.StatusNotFound,
