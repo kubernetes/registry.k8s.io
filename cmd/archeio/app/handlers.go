@@ -94,7 +94,8 @@ func makeV2Handler(upstreamRegistry string, blobs blobChecker) func(w http.Respo
 		if len(matches) != 2 {
 			// not a blob request so forward it to the main upstream registry
 			klog.V(2).InfoS("redirecting non-blob request to upstream registry", "path", path)
-			http.Redirect(w, r, upstreamRegistry+path, http.StatusTemporaryRedirect)
+			// Strip /v2 from path as it is already included in upstreamRegistry variable
+			http.Redirect(w, r, upstreamRegistry+strings.TrimPrefix(path, "/v2"), http.StatusTemporaryRedirect)
 			return
 		}
 
@@ -112,7 +113,8 @@ func makeV2Handler(upstreamRegistry string, blobs blobChecker) func(w http.Respo
 		if !ipIsKnown {
 			// no region match, redirect to main upstream registry
 			klog.V(2).InfoS("redirecting blob request to upstream registry", "path", path)
-			http.Redirect(w, r, upstreamRegistry+path, http.StatusTemporaryRedirect)
+			// Strip /v2 from path as it is already included in upstreamRegistry variable
+			http.Redirect(w, r, upstreamRegistry+strings.TrimPrefix(path, "/v2"), http.StatusTemporaryRedirect)
 			return
 		}
 
@@ -130,6 +132,7 @@ func makeV2Handler(upstreamRegistry string, blobs blobChecker) func(w http.Respo
 
 		// fall back to redirect to upstream
 		klog.V(2).InfoS("redirecting blob request to upstream registry", "path", path)
-		http.Redirect(w, r, upstreamRegistry+path, http.StatusTemporaryRedirect)
+		// Strip /v2 from path as it is already included in upstreamRegistry variable
+		http.Redirect(w, r, upstreamRegistry+strings.TrimPrefix(path, "/v2"), http.StatusTemporaryRedirect)
 	}
 }

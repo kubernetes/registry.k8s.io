@@ -29,7 +29,7 @@ import (
 	"sigs.k8s.io/oci-proxy/cmd/archeio/app"
 )
 
-const defaultUpstreamRegistry = "https://k8s.gcr.io"
+const defaultUpstreamRegistry = "https://k8s.gcr.io/v2"
 
 func main() {
 	// klog setup

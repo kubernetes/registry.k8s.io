@@ -24,7 +24,7 @@ import (
 )
 
 func TestMakeHandler(t *testing.T) {
-	const upstreamRegistry = "https://k8s.gcr.io"
+	const upstreamRegistry = "https://k8s.gcr.io/v2"
 	handler := MakeHandler(upstreamRegistry)
 	testCases := []struct {
 		Name           string
@@ -110,7 +110,7 @@ func (f *fakeBlobsChecker) BlobExists(blobURL, bucket, hashKey string) bool {
 }
 
 func TestMakeV2Handler(t *testing.T) {
-	const upstreamRegistry = "https://k8s.gcr.io"
+	const upstreamRegistry = "https://k8s.gcr.io/v2"
 	blobs := fakeBlobsChecker{
 		knownURLs: map[string]bool{
 			"https://painfully-really-suddenly-many-raccoon-image-layers.s3.us-west-2.amazonaws.com/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e": true,
