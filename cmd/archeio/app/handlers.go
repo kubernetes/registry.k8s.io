@@ -28,7 +28,8 @@ import (
 
 const (
 	// hard coded for now
-	infoURL = "https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io"
+	infoURL    = "https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io"
+	privacyURL = "https://www.linuxfoundation.org/privacy-policy/"
 )
 
 // MakeHandler returns the root archeio HTTP handler
@@ -49,6 +50,8 @@ func MakeHandler(upstreamRegistry string) http.Handler {
 			doV2(w, r)
 		case path == "/":
 			http.Redirect(w, r, infoURL, http.StatusTemporaryRedirect)
+		case strings.HasPrefix(path, "/privacy"):
+			http.Redirect(w, r, privacyURL, http.StatusTemporaryRedirect)
 		default:
 			klog.V(2).InfoS("unknown request", "path", path)
 			http.NotFound(w, r)

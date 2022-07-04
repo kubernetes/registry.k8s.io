@@ -3,7 +3,8 @@
 Requests to archeio follows the following flow:
 
 1. If it's a request for `/`: redirect to our wiki page about the project
-2. If it's not a request for `/` and does not start with `/v2/`: 404 error
+2. If it's a request for `/privacy`: redirect to linux foundation privacy policy page
+2. If it's not a request for `/` or `/privacy` and does not start with `/v2/`: 404 error
 3. For registry API requests, all of which start with `/v2/`:
   - If it's not a blob request: redirect to Upstream Registry
   - If it's not a known AWS IP: redirect to Upstream Registry
@@ -17,7 +18,9 @@ Or in chart form:
 flowchart TD
 
 A(Does the request path start with /v2/?) -->|No, it is not a registry API call| B(Is the request for /?)
-B -->|No, it is an unknown path| D[Serve 404 error]
+B -->|No| D[Is the request for /privacy?]
+D -->|No, it is an unknown path| C[Serve 404 error]
+D -->|Yes| K[Serve redirect to linux foundation privacy policy page]
 B -->|Yes| E[Serve redirect to registry wiki page]
 A -->|Yes, it is a registry API call| F(Is it a blob request?)
 F -->|No| G[Serve redirect to Upstream Registry https://k8s.gcr.io]
