@@ -158,7 +158,6 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		} else if len(path) > 5 && rc.UpstreamRegistryPath == "" {
 			redirectPath = "/v2" + strings.TrimPrefix(path, "/v2")
 		}
-
 		klog.V(2).InfoS("redirecting blob request to upstream registry", "path", path, "redirect", rc.UpstreamRegistryEndpoint+redirectPath)
 		http.Redirect(w, r, rc.UpstreamRegistryEndpoint+redirectPath, http.StatusTemporaryRedirect)
 	}
