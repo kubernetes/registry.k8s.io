@@ -26,11 +26,6 @@ import (
 	"sigs.k8s.io/oci-proxy/pkg/net/cidrs/aws"
 )
 
-const (
-// hard coded for now
-
-)
-
 type RegistryConfig struct {
 	UpstreamRegistryEndpoint string
 	UpstreamRegistryPath     string
