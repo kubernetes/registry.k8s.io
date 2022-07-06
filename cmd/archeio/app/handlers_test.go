@@ -24,8 +24,14 @@ import (
 )
 
 func TestMakeHandler(t *testing.T) {
-	const upstreamRegistry = "https://k8s.gcr.io/v2"
-	handler := MakeHandler(upstreamRegistry)
+	registryConfig := RegistryConfig{
+		// the v2 test below tests being redirected to k8s.gcr.io as that one doesn't have UpstreamRegistryPath
+		UpstreamRegistryEndpoint: "https://us.gcr.io",
+		UpstreamRegistryPath:     "k8s-artifacts-prod",
+		InfoURL:                  "https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io",
+		PrivacyURL:               "https://www.linuxfoundation.org/privacy-policy/",
+	}
+	handler := MakeHandler(registryConfig)
 	testCases := []struct {
 		Name           string
 		Request        *http.Request
@@ -36,13 +42,13 @@ func TestMakeHandler(t *testing.T) {
 			Name:           "/",
 			Request:        httptest.NewRequest("GET", "http://localhost:8080/", nil),
 			ExpectedStatus: http.StatusTemporaryRedirect,
-			ExpectedURL:    infoURL,
+			ExpectedURL:    registryConfig.InfoURL,
 		},
 		{
 			Name:           "/privacy",
 			Request:        httptest.NewRequest("GET", "http://localhost:8080/privacy", nil),
 			ExpectedStatus: http.StatusTemporaryRedirect,
-			ExpectedURL:    privacyURL,
+			ExpectedURL:    registryConfig.PrivacyURL,
 		},
 		{
 			Name:           "/v3/",
@@ -63,7 +69,7 @@ func TestMakeHandler(t *testing.T) {
 			Name:           "/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil),
 			ExpectedStatus: http.StatusTemporaryRedirect,
-			ExpectedURL:    "https://k8s.gcr.io/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			ExpectedURL:    "https://us.gcr.io/v2/k8s-artifacts-prod/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 		},
 	}
 	for i := range testCases {
@@ -110,13 +116,18 @@ func (f *fakeBlobsChecker) BlobExists(blobURL, bucket, hashKey string) bool {
 }
 
 func TestMakeV2Handler(t *testing.T) {
-	const upstreamRegistry = "https://k8s.gcr.io/v2"
+	registryConfig := RegistryConfig{
+		UpstreamRegistryEndpoint: "https://k8s.gcr.io",
+		UpstreamRegistryPath:     "",
+		InfoURL:                  "https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io",
+		PrivacyURL:               "https://www.linuxfoundation.org/privacy-policy/",
+	}
 	blobs := fakeBlobsChecker{
 		knownURLs: map[string]bool{
 			"https://painfully-really-suddenly-many-raccoon-image-layers.s3.us-west-2.amazonaws.com/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e": true,
 		},
 	}
-	handler := makeV2Handler(upstreamRegistry, &blobs)
+	handler := makeV2Handler(registryConfig, &blobs)
 	testCases := []struct {
 		Name           string
 		Request        *http.Request
