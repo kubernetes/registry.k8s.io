@@ -29,7 +29,7 @@ import (
 func awsRegionToS3URL(region string) string {
 	switch region {
 	default:
-		return "https://prod-registry-k8s-io-us-east-2.s3.us-west-2.amazonaws.com"
+		return "https://prod-registry-k8s-io-us-east-2.s3.dualstack.us-east-2.amazonaws.com"
 	}
 }
 
