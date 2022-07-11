@@ -113,7 +113,7 @@ func TestMakeV2Handler(t *testing.T) {
 	const upstreamRegistry = "https://k8s.gcr.io"
 	blobs := fakeBlobsChecker{
 		knownURLs: map[string]bool{
-			"https://painfully-really-suddenly-many-raccoon-image-layers.s3.us-west-2.amazonaws.com/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e": true,
+			"https://prod-registry-k8s-io-us-east-2.s3.dualstack.us-east-2.amazonaws.com/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e": true,
 		},
 	}
 	handler := makeV2Handler(upstreamRegistry, &blobs)
@@ -148,7 +148,7 @@ func TestMakeV2Handler(t *testing.T) {
 				return r
 			}(),
 			ExpectedStatus: http.StatusTemporaryRedirect,
-			ExpectedURL:    "https://painfully-really-suddenly-many-raccoon-image-layers.s3.us-west-2.amazonaws.com/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			ExpectedURL:    "https://prod-registry-k8s-io-us-east-2.s3.dualstack.us-east-2.amazonaws.com/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 		},
 		{
 			Name: "AWS IP, /v2/pause/blobs/sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1234567",

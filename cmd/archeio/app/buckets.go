@@ -27,10 +27,9 @@ import (
 //
 // blobs in the buckets should be stored at /containers/images/sha256:$hash
 func awsRegionToS3URL(region string) string {
-	// for now always return @ameukam's test bucket
 	switch region {
 	default:
-		return "https://painfully-really-suddenly-many-raccoon-image-layers.s3.us-west-2.amazonaws.com"
+		return "https://prod-registry-k8s-io-us-east-2.s3.dualstack.us-east-2.amazonaws.com"
 	}
 }
 
