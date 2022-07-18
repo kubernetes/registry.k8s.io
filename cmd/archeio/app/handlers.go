@@ -26,11 +26,12 @@ import (
 	"sigs.k8s.io/oci-proxy/pkg/net/cidrs/aws"
 )
 
-const (
-	// hard coded for now
-	infoURL    = "https://github.com/kubernetes/k8s.io/wiki/New-Registry-url-for-Kubernetes-(registry.k8s.io)"
-	privacyURL = "https://www.linuxfoundation.org/privacy-policy/"
-)
+type RegistryConfig struct {
+	UpstreamRegistryEndpoint string
+	UpstreamRegistryPath     string
+	InfoURL                  string
+	PrivacyURL               string
+}
 
 // MakeHandler returns the root archeio HTTP handler
 //
@@ -38,10 +39,17 @@ const (
 // archeio is fronting.
 //
 // Exact behavior should be documented in docs/request-handling.md
-func MakeHandler(upstreamRegistry string) http.Handler {
+func MakeHandler(rc RegistryConfig) http.Handler {
 	blobs := newCachedBlobChecker()
-	doV2 := makeV2Handler(upstreamRegistry, blobs)
+	doV2 := makeV2Handler(rc, blobs)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// only allow GET, HEAD
+		// this is all a client needs to pull images
+		// we do *not* support mutation
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			http.Error(w, "Only GET and HEAD are allowed.", http.StatusMethodNotAllowed)
+			return
+		}
 		// all valid registry requests should be at /v2/
 		// v1 API is super old and not supported by GCR anymore.
 		path := r.URL.Path
@@ -49,9 +57,9 @@ func MakeHandler(upstreamRegistry string) http.Handler {
 		case strings.HasPrefix(path, "/v2"):
 			doV2(w, r)
 		case path == "/":
-			http.Redirect(w, r, infoURL, http.StatusTemporaryRedirect)
+			http.Redirect(w, r, rc.InfoURL, http.StatusTemporaryRedirect)
 		case strings.HasPrefix(path, "/privacy"):
-			http.Redirect(w, r, privacyURL, http.StatusTemporaryRedirect)
+			http.Redirect(w, r, rc.PrivacyURL, http.StatusTemporaryRedirect)
 		default:
 			klog.V(2).InfoS("unknown request", "path", path)
 			http.NotFound(w, r)
@@ -59,7 +67,7 @@ func MakeHandler(upstreamRegistry string) http.Handler {
 	})
 }
 
-func makeV2Handler(upstreamRegistry string, blobs blobChecker) func(w http.ResponseWriter, r *http.Request) {
+func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWriter, r *http.Request) {
 	// matches blob requests, captures the requested blob hash
 	reBlob := regexp.MustCompile("^/v2/.*/blobs/sha256:([0-9a-f]{64})$")
 	// initialize map of clientIP to AWS region
@@ -93,8 +101,9 @@ func makeV2Handler(upstreamRegistry string, blobs blobChecker) func(w http.Respo
 		matches := reBlob.FindStringSubmatch(path)
 		if len(matches) != 2 {
 			// not a blob request so forward it to the main upstream registry
-			klog.V(2).InfoS("redirecting non-blob request to upstream registry", "path", path)
-			http.Redirect(w, r, upstreamRegistry+path, http.StatusTemporaryRedirect)
+			redirectPath := calculateRedirectPath(rc, path)
+			klog.V(2).InfoS("redirecting manifest request to upstream registry", "path", path, "redirect", rc.UpstreamRegistryEndpoint+redirectPath)
+			http.Redirect(w, r, rc.UpstreamRegistryEndpoint+redirectPath, http.StatusTemporaryRedirect)
 			return
 		}
 
@@ -111,8 +120,9 @@ func makeV2Handler(upstreamRegistry string, blobs blobChecker) func(w http.Respo
 		awsRegion, ipIsKnown := regionMapper.GetIP(clientIP)
 		if !ipIsKnown {
 			// no region match, redirect to main upstream registry
-			klog.V(2).InfoS("redirecting blob request to upstream registry", "path", path)
-			http.Redirect(w, r, upstreamRegistry+path, http.StatusTemporaryRedirect)
+			redirectPath := calculateRedirectPath(rc, path)
+			klog.V(2).InfoS("redirecting blob request to upstream registry", "path", path, "redirect", rc.UpstreamRegistryEndpoint+redirectPath)
+			http.Redirect(w, r, rc.UpstreamRegistryEndpoint+redirectPath, http.StatusTemporaryRedirect)
 			return
 		}
 
@@ -129,7 +139,19 @@ func makeV2Handler(upstreamRegistry string, blobs blobChecker) func(w http.Respo
 		}
 
 		// fall back to redirect to upstream
-		klog.V(2).InfoS("redirecting blob request to upstream registry", "path", path)
-		http.Redirect(w, r, upstreamRegistry+path, http.StatusTemporaryRedirect)
+		redirectPath := calculateRedirectPath(rc, path)
+		klog.V(2).InfoS("redirecting blob request to upstream registry", "path", path, "redirect", rc.UpstreamRegistryEndpoint+redirectPath)
+		http.Redirect(w, r, rc.UpstreamRegistryEndpoint+redirectPath, http.StatusTemporaryRedirect)
 	}
+}
+
+func calculateRedirectPath(rc RegistryConfig, path string) string {
+	redirectPath := path
+	// if path is not just /v2/, which is a special endpoint
+	if len(path) > 5 && rc.UpstreamRegistryPath != "" {
+		redirectPath = "/v2/" + rc.UpstreamRegistryPath + strings.TrimPrefix(path, "/v2")
+	} else if len(path) > 5 && rc.UpstreamRegistryPath == "" {
+		redirectPath = "/v2" + strings.TrimPrefix(path, "/v2")
+	}
+	return redirectPath
 }

@@ -29,8 +29,6 @@ import (
 	"sigs.k8s.io/oci-proxy/cmd/archeio/app"
 )
 
-const defaultUpstreamRegistry = "https://k8s.gcr.io"
-
 func main() {
 	// klog setup
 	klog.InitFlags(nil)
@@ -42,13 +40,18 @@ func main() {
 	port := getEnv("PORT", "8080")
 
 	// make it possible to override k8s.gcr.io without rebuilding in the future
-	upstreamRegistry := getEnv("UPSTREAM_REGISTRY", defaultUpstreamRegistry)
+	registryConfig := app.RegistryConfig{
+		UpstreamRegistryEndpoint: getEnv("UPSTREAM_REGISTRY_ENDPOINT", "https://k8s.gcr.io"),
+		UpstreamRegistryPath:     getEnv("UPSTREAM_REGISTRY_PATH", ""),
+		InfoURL:                  "https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io",
+		PrivacyURL:               "https://www.linuxfoundation.org/privacy-policy/",
+	}
 
 	// configure server with reasonable timeout
 	// we only serve redirects, 10s should be sufficient
 	server := &http.Server{
 		Addr:        ":" + port,
-		Handler:     app.MakeHandler(upstreamRegistry),
+		Handler:     app.MakeHandler(registryConfig),
 		ReadTimeout: 10 * time.Second,
 	}
 
@@ -63,6 +66,7 @@ func main() {
 		}
 	}()
 	klog.InfoS("listening", "port", port)
+	klog.InfoS("registry", "configuration", registryConfig)
 
 	// Graceful shutdown
 	<-done
