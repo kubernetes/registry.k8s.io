@@ -101,13 +101,7 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		matches := reBlob.FindStringSubmatch(path)
 		if len(matches) != 2 {
 			// not a blob request so forward it to the main upstream registry
-			redirectPath := path
-			// if path is not just /v2/, which is a special endpoint
-			if len(path) > 5 && rc.UpstreamRegistryPath != "" {
-				redirectPath = "/v2/" + rc.UpstreamRegistryPath + strings.TrimPrefix(path, "/v2")
-			} else if len(path) > 5 && rc.UpstreamRegistryPath == "" {
-				redirectPath = "/v2" + strings.TrimPrefix(path, "/v2")
-			}
+			redirectPath := calculateRedirectPath(rc, path)
 			klog.V(2).InfoS("redirecting manifest request to upstream registry", "path", path, "redirect", rc.UpstreamRegistryEndpoint+redirectPath)
 			http.Redirect(w, r, rc.UpstreamRegistryEndpoint+redirectPath, http.StatusTemporaryRedirect)
 			return
@@ -126,13 +120,7 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		awsRegion, ipIsKnown := regionMapper.GetIP(clientIP)
 		if !ipIsKnown {
 			// no region match, redirect to main upstream registry
-			redirectPath := path
-			// if path is not just /v2/, which is a special endpoint
-			if len(path) > 5 && rc.UpstreamRegistryPath != "" {
-				redirectPath = "/v2/" + rc.UpstreamRegistryPath + strings.TrimPrefix(path, "/v2")
-			} else if len(path) > 5 && rc.UpstreamRegistryPath == "" {
-				redirectPath = "/v2" + strings.TrimPrefix(path, "/v2")
-			}
+			redirectPath := calculateRedirectPath(rc, path)
 			klog.V(2).InfoS("redirecting blob request to upstream registry", "path", path, "redirect", rc.UpstreamRegistryEndpoint+redirectPath)
 			http.Redirect(w, r, rc.UpstreamRegistryEndpoint+redirectPath, http.StatusTemporaryRedirect)
 			return
@@ -151,14 +139,19 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		}
 
 		// fall back to redirect to upstream
-		redirectPath := path
-		// if path is not just /v2/, which is a special endpoint
-		if len(path) > 5 && rc.UpstreamRegistryPath != "" {
-			redirectPath = "/v2/" + rc.UpstreamRegistryPath + strings.TrimPrefix(path, "/v2")
-		} else if len(path) > 5 && rc.UpstreamRegistryPath == "" {
-			redirectPath = "/v2" + strings.TrimPrefix(path, "/v2")
-		}
+		redirectPath := calculateRedirectPath(rc, path)
 		klog.V(2).InfoS("redirecting blob request to upstream registry", "path", path, "redirect", rc.UpstreamRegistryEndpoint+redirectPath)
 		http.Redirect(w, r, rc.UpstreamRegistryEndpoint+redirectPath, http.StatusTemporaryRedirect)
 	}
+}
+
+func calculateRedirectPath(rc RegistryConfig, path string) string {
+	redirectPath := path
+	// if path is not just /v2/, which is a special endpoint
+	if len(path) > 5 && rc.UpstreamRegistryPath != "" {
+		redirectPath = "/v2/" + rc.UpstreamRegistryPath + strings.TrimPrefix(path, "/v2")
+	} else if len(path) > 5 && rc.UpstreamRegistryPath == "" {
+		redirectPath = "/v2" + strings.TrimPrefix(path, "/v2")
+	}
+	return redirectPath
 }
