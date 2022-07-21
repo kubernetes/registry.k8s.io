@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -47,6 +48,13 @@ func main() {
 		PrivacyURL:               "https://www.linuxfoundation.org/privacy-policy/",
 	}
 
+	var err error
+	// feature gate AWS S3 serving feature
+	registryConfig.ServeImagesfromAWS, err = strconv.ParseBool(getEnv("SERVE_IMAGES_FROM_AWS", "true"))
+	if err != nil {
+		klog.Fatal("SERVE_IMAGES_FROM_AWS environment variable is not set to a boolean value %v", err)
+	}
+
 	// configure server with reasonable timeout
 	// we only serve redirects, 10s should be sufficient
 	server := &http.Server{
@@ -61,7 +69,7 @@ func main() {
 
 	// start serving
 	go func() {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err = server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			klog.Fatal(err)
 		}
 	}()

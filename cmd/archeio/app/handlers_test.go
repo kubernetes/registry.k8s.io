@@ -30,6 +30,7 @@ func TestMakeHandler(t *testing.T) {
 		UpstreamRegistryPath:     "k8s-artifacts-prod",
 		InfoURL:                  "https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io",
 		PrivacyURL:               "https://www.linuxfoundation.org/privacy-policy/",
+		ServeImagesfromAWS:       false,
 	}
 	handler := MakeHandler(registryConfig)
 	testCases := []struct {
@@ -87,6 +88,16 @@ func TestMakeHandler(t *testing.T) {
 			ExpectedStatus: http.StatusTemporaryRedirect,
 			ExpectedURL:    "https://us.gcr.io/v2/k8s-artifacts-prod/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 		},
+		{
+			Name: "AWS IP, /v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			Request: func() *http.Request {
+				r := httptest.NewRequest("GET", "http://localhost:8080/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil)
+				r.RemoteAddr = "35.180.1.1:888"
+				return r
+			}(),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://us.gcr.io/v2/k8s-artifacts-prod/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+		},
 	}
 	for i := range testCases {
 		tc := testCases[i]
@@ -137,6 +148,7 @@ func TestMakeV2Handler(t *testing.T) {
 		UpstreamRegistryPath:     "",
 		InfoURL:                  "https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io",
 		PrivacyURL:               "https://www.linuxfoundation.org/privacy-policy/",
+		ServeImagesfromAWS:       true,
 	}
 	blobs := fakeBlobsChecker{
 		knownURLs: map[string]bool{

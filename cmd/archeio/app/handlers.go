@@ -31,6 +31,7 @@ type RegistryConfig struct {
 	UpstreamRegistryPath     string
 	InfoURL                  string
 	PrivacyURL               string
+	ServeImagesfromAWS       bool
 }
 
 // MakeHandler returns the root archeio HTTP handler
@@ -97,47 +98,49 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 			return
 		}
 
-		// check if blob request
-		matches := reBlob.FindStringSubmatch(path)
-		if len(matches) != 2 {
-			// not a blob request so forward it to the main upstream registry
-			redirectPath := calculateRedirectPath(rc, path)
-			klog.V(2).InfoS("redirecting manifest request to upstream registry", "path", path, "redirect", rc.UpstreamRegistryEndpoint+redirectPath)
-			http.Redirect(w, r, rc.UpstreamRegistryEndpoint+redirectPath, http.StatusTemporaryRedirect)
-			return
-		}
+		if rc.ServeImagesfromAWS {
+			// check if blob request
+			matches := reBlob.FindStringSubmatch(path)
+			if len(matches) != 2 {
+				// not a blob request so forward it to the main upstream registry
+				redirectPath := calculateRedirectPath(rc, path)
+				klog.V(2).InfoS("redirecting manifest request to upstream registry", "path", path, "redirect", rc.UpstreamRegistryEndpoint+redirectPath)
+				http.Redirect(w, r, rc.UpstreamRegistryEndpoint+redirectPath, http.StatusTemporaryRedirect)
+				return
+			}
 
-		// for blob requests, check the client IP and determine the best backend
-		clientIP, err := getClientIP(r)
-		if err != nil {
-			// this should not happen
-			klog.ErrorS(err, "failed to get client IP")
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+			// for blob requests, check the client IP and determine the best backend
+			clientIP, err := getClientIP(r)
+			if err != nil {
+				// this should not happen
+				klog.ErrorS(err, "failed to get client IP")
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 
-		// check if client is known to be coming from an AWS region
-		awsRegion, ipIsKnown := regionMapper.GetIP(clientIP)
-		if !ipIsKnown {
-			// no region match, redirect to main upstream registry
-			redirectPath := calculateRedirectPath(rc, path)
-			klog.V(2).InfoS("redirecting blob request to upstream registry", "path", path, "redirect", rc.UpstreamRegistryEndpoint+redirectPath)
-			http.Redirect(w, r, rc.UpstreamRegistryEndpoint+redirectPath, http.StatusTemporaryRedirect)
-			return
-		}
+			// check if client is known to be coming from an AWS region
+			awsRegion, ipIsKnown := regionMapper.GetIP(clientIP)
+			if !ipIsKnown {
+				// no region match, redirect to main upstream registry
+				redirectPath := calculateRedirectPath(rc, path)
+				klog.V(2).InfoS("redirecting blob request to upstream registry", "path", path, "redirect", rc.UpstreamRegistryEndpoint+redirectPath)
+				http.Redirect(w, r, rc.UpstreamRegistryEndpoint+redirectPath, http.StatusTemporaryRedirect)
+				return
+			}
 
-		// check if blob is available in our S3 bucket for the region
-		bucketURL := awsRegionToS3URL(awsRegion)
-		hash := matches[1]
-		// this matches GCR's GCS layout, which we will use for other buckets
-		blobURL := bucketURL + "/containers/images/sha256%3A" + hash
-		if blobs.BlobExists(blobURL, bucketURL, hash) {
-			// blob known to be available in S3, redirect client there
-			klog.V(2).InfoS("redirecting blob request to S3", "path", path)
-			http.Redirect(w, r, blobURL, http.StatusTemporaryRedirect)
-			return
-		}
+			// check if blob is available in our S3 bucket for the region
+			bucketURL := awsRegionToS3URL(awsRegion)
+			hash := matches[1]
+			// this matches GCR's GCS layout, which we will use for other buckets
+			blobURL := bucketURL + "/containers/images/sha256%3A" + hash
+			if blobs.BlobExists(blobURL, bucketURL, hash) {
+				// blob known to be available in S3, redirect client there
+				klog.V(2).InfoS("redirecting blob request to S3", "path", path)
+				http.Redirect(w, r, blobURL, http.StatusTemporaryRedirect)
+				return
+			}
 
+		}
 		// fall back to redirect to upstream
 		redirectPath := calculateRedirectPath(rc, path)
 		klog.V(2).InfoS("redirecting blob request to upstream registry", "path", path, "redirect", rc.UpstreamRegistryEndpoint+redirectPath)
