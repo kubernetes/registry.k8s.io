@@ -44,7 +44,7 @@ func main() {
 	registryConfig := app.RegistryConfig{
 		UpstreamRegistryEndpoint: getEnv("UPSTREAM_REGISTRY_ENDPOINT", "https://k8s.gcr.io"),
 		UpstreamRegistryPath:     getEnv("UPSTREAM_REGISTRY_PATH", ""),
-		InfoURL:                  "https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io",
+		InfoURL:                  "https://github.com/kubernetes/k8s.io/wiki/New-Registry-url-for-Kubernetes-(registry.k8s.io)",
 		PrivacyURL:               "https://www.linuxfoundation.org/privacy-policy/",
 	}
 
