@@ -25,7 +25,19 @@ IMAGE_REPO="${IMAGE_REPO:-gcr.io/k8s-staging-infra-tools/archeio}"
 PROJECT="${PROJECT:-k8s-infra-oci-proxy}"
 
 REGIONS=(
+    asia-east1
+    asia-southeast1
+    asia-southeast2
+    europe-north1
+    europe-southwest1
+    europe-west1
+    europe-west8
+    europe-west9
     us-central1
+    us-east1
+    us-east4
+    us-east5
+    us-south1
     us-west1
 )
 
