@@ -58,9 +58,10 @@ func main() {
 	// configure server with reasonable timeout
 	// we only serve redirects, 10s should be sufficient
 	server := &http.Server{
-		Addr:        ":" + port,
-		Handler:     app.MakeHandler(registryConfig),
-		ReadTimeout: 10 * time.Second,
+		Addr:              ":" + port,
+		Handler:           app.MakeHandler(registryConfig),
+		ReadTimeout:       10 * time.Second,
+		ReadHeaderTimeout: 2 * time.Second,
 	}
 
 	// signal handler for graceful shutdown
