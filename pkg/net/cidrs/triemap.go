@@ -24,7 +24,7 @@ import (
 // match a netip.Addr to the associated Prefix if any and return the value
 // associated with it of type V.
 //
-// Use NewTrieMap to instantiate
+// # Use NewTrieMap to instantiate
 //
 // NOTE: This is insert-only (no delete) and insertion is *not* thread-safe.
 //
