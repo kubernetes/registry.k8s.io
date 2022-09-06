@@ -26,8 +26,8 @@ PROJECT="${PROJECT:-k8s-infra-oci-proxy}"
 
 REGIONS=(
     asia-east1
-    asia-southeast1
-    asia-southeast2
+    asia-northeast1
+    asia-northeast2
     europe-north1
     europe-southwest1
     europe-west1
