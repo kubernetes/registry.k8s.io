@@ -11,3 +11,7 @@
 *.sublime-project
 *.sublime-workspace
 *~
+
+# terraform
+.terraform
+terraform.tfstate
