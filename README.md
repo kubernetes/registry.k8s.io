@@ -1,4 +1,4 @@
-# oci-proxy
+# registry.k8s.io
 
 The production redirect domain for Kubernetes artifacts, for more see [cmd/archeio](./cmd/archeio/README.md)
 
