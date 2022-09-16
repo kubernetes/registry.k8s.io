@@ -1,6 +1,6 @@
 # oci-proxy
 
-This project is currently an experiment, for more see [cmd/archeio](./cmd/archeio/README.md)
+The production redirect domain for Kubernetes artifacts, for more see [cmd/archeio](./cmd/archeio/README.md)
 
 ## Community, discussion, contribution, and support
 
@@ -16,4 +16,4 @@ You can reach the maintainers of this project at:
 Participation in the Kubernetes community is governed by the [Kubernetes Code of Conduct](code-of-conduct.md).
 
 [owners]: https://git.k8s.io/community/contributors/guide/owners.md
-[Creative Commons 4.0]: https://git.k8s.io/website/LICENSE
+[creative commons 4.0]: https://git.k8s.io/website/LICENSE
