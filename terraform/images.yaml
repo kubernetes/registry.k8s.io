@@ -1,0 +1,4 @@
+# oci-proxy images are loaded from the yaml file so the autobumper can bump them.
+
+dev: gcr.io/k8s-staging-infra-tools/archeio:v20220726-v0.0.1-115-g1246a8b
+prod: us.gcr.io/k8s-artifacts-prod/infra-tools/archeio:v20220816-v0.0.1-120-g8293873

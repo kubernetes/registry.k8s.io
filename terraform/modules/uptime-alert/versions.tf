@@ -14,21 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-variable "domain" {
-  type = string
-}
-variable "project_id" {
-  type = string
-}
-variable "cloud_run_config" {
-  type = map(object({
-    environment_variables = list(object({
-      value = string
-      name  = string
-    }))
-  }))
-}
+terraform {
+  required_version = "~> 1.1.0"
 
-variable "environment" {
-  type = string
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 4.32.0"
+    }
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = "~> 4.32.0"
+    }
+  }
 }
