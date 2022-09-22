@@ -1,6 +1,6 @@
-# oci-proxy
+# registry.k8s.io
 
-This project is currently an experiment, for more see [cmd/archeio](./cmd/archeio/README.md)
+The production redirector service for Kubernetes container image artifacts, for more see [cmd/archeio](./cmd/archeio/README.md)
 
 ## Community, discussion, contribution, and support
 
