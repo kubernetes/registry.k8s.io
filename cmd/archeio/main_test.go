@@ -27,7 +27,7 @@ import (
 	"testing"
 	"time"
 
-	"sigs.k8s.io/oci-proxy/internal/integration"
+	"k8s.io/registry.k8s.io/internal/integration"
 )
 
 // TestIntegrationMain tests the entire, built binary with an integration

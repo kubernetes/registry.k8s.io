@@ -33,7 +33,7 @@ cd "${REPO_ROOT}"
 go_test_opts=(
   "-coverprofile=${REPO_ROOT}/bin/${MODE}.cov"
   '-covermode' 'count'
-  '-coverpkg' 'sigs.k8s.io/oci-proxy/...'
+  '-coverpkg' 'k8s.io/registry.k8s.io/...'
 )
 if [[ "${MODE}" = 'unit' ]]; then
   go_test_opts+=('-tags=nointegration')

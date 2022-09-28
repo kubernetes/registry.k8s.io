@@ -1,4 +1,4 @@
-module sigs.k8s.io/oci-proxy/hack/tools
+module k8s.io/registry.k8s.io/hack/tools
 
 go 1.13
 

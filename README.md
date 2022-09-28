@@ -1,6 +1,9 @@
 # registry.k8s.io
 
-The production redirector service for Kubernetes container image artifacts, for more see [cmd/archeio](./cmd/archeio/README.md)
+This project implements the backend for registry.k8s.io, Kubernetes's container
+image registry.
+
+For more see [cmd/archeio](./cmd/archeio/README.md)
 
 ## Community, discussion, contribution, and support
 
@@ -8,7 +11,7 @@ Learn how to engage with the Kubernetes community on the [community page](http:/
 
 You can reach the maintainers of this project at:
 
-- [Slack](http://slack.k8s.io/)
+- [Slack](http://slack.k8s.io/) in channel `#sig-k8s-infra`
 - [Mailing List](https://groups.google.com/forum/#!forum/kubernetes-sig-k8s-infra)
 
 ### Code of conduct

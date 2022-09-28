@@ -19,7 +19,7 @@ package app
 import (
 	"testing"
 
-	"sigs.k8s.io/oci-proxy/pkg/net/cidrs/aws"
+	"k8s.io/registry.k8s.io/pkg/net/cidrs/aws"
 )
 
 func TestRegionToAWSRegionToS3URL(t *testing.T) {

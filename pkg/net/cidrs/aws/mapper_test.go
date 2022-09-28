@@ -20,7 +20,7 @@ import (
 	"net/netip"
 	"testing"
 
-	"sigs.k8s.io/oci-proxy/pkg/net/cidrs"
+	"k8s.io/registry.k8s.io/pkg/net/cidrs"
 )
 
 type testCase struct {
