@@ -1,4 +1,4 @@
-module sigs.k8s.io/oci-proxy
+module k8s.io/registry.k8s.io
 
 go 1.18
 

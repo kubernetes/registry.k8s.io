@@ -16,7 +16,7 @@ limitations under the License.
 
 package aws
 
-import "sigs.k8s.io/oci-proxy/pkg/net/cidrs"
+import "k8s.io/registry.k8s.io/pkg/net/cidrs"
 
 // NewAWSRegionMapper returns a new cidrs.IPMapper[string] mapping from
 // IP to AWS regions

@@ -23,7 +23,7 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"sigs.k8s.io/oci-proxy/pkg/net/cidrs/aws"
+	"k8s.io/registry.k8s.io/pkg/net/cidrs/aws"
 )
 
 type RegistryConfig struct {
