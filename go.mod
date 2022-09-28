@@ -1,6 +1,6 @@
 module k8s.io/registry.k8s.io
 
-go 1.18
+go 1.19
 
 require k8s.io/klog/v2 v2.80.1
 
