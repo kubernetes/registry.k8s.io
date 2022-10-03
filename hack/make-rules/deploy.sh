@@ -54,6 +54,7 @@ for REGION in "${REGIONS[@]}"; do
         --image "${IMAGE_REPO}:${TAG}" \
         --region "${REGION}" \
         --concurrency 1000 \
+        --max-instances 10 \
         `# NOTE: should match number of cores configured` \
         --update-env-vars GOMAXPROCS=1 \
         `# TODO: if we use this to deploy prod, we need to handle this differently` \
