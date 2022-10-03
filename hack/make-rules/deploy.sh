@@ -53,6 +53,9 @@ for REGION in "${REGIONS[@]}"; do
         run services update "${SERVICE_BASENAME}-${REGION}" \
         --image "${IMAGE_REPO}:${TAG}" \
         --region "${REGION}" \
+        --concurrency 1000 \
+        `# NOTE: should match number of cores configured` \
+        --update-env-vars GOMAXPROCS=1 \
         `# TODO: if we use this to deploy prod, we need to handle this differently` \
         --args=-v=3
 done
