@@ -43,7 +43,6 @@ REGIONS=(
     us-east4
     us-east5
     us-south1
-    us-south2
     us-west1
     us-west2
 )
@@ -57,6 +56,8 @@ for REGION in "${REGIONS[@]}"; do
         --max-instances 10 \
         `# NOTE: should match number of cores configured` \
         --update-env-vars GOMAXPROCS=1 \
+        `# Use artifact registry repositories`
+        UPSTREAM_REGISTRY_PATH="k8s-artifacts-prod/images" UPSTREAM_REGISTRY_ENDPOINT="https://${REGION}-docker.pkg.dev" \
         `# TODO: if we use this to deploy prod, we need to handle this differently` \
         --args=-v=3
 done
