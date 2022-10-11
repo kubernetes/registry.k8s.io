@@ -3,7 +3,34 @@
 This project implements the backend for registry.k8s.io, Kubernetes's container
 image registry.
 
-For more see [cmd/archeio](./cmd/archeio/README.md)
+For more details on the implementation see [cmd/archeio](./cmd/archeio/README.md)
+
+The community deployment configs are documented at in the k8s.io repo with
+the rest of the community infra deployments:
+https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io
+
+## Privacy
+
+This project abides by the Linux Foundation privacy policy, as documented at
+https://registry.k8s.io/privacy
+
+## Background
+
+Previously all of Kubernetes' image hosting has been out of gcr.io ("Google Container Registry").
+
+We've incurred significant egress traffic costs from users on other cloud providers
+in particular in doing so, severely limiting our ability to use the infra budget
+for purposes other than hosting end-user downloads.
+
+We're now moving to shift all traffic behind a community controlled domain, so
+we can quickly implement cost-cutting measures like serving the bulk of the traffic
+for AWS-users from AWS-local storage funded by Amazon, or potentially leveraging
+other providers in the future.
+
+For additional context on why we did this and what we're changing about kubernetes images
+see https://github.com/kubernetes/k8s.io/wiki/New-Registry-url-for-Kubernetes-(registry.k8s.io)
+
+Essentially, this repo implements the backend sources for the steps outlined there.
 
 ## Community, discussion, contribution, and support
 
