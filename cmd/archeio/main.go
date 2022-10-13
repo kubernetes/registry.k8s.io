@@ -42,8 +42,8 @@ func main() {
 
 	// make it possible to override k8s.gcr.io without rebuilding in the future
 	registryConfig := app.RegistryConfig{
-		UpstreamRegistryEndpoint: getEnv("UPSTREAM_REGISTRY_ENDPOINT", "https://k8s.gcr.io"),
-		UpstreamRegistryPath:     getEnv("UPSTREAM_REGISTRY_PATH", ""),
+		UpstreamRegistryEndpoint: getEnv("UPSTREAM_REGISTRY_ENDPOINT", "https://us-central1-docker.pkg.dev"),
+		UpstreamRegistryPath:     getEnv("UPSTREAM_REGISTRY_PATH", "k8s-artifacts-prod/images"),
 		InfoURL:                  "https://github.com/kubernetes/registry.k8s.io",
 		PrivacyURL:               "https://www.linuxfoundation.org/privacy-policy/",
 	}
