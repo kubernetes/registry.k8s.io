@@ -36,28 +36,28 @@ func awsRegionToS3URL(region string) string {
 	// shifting other regions that do not have their own bucket
 
 	// US East (N. Virginia)
-	case "us-east-1", "sa-east-1":
+	case "us-east-1", "sa-east-1", "us-gov-east-1", "GLOBAL":
 		return "https://prod-registry-k8s-io-us-east-1.s3.dualstack.us-east-1.amazonaws.com"
 	// US East (Ohio)
 	case "us-east-2", "ca-central-1":
 		return "https://prod-registry-k8s-io-us-east-2.s3.dualstack.us-east-2.amazonaws.com"
 	// US West (N. California)
-	case "us-west-1":
+	case "us-west-1", "us-gov-west-1":
 		return "https://prod-registry-k8s-io-us-west-1.s3.dualstack.us-west-1.amazonaws.com"
 	// US West (Oregon)
-	case "us-west-2":
+	case "us-west-2", "ca-west-1":
 		return "https://prod-registry-k8s-io-us-west-2.s3.dualstack.us-west-2.amazonaws.com"
 	// Asia Pacific (Mumbai)
-	case "ap-south-1", "me-south-1":
+	case "ap-south-1", "ap-south-2", "me-south-1", "me-central-1":
 		return "https://prod-registry-k8s-io-ap-south-1.s3.dualstack.ap-south-1.amazonaws.com"
 	// Asia Pacific (Tokyo)
 	case "ap-northeast-1", "ap-northeast-2", "ap-northeast-3":
 		return "https://prod-registry-k8s-io-ap-northeast-1.s3.dualstack.ap-northeast-1.amazonaws.com"
 	// Asia Pacific (Singapore)
-	case "ap-southeast-1", "ap-southeast-2", "ap-southeast-3", "ap-east-1":
+	case "ap-southeast-1", "ap-southeast-2", "ap-southeast-3", "ap-southeast-4", "ap-southeast-6", "ap-east-1", "cn-northwest-1", "cn-north-1":
 		return "https://prod-registry-k8s-io-ap-southeast-1.s3.dualstack.ap-southeast-1.amazonaws.com"
 	// Europe (Frankfurt)
-	case "eu-central-1", "eu-south-1":
+	case "eu-central-1", "eu-central-2", "eu-south-1", "eu-south-2", "il-central-1":
 		return "https://prod-registry-k8s-io-eu-central-1.s3.dualstack.eu-central-1.amazonaws.com"
 	// Europe (Ireland)
 	case "eu-west-1", "af-south-1":
