@@ -70,23 +70,6 @@ func getClientIP(r *http.Request) (netip.Addr, error) {
 	if len(keys) < 2 {
 		return netip.Addr{}, fmt.Errorf("invalid X-Forwarded-For value: %s", rawXFwdFor)
 	}
-	// detect cloud run bug where the header is actually like
-	// <client-ip>, <load-balancer-ip>,<client-ip>
-	// (last ,<client-ip> should not be there)
-	// for googlers this is b/209919936
-	// TODO: Remove this once cloud run bug is fixed
-	//
-	// NOTE: Once this bug is fixed, a client could set the header:
-	// X-Forwarded-For: <load-balancer-ip>
-	// and confuse us into thinking this bug is still active, causing us to
-	// server their traffic from the upstream registry instead of redirecting.
-	// ... however, it is extremely unclear why anyone would do this,
-	// or why we would care for our use case ...
-	// Otherwise this implementation will use the normal path below
-	// automatically when the bug is fixed.
-	if len(keys) > 2 && keys[len(keys)-1] == keys[len(keys)-3] {
-		return netip.ParseAddr(keys[len(keys)-3])
-	}
 	// normal case, we expect the client-ip to be 2 from the end
 	return netip.ParseAddr(keys[len(keys)-2])
 }
