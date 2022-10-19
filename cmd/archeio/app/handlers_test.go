@@ -30,7 +30,6 @@ func TestMakeHandler(t *testing.T) {
 		UpstreamRegistryPath:     "k8s-artifacts-prod",
 		InfoURL:                  "https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io",
 		PrivacyURL:               "https://www.linuxfoundation.org/privacy-policy/",
-		ServeImagesfromAWS:       false,
 	}
 	handler := MakeHandler(registryConfig)
 	testCases := []struct {
@@ -148,7 +147,6 @@ func TestMakeV2Handler(t *testing.T) {
 		UpstreamRegistryPath:     "",
 		InfoURL:                  "https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io",
 		PrivacyURL:               "https://www.linuxfoundation.org/privacy-policy/",
-		ServeImagesfromAWS:       true,
 	}
 	blobs := fakeBlobsChecker{
 		knownURLs: map[string]bool{
