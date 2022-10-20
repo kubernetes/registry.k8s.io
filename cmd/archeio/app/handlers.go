@@ -18,6 +18,7 @@ package app
 
 import (
 	"net/http"
+	"path"
 	"regexp"
 	"strings"
 
@@ -74,7 +75,7 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 	regionMapper := aws.NewAWSRegionMapper()
 	// capture these in a http handler lambda
 	return func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
+		rPath := r.URL.Path
 
 		// we only care about publicly readable GCR as the backing registry
 		// or publicly readable blob storage
@@ -88,8 +89,8 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		// it turns out publicly readable GCR repos do not actually care about
 		// the presence of a token for any API calls, despite the /v2/ API call
 		// returning 401, prompting token auth
-		if path == "/v2/" || path == "/v2" {
-			klog.V(2).InfoS("serving 200 OK for /v2/ check", "path", path)
+		if rPath == "/v2/" || rPath == "/v2" {
+			klog.V(2).InfoS("serving 200 OK for /v2/ check", "path", rPath)
 			// NOTE: OCI does not require this, but the docker v2 spec include it, and GCR sets this
 			// Docker distribution v2 clients may fallback to an older version if this is not set.
 			w.Header().Set("Docker-Distribution-Api-Version", "registry/2.0")
@@ -98,14 +99,16 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		}
 
 		// check if blob request
-		matches := reBlob.FindStringSubmatch(path)
+		matches := reBlob.FindStringSubmatch(rPath)
 		if len(matches) != 2 {
 			// not a blob request so forward it to the main upstream registry
-			redirectPath := calculateRedirectPath(rc, path)
-			klog.V(2).InfoS("redirecting manifest request to upstream registry", "path", path, "redirect", rc.UpstreamRegistryEndpoint+redirectPath)
-			http.Redirect(w, r, rc.UpstreamRegistryEndpoint+redirectPath, http.StatusTemporaryRedirect)
+			redirectURL := upstreamRedirectURL(rc, rPath)
+			klog.V(2).InfoS("redirecting manifest request to upstream registry", "path", rPath, "redirect", redirectURL)
+			http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 			return
 		}
+		// it is a blob request, grab the hash for later
+		hash := matches[1]
 
 		// for blob requests, check the client IP and determine the best backend
 		clientIP, err := getClientIP(r)
@@ -120,38 +123,30 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		awsRegion, ipIsKnown := regionMapper.GetIP(clientIP)
 		if !ipIsKnown {
 			// no region match, redirect to main upstream registry
-			redirectPath := calculateRedirectPath(rc, path)
-			klog.V(2).InfoS("redirecting blob request to upstream registry", "path", path, "redirect", rc.UpstreamRegistryEndpoint+redirectPath)
-			http.Redirect(w, r, rc.UpstreamRegistryEndpoint+redirectPath, http.StatusTemporaryRedirect)
+			redirectURL := upstreamRedirectURL(rc, rPath)
+			klog.V(2).InfoS("redirecting blob request to upstream registry", "path", rPath, "redirect", redirectURL)
+			http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 			return
 		}
 
 		// check if blob is available in our S3 bucket for the region
 		bucketURL := awsRegionToS3URL(awsRegion)
-		hash := matches[1]
 		// this matches GCR's GCS layout, which we will use for other buckets
 		blobURL := bucketURL + "/containers/images/sha256%3A" + hash
 		if blobs.BlobExists(blobURL, bucketURL, hash) {
 			// blob known to be available in S3, redirect client there
-			klog.V(2).InfoS("redirecting blob request to S3", "path", path)
+			klog.V(2).InfoS("redirecting blob request to S3", "path", rPath)
 			http.Redirect(w, r, blobURL, http.StatusTemporaryRedirect)
 			return
 		}
 
 		// fall back to redirect to upstream
-		redirectPath := calculateRedirectPath(rc, path)
-		klog.V(2).InfoS("redirecting blob request to upstream registry", "path", path, "redirect", rc.UpstreamRegistryEndpoint+redirectPath)
-		http.Redirect(w, r, rc.UpstreamRegistryEndpoint+redirectPath, http.StatusTemporaryRedirect)
+		redirectURL := upstreamRedirectURL(rc, rPath)
+		klog.V(2).InfoS("redirecting blob request to upstream registry", "path", rPath, "redirect", redirectURL)
+		http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 	}
 }
 
-func calculateRedirectPath(rc RegistryConfig, path string) string {
-	redirectPath := path
-	// if path is not just /v2/, which is a special endpoint
-	if len(path) > 5 && rc.UpstreamRegistryPath != "" {
-		redirectPath = "/v2/" + rc.UpstreamRegistryPath + strings.TrimPrefix(path, "/v2")
-	} else if len(path) > 5 && rc.UpstreamRegistryPath == "" {
-		redirectPath = "/v2" + strings.TrimPrefix(path, "/v2")
-	}
-	return redirectPath
+func upstreamRedirectURL(rc RegistryConfig, originalPath string) string {
+	return rc.UpstreamRegistryEndpoint + path.Join("/v2/", rc.UpstreamRegistryPath, strings.TrimPrefix(originalPath, "/v2"))
 }
