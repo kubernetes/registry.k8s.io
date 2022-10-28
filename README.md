@@ -9,6 +9,30 @@ The community deployment configs are documented at in the k8s.io repo with
 the rest of the community infra deployments:
 https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io
 
+## Stability
+
+registry.k8s.io is GA and we ask that all users migrate from k8s.gcr.io as
+soon as possible.
+
+However, unequivocally: **DO NOT** depend on the implementation details of this registry.
+
+**Other than registry.k8s.io serving a compliant [OCI][distribution-spec] registry, API endpoints 
+and backing services used are subject to change at anytime as needed by the 
+project and as resources become available to us.**
+
+**If you need to allow-list domains to pull these images, we highly recommend
+mirroring them instead.**
+
+The Kubernetes project is currently sending traffic to GCP and AWS
+thanks to their donations but we hope to redirect traffic to more
+sponsors and their respective API endpoints in the future to keep the project
+sustainable.
+
+Please note that there is also **No SLA** as this is a free, volunteer managed
+service. We will however do our best to respond to issues and the system is
+designed to be low-touch.
+
+<!--TODO: link out to a doc with suggestion(s) for mirroring--->
 ## Privacy
 
 This project abides by the Linux Foundation privacy policy, as documented at
@@ -47,3 +71,4 @@ Participation in the Kubernetes community is governed by the [Kubernetes Code of
 
 [owners]: https://git.k8s.io/community/contributors/guide/owners.md
 [Creative Commons 4.0]: https://git.k8s.io/website/LICENSE
+[distribution-spec]: https://github.com/opencontainers/distribution-spec
