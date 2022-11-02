@@ -56,8 +56,11 @@ all: build
 # builds archeio, outputs to $(OUT_DIR)
 archeio:
 	go build -v -o "$(OUT_DIR)/$(ARCHEIO_BINARY_NAME)" $(ARCHEIO_BUILD_FLAGS) ./cmd/archeio
-# alias for building archeio
-build: archeio
+redirectserver:
+	go build -v -o "$(OUT_DIR)/redirectserver" $(ARCHEIO_BUILD_FLAGS) ./cmd/redirectserver
+# alias for building archeio and redirectserver
+build: archeio redirectserver
+
 # build images to local tarball
 images:
 	hack/make-rules/images.sh

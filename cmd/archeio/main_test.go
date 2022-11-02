@@ -67,7 +67,7 @@ func TestIntegrationMain(t *testing.T) {
 	// wait for server to be up and running
 	startErr := <-serverErrChan
 	if startErr != nil {
-		t.Fatalf("Failed to start archeio: %v", err)
+		t.Fatalf("Failed to start archeio: %v", startErr)
 	}
 	if !tryUntil(time.Now().Add(time.Second), func() bool {
 		_, err := http.Get("http://" + testAddr + "/v2/")

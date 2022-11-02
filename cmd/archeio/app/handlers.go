@@ -41,7 +41,7 @@ type RegistryConfig struct {
 //
 // Exact behavior should be documented in docs/request-handling.md
 func MakeHandler(rc RegistryConfig) http.Handler {
-	blobs := newCachedBlobChecker()
+	blobs := NewCachedBlobChecker(http.DefaultClient)
 	doV2 := makeV2Handler(rc, blobs)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// only allow GET, HEAD
@@ -68,7 +68,7 @@ func MakeHandler(rc RegistryConfig) http.Handler {
 	})
 }
 
-func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWriter, r *http.Request) {
+func makeV2Handler(rc RegistryConfig, blobs BlobChecker) func(w http.ResponseWriter, r *http.Request) {
 	// matches blob requests, captures the requested blob hash
 	reBlob := regexp.MustCompile("^/v2/.*/blobs/sha256:([0-9a-f]{64})$")
 	// initialize map of clientIP to AWS region
@@ -111,7 +111,7 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		hash := matches[1]
 
 		// for blob requests, check the client IP and determine the best backend
-		clientIP, err := getClientIP(r)
+		clientIP, err := GetClientIP(r)
 		if err != nil {
 			// this should not happen
 			klog.ErrorS(err, "failed to get client IP")

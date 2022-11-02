@@ -20,12 +20,13 @@ limitations under the License.
 package app
 
 import (
+	"net/http"
 	"testing"
 )
 
 func TestCachedBlobChecker(t *testing.T) {
 	bucket := awsRegionToS3URL("us-east-1")
-	blobs := newCachedBlobChecker()
+	blobs := NewCachedBlobChecker(http.DefaultClient)
 	testCases := []struct {
 		Name         string
 		BlobURL      string

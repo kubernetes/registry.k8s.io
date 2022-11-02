@@ -31,7 +31,7 @@ import (
 // 2. behind Google Cloud LoadBalancer
 //
 // At this time we have no need to complicate it further
-func getClientIP(r *http.Request) (netip.Addr, error) {
+func GetClientIP(r *http.Request) (netip.Addr, error) {
 	// Upstream docs:
 	// https://cloud.google.com/load-balancing/docs/https#x-forwarded-for_header
 	//

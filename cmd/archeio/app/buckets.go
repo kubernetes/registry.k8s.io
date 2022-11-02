@@ -78,8 +78,8 @@ func awsRegionToS3URL(region string) string {
 	}
 }
 
-// blobChecker are used to check if a blob exists, possibly with caching
-type blobChecker interface {
+// BlobChecker are used to check if a blob exists, possibly with caching
+type BlobChecker interface {
 	// BlobExists should check that blobURL exists
 	// bucket and layerHash may be used for caching purposes
 	BlobExists(blobURL, bucket, layerHash string) bool
@@ -90,12 +90,13 @@ type blobChecker interface {
 // TODO: potentially replace with a caching implementation
 // should be plenty fast for now, HTTP HEAD on s3 is cheap
 type cachedBlobChecker struct {
-	http.Client
+	httpClient *http.Client
 	blobCache
 }
 
-func newCachedBlobChecker() *cachedBlobChecker {
+func NewCachedBlobChecker(httpClient *http.Client) BlobChecker {
 	return &cachedBlobChecker{
+		httpClient: httpClient,
 		blobCache: blobCache{
 			cache: make(map[string]map[string]struct{}),
 		},
@@ -135,7 +136,7 @@ func (c *cachedBlobChecker) BlobExists(blobURL, bucket, layerHash string) bool {
 		return true
 	}
 	klog.V(3).InfoS("blob existence cache miss", "url", blobURL)
-	r, err := c.Client.Head(blobURL)
+	r, err := c.httpClient.Head(blobURL)
 	// fallback to assuming blob is unavailable on errors
 	if err != nil {
 		return false
