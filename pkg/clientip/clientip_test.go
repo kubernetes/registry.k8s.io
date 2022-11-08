@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package app
+package clientip
 
 import (
 	"net/http"
@@ -22,7 +22,7 @@ import (
 	"testing"
 )
 
-func TestGetClientIP(t *testing.T) {
+func TestGet(t *testing.T) {
 	testCases := []struct {
 		Name        string
 		Request     http.Request
@@ -88,7 +88,7 @@ func TestGetClientIP(t *testing.T) {
 		tc := testCases[i]
 		t.Run(tc.Name, func(t *testing.T) {
 			//t.Parallel()
-			ip, err := getClientIP(&tc.Request)
+			ip, err := Get(&tc.Request)
 			if err != nil {
 				if !tc.ExpectError {
 					t.Fatalf("unexpted error: %v", err)

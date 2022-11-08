@@ -24,6 +24,7 @@ import (
 
 	"k8s.io/klog/v2"
 
+	"k8s.io/registry.k8s.io/pkg/clientip"
 	"k8s.io/registry.k8s.io/pkg/net/cidrs/aws"
 )
 
@@ -111,7 +112,7 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		hash := matches[1]
 
 		// for blob requests, check the client IP and determine the best backend
-		clientIP, err := getClientIP(r)
+		clientIP, err := clientip.Get(r)
 		if err != nil {
 			// this should not happen
 			klog.ErrorS(err, "failed to get client IP")

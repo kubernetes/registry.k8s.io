@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package app
+package clientip
 
 import (
 	"fmt"
@@ -24,14 +24,14 @@ import (
 	"strings"
 )
 
-// getClientIP gets the client IP for an http.Request
+// Get gets the client IP for an http.Request
 //
 // NOTE: currently only two scenarios are supported:
 // 1. no loadbalancer, local testing
-// 2. behind Google Cloud LoadBalancer
+// 2. behind Google Cloud LoadBalancer (as in cloudrun)
 //
 // At this time we have no need to complicate it further
-func getClientIP(r *http.Request) (netip.Addr, error) {
+func Get(r *http.Request) (netip.Addr, error) {
 	// Upstream docs:
 	// https://cloud.google.com/load-balancing/docs/https#x-forwarded-for_header
 	//
