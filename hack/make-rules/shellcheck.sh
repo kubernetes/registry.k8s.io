@@ -79,7 +79,7 @@ if ${HAVE_SHELLCHECK}; then
 else
   echo "Using shellcheck ${SHELLCHECK_VERSION} docker image."
   "${DOCKER}" run \
-    --rm -v "${KUBE_ROOT}:${KUBE_ROOT}" -w "${KUBE_ROOT}" \
+    --rm -v "${REPO_ROOT}:${REPO_ROOT}" -w "${REPO_ROOT}" \
     "${SHELLCHECK_IMAGE}" \
   shellcheck "${SHELLCHECK_OPTIONS[@]}" "${all_shell_scripts[@]}" >&2 || res=$?
 fi
