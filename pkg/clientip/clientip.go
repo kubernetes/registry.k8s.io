@@ -30,7 +30,11 @@ import (
 // 1. no loadbalancer, local testing
 // 2. behind Google Cloud LoadBalancer (as in cloudrun)
 //
-// At this time we have no need to complicate it further
+// Note that in particular we do not support hitting the CloudRun endpoint
+// directly (though we could easily do so here). Cloud Armor is on the GCLB,
+// so directly accessing the CloudRun endpoint would bypass that.
+//
+// At this time we have no need to complicate it further.
 func Get(r *http.Request) (netip.Addr, error) {
 	// Upstream docs:
 	// https://cloud.google.com/load-balancing/docs/https#x-forwarded-for_header
