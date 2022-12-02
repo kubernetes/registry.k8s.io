@@ -21,8 +21,8 @@ package main
 // ipRangesRaw contains the contents of https://ip-ranges.amazonaws.com/ip-ranges.json
 var ipRangesRaw = `
 {
-  "syncToken": "1669933986",
-  "createDate": "2022-12-01-22-33-06",
+  "syncToken": "1669999385",
+  "createDate": "2022-12-02-16-43-05",
   "prefixes": [
     {
       "ip_prefix": "3.2.34.0/26",
@@ -13126,7 +13126,7 @@ var ipRangesRaw = `
       "ip_prefix": "18.88.0.0/18",
       "region": "us-east-1",
       "service": "AMAZON",
-      "network_border_group": "us-east-1"
+      "network_border_group": "us-east-1-dfw-2"
     },
     {
       "ip_prefix": "52.93.127.178/32",
@@ -25621,6 +25621,12 @@ var ipRangesRaw = `
       "network_border_group": "us-gov-east-1"
     },
     {
+      "ip_prefix": "43.193.0.0/17",
+      "region": "cn-northwest-1",
+      "service": "AMAZON",
+      "network_border_group": "cn-northwest-1"
+    },
+    {
       "ip_prefix": "43.224.76.220/30",
       "region": "us-east-1",
       "service": "AMAZON",
@@ -31492,7 +31498,7 @@ var ipRangesRaw = `
       "ip_prefix": "18.88.0.0/18",
       "region": "us-east-1",
       "service": "EC2",
-      "network_border_group": "us-east-1"
+      "network_border_group": "us-east-1-dfw-2"
     },
     {
       "ip_prefix": "162.213.234.0/23",
@@ -34217,6 +34223,12 @@ var ipRangesRaw = `
       "region": "us-gov-east-1",
       "service": "EC2",
       "network_border_group": "us-gov-east-1"
+    },
+    {
+      "ip_prefix": "43.193.0.0/17",
+      "region": "cn-northwest-1",
+      "service": "EC2",
+      "network_border_group": "cn-northwest-1"
     },
     {
       "ip_prefix": "64.252.105.0/24",

@@ -2341,6 +2341,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom16([16]byte{36, 15, 128, 254, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}), 40),
 		netip.PrefixFrom(netip.AddrFrom16([16]byte{36, 15, 128, 255, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}), 40),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{43, 192, 0, 0}), 16),
+		netip.PrefixFrom(netip.AddrFrom4([4]byte{43, 193, 0, 0}), 17),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{43, 194, 0, 0}), 16),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{52, 82, 0, 0}), 17),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{52, 82, 1, 0}), 29),
