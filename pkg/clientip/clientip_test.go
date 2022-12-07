@@ -83,6 +83,27 @@ func TestGet(t *testing.T) {
 			},
 			ExpectError: true,
 		},
+		{
+			Name: "X-Forwarded-For for IPv6 with load balancer",
+			Request: http.Request{
+				Header: http.Header{
+					"X-Forwarded-For": []string{"2001:0db8:1234:5678:abcd:1234:5678:abcd, 2001:0db8:0:abcd::"},
+				},
+				RemoteAddr: "127.0.0.1:8888",
+			},
+			ExpectedIP: netip.MustParseAddr("2001:0db8:1234:5678:abcd:1234:5678:abcd"),
+		},
+		{
+			Name: "X-Forwarded-For for IPv6 without load balancer",
+			Request: http.Request{
+				Header: http.Header{
+					"X-Forwarded-For": []string{"2001:0db8:1234:5678:abcd:1234:5678:abcd"},
+				},
+				RemoteAddr: "127.0.0.1:8888",
+			},
+			// We could accept this, we choose to require the load balancer
+			ExpectError: true,
+		},
 	}
 	for i := range testCases {
 		tc := testCases[i]
@@ -91,7 +112,7 @@ func TestGet(t *testing.T) {
 			ip, err := Get(&tc.Request)
 			if err != nil {
 				if !tc.ExpectError {
-					t.Fatalf("unexpted error: %v", err)
+					t.Fatalf("unexpected error: %v", err)
 				}
 			} else if tc.ExpectError {
 				t.Fatal("expected error but err was nil")
