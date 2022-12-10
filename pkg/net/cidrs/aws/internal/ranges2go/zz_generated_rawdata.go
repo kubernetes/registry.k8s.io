@@ -21,8 +21,8 @@ package main
 // ipRangesRaw contains the contents of https://ip-ranges.amazonaws.com/ip-ranges.json
 var ipRangesRaw = `
 {
-  "syncToken": "1670538787",
-  "createDate": "2022-12-08-22-33-07",
+  "syncToken": "1670608386",
+  "createDate": "2022-12-09-17-53-06",
   "prefixes": [
     {
       "ip_prefix": "3.2.34.0/26",
@@ -10777,6 +10777,12 @@ var ipRangesRaw = `
       "network_border_group": "ap-south-2"
     },
     {
+      "ip_prefix": "3.160.0.0/14",
+      "region": "GLOBAL",
+      "service": "AMAZON",
+      "network_border_group": "GLOBAL"
+    },
+    {
       "ip_prefix": "13.34.32.64/27",
       "region": "us-west-1",
       "service": "AMAZON",
@@ -13090,7 +13096,7 @@ var ipRangesRaw = `
       "ip_prefix": "18.88.0.0/18",
       "region": "us-east-1",
       "service": "AMAZON",
-      "network_border_group": "us-east-1-dfw-2"
+      "network_border_group": "us-east-1"
     },
     {
       "ip_prefix": "52.93.127.178/32",
@@ -17806,7 +17812,7 @@ var ipRangesRaw = `
       "ip_prefix": "99.151.184.0/23",
       "region": "us-east-1",
       "service": "AMAZON",
-      "network_border_group": "us-east-1-dfw-2"
+      "network_border_group": "us-east-1"
     },
     {
       "ip_prefix": "150.222.3.179/32",
@@ -31408,7 +31414,7 @@ var ipRangesRaw = `
       "ip_prefix": "18.88.0.0/18",
       "region": "us-east-1",
       "service": "EC2",
-      "network_border_group": "us-east-1-dfw-2"
+      "network_border_group": "us-east-1"
     },
     {
       "ip_prefix": "162.213.234.0/23",
@@ -32488,7 +32494,7 @@ var ipRangesRaw = `
       "ip_prefix": "99.151.184.0/23",
       "region": "us-east-1",
       "service": "EC2",
-      "network_border_group": "us-east-1-dfw-2"
+      "network_border_group": "us-east-1"
     },
     {
       "ip_prefix": "3.5.144.0/23",
@@ -34616,6 +34622,12 @@ var ipRangesRaw = `
     },
     {
       "ip_prefix": "54.230.208.0/20",
+      "region": "GLOBAL",
+      "service": "CLOUDFRONT",
+      "network_border_group": "GLOBAL"
+    },
+    {
+      "ip_prefix": "3.160.0.0/14",
       "region": "GLOBAL",
       "service": "CLOUDFRONT",
       "network_border_group": "GLOBAL"
