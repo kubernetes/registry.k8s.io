@@ -94,6 +94,10 @@ update:
 	hack/make-rules/update.sh
 tidy:
 	hack/make-rules/tidy.sh
+# generate ip ranges
+generate-ipranges:
+	pkg/net/cidrs/aws/internal/ranges2go/genrawdata.sh
+	go generate ./...
 # gofmt
 gofmt:
 	hack/make-rules/gofmt.sh
