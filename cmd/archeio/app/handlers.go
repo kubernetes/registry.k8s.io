@@ -131,7 +131,15 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		}
 
 		// check if blob is available in our S3 bucket for the region
-		bucketURL := awsRegionToS3URL(awsRegion)
+		bucketURL, found := awsRegionToS3URL(awsRegion)
+		if !found {
+			// fall back to redirect to upstream
+			klog.InfoS("mirror not found for region %q; redirecting blob request to fallback location", "region", awsRegion)
+			redirectURL := upstreamRedirectURL(rc, rPath)
+			http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
+			return
+		}
+
 		// this matches GCR's GCS layout, which we will use for other buckets
 		blobURL := bucketURL + "/containers/images/sha256%3A" + hash
 		if blobs.BlobExists(blobURL, bucketURL, hash) {

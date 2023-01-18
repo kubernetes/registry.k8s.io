@@ -26,13 +26,13 @@ func TestRegionToAWSRegionToS3URL(t *testing.T) {
 	// ensure all known regions return a configured bucket
 	regions := aws.Regions()
 	for region := range regions {
-		url := awsRegionToS3URL(region)
-		if url == "" {
-			t.Fatalf("received empty string for known region %q url", region)
+		_, found := awsRegionToS3URL(region)
+		if !found {
+			t.Fatalf("could not find s3 mirror for known region %q", region)
 		}
 	}
-	// ensure bogus region would return "" so we know above test is valid
-	if url := awsRegionToS3URL("nonsensical-region"); url != "" {
-		t.Fatalf("received non-empty URL string for made up region \"nonsensical-region\": %q", url)
+	// ensure bogus region returns false
+	if url, found := awsRegionToS3URL("nonsensical-region"); found {
+		t.Fatalf("received non-empty mirror for made up region \"nonsensical-region\": %q", url)
 	}
 }

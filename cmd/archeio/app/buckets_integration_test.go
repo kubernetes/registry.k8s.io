@@ -24,7 +24,10 @@ import (
 )
 
 func TestCachedBlobChecker(t *testing.T) {
-	bucket := awsRegionToS3URL("us-east-1")
+	bucket, found := awsRegionToS3URL("us-east-1")
+	if !found {
+		t.Fatalf("awsRegionToS3URL gave unexpected value; got not-found but expected to be found")
+	}
 	blobs := newCachedBlobChecker()
 	testCases := []struct {
 		Name         string
