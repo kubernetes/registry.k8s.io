@@ -9,6 +9,8 @@ The community deployment configs are documented at in the k8s.io repo with
 the rest of the community infra deployments:
 https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io
 
+For publishing to registry.k8s.io, refer to the docs at https://git.k8s.io/k8s.io/k8s.gcr.io#managing-kubernetes-container-registries
+
 ## Stability
 
 registry.k8s.io is GA and we ask that all users migrate from k8s.gcr.io as
