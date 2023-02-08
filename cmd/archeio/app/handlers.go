@@ -33,6 +33,7 @@ type RegistryConfig struct {
 	UpstreamRegistryPath     string
 	InfoURL                  string
 	PrivacyURL               string
+	DefaultAWSBaseURL        string
 }
 
 // MakeHandler returns the root archeio HTTP handler
@@ -131,7 +132,7 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		}
 
 		// check if blob is available in our S3 bucket for the region
-		bucketURL := awsRegionToS3URL(ipInfo.Region)
+		bucketURL := awsRegionToHostURL(ipInfo.Region, rc.DefaultAWSBaseURL)
 		// this matches GCR's GCS layout, which we will use for other buckets
 		blobURL := bucketURL + "/containers/images/sha256%3A" + hash
 		if blobs.BlobExists(blobURL, bucketURL, hash) {
