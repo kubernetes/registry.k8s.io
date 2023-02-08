@@ -73,7 +73,7 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 	// matches blob requests, captures the requested blob hash
 	reBlob := regexp.MustCompile("^/v2/.*/blobs/sha256:([0-9a-f]{64})$")
 	// initialize map of clientIP to AWS region
-	regionMapper := cloudcidrs.NewAWSRegionMapper()
+	regionMapper := cloudcidrs.NewIPMapper()
 	// capture these in a http handler lambda
 	return func(w http.ResponseWriter, r *http.Request) {
 		rPath := r.URL.Path
@@ -121,9 +121,9 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		}
 
 		// check if client is known to be coming from an AWS region
-		awsRegion, ipIsKnown := regionMapper.GetIP(clientIP)
-		if !ipIsKnown {
-			// no region match, redirect to main upstream registry
+		ipInfo, ipIsKnown := regionMapper.GetIP(clientIP)
+		if !ipIsKnown || ipInfo.Cloud != cloudcidrs.AWS {
+			// no AWS region match, redirect to main upstream registry
 			redirectURL := upstreamRedirectURL(rc, rPath)
 			klog.V(2).InfoS("redirecting blob request to upstream registry", "path", rPath, "redirect", redirectURL)
 			http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
@@ -131,7 +131,7 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		}
 
 		// check if blob is available in our S3 bucket for the region
-		bucketURL := awsRegionToS3URL(awsRegion)
+		bucketURL := awsRegionToS3URL(ipInfo.Region)
 		// this matches GCR's GCS layout, which we will use for other buckets
 		blobURL := bucketURL + "/containers/images/sha256%3A" + hash
 		if blobs.BlobExists(blobURL, bucketURL, hash) {

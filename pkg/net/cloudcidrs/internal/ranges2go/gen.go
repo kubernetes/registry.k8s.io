@@ -46,8 +46,10 @@ import (
 	"net/netip"
 )
 
+const AWS = "AWS"
+
 // regionToRanges contains a preparsed map of AWS regions to netip.Prefix
-var regionToRanges = map[string][]netip.Prefix{
+var regionToRanges = map[IPInfo][]netip.Prefix{
 `
 
 func generateRangesGo(w io.Writer, rtp regionsToPrefixes) error {
@@ -64,7 +66,7 @@ func generateRangesGo(w io.Writer, rtp regionsToPrefixes) error {
 	sort.Strings(regions)
 	for _, region := range regions {
 		prefixes := rtp[region]
-		if _, err := fmt.Fprintf(w, "\t%q: {\n", region); err != nil {
+		if _, err := fmt.Fprintf(w, "\t{Cloud: AWS, Region: %q}: {\n", region); err != nil {
 			return err
 		}
 		for _, prefix := range prefixes {

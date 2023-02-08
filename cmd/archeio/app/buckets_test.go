@@ -23,6 +23,7 @@ import (
 )
 
 func TestRegionToAWSRegionToS3URL(t *testing.T) {
+	// TODO: replace / fix this
 	// ensure all known regions return a configured bucket
 	regions := cloudcidrs.Regions()
 	for region := range regions {

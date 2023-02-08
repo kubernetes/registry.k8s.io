@@ -18,13 +18,13 @@ package cloudcidrs
 
 import "k8s.io/registry.k8s.io/pkg/net/cidrs"
 
-// NewAWSRegionMapper returns a new cidrs.IPMapper[string] mapping from
-// IP to AWS regions
-func NewAWSRegionMapper() cidrs.IPMapper[string] {
-	t := cidrs.NewTrieMap[string]()
-	for prefix, cidrs := range regionToRanges {
+// NewIPMapper returns cidrs.IPMapper populated with cloud region info
+// for the clouds we have resources for, currently GCP and AWS
+func NewIPMapper() cidrs.IPMapper[IPInfo] {
+	t := cidrs.NewTrieMap[IPInfo]()
+	for info, cidrs := range regionToRanges {
 		for _, cidr := range cidrs {
-			t.Insert(cidr, prefix)
+			t.Insert(cidr, info)
 		}
 	}
 	return t

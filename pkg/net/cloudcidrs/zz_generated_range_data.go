@@ -22,9 +22,11 @@ import (
 	"net/netip"
 )
 
+const AWS = "AWS"
+
 // regionToRanges contains a preparsed map of AWS regions to netip.Prefix
-var regionToRanges = map[string][]netip.Prefix{
-	"GLOBAL": {
+var regionToRanges = map[IPInfo][]netip.Prefix{
+	{Cloud: AWS, Region: "GLOBAL"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{108, 156, 0, 0}), 14),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{116, 129, 226, 0}), 25),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{116, 129, 226, 128}), 26),
@@ -267,7 +269,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 84, 0, 0}), 16),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 86, 0, 0}), 16),
 	},
-	"af-south-1": {
+	{Cloud: AWS, Region: "af-south-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 244, 121, 0}), 26),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 244, 121, 196}), 30),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 244, 122, 0}), 24),
@@ -379,7 +381,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 78, 144, 0}), 21),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 78, 152, 0}), 22),
 	},
-	"ap-east-1": {
+	{Cloud: AWS, Region: "ap-east-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 248, 48, 0}), 21),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 248, 56, 0}), 22),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 248, 60, 0}), 22),
@@ -491,7 +493,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 77, 241, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 83, 96, 0}), 24),
 	},
-	"ap-northeast-1": {
+	{Cloud: AWS, Region: "ap-northeast-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{103, 4, 8, 0}), 21),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 59, 136}), 32),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 59, 137}), 32),
@@ -777,7 +779,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 82, 170, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 83, 84, 0}), 22),
 	},
-	"ap-northeast-2": {
+	{Cloud: AWS, Region: "ap-northeast-2"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 59, 119}), 32),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 124, 0, 0}), 16),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 124, 145, 104}), 29),
@@ -942,7 +944,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 78, 188, 0}), 22),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 82, 168, 0}), 24),
 	},
-	"ap-northeast-3": {
+	{Cloud: AWS, Region: "ap-northeast-3"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 59, 115}), 32),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 208, 0, 0}), 16),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 208, 131, 0}), 29),
@@ -1054,7 +1056,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 77, 243, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 83, 100, 0}), 24),
 	},
-	"ap-south-1": {
+	{Cloud: AWS, Region: "ap-south-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 59, 86}), 32),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 59, 91}), 32),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 126, 0, 0}), 15),
@@ -1284,7 +1286,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 83, 72, 0}), 22),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 83, 76, 0}), 22),
 	},
-	"ap-south-2": {
+	{Cloud: AWS, Region: "ap-south-2"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 59, 123}), 32),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 59, 124}), 32),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 59, 125}), 32),
@@ -1353,7 +1355,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 87, 4, 0}), 22),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 87, 8, 0}), 21),
 	},
-	"ap-southeast-1": {
+	{Cloud: AWS, Region: "ap-southeast-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{122, 248, 192, 0}), 18),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 212, 0, 0}), 15),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 212, 132, 0}), 22),
@@ -1659,7 +1661,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 83, 102, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 87, 0, 0}), 22),
 	},
-	"ap-southeast-2": {
+	{Cloud: AWS, Region: "ap-southeast-2"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 59, 87}), 32),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 59, 88}), 32),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 210, 0, 0}), 15),
@@ -1862,7 +1864,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 83, 120, 0}), 22),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 83, 80, 0}), 22),
 	},
-	"ap-southeast-3": {
+	{Cloud: AWS, Region: "ap-southeast-3"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 59, 102}), 32),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 59, 103}), 32),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 59, 104}), 32),
@@ -1958,7 +1960,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 78, 238, 255}), 32),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 78, 240, 0}), 20),
 	},
-	"ap-southeast-4": {
+	{Cloud: AWS, Region: "ap-southeast-4"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 59, 131}), 32),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 59, 132}), 32),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 59, 133}), 32),
@@ -2023,11 +2025,11 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{70, 232, 88, 0}), 22),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 151, 72, 0}), 21),
 	},
-	"ap-southeast-6": {
+	{Cloud: AWS, Region: "ap-southeast-6"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{43, 208, 0, 0}), 15),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{43, 210, 0, 0}), 15),
 	},
-	"ca-central-1": {
+	{Cloud: AWS, Region: "ca-central-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 78, 128}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 78, 160}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 81, 0}), 27),
@@ -2188,7 +2190,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 79, 34, 0}), 23),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 82, 174, 0}), 24),
 	},
-	"ca-west-1": {
+	{Cloud: AWS, Region: "ca-west-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{15, 177, 100, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{15, 190, 48, 0}), 20),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{15, 190, 8, 0}), 22),
@@ -2199,7 +2201,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{40, 178, 0, 0}), 15),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 151, 168, 0}), 21),
 	},
-	"cn-north-1": {
+	{Cloud: AWS, Region: "cn-north-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{140, 179, 0, 0}), 16),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{140, 179, 1, 64}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{140, 179, 1, 96}), 27),
@@ -2312,7 +2314,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{71, 136, 64, 0}), 18),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{71, 137, 0, 0}), 18),
 	},
-	"cn-northwest-1": {
+	{Cloud: AWS, Region: "cn-northwest-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{161, 189, 148, 0}), 23),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{161, 189, 23, 0}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{161, 189, 23, 32}), 27),
@@ -2423,7 +2425,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{69, 235, 162, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{69, 235, 170, 0}), 23),
 	},
-	"eu-central-1": {
+	{Cloud: AWS, Region: "eu-central-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 248, 97, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 33, 0}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 33, 128}), 27),
@@ -2747,7 +2749,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 82, 163, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 83, 99, 0}), 24),
 	},
-	"eu-central-2": {
+	{Cloud: AWS, Region: "eu-central-2"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 39, 0}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 39, 128}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 39, 160}), 27),
@@ -2808,7 +2810,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{70, 232, 96, 0}), 20),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 151, 80, 0}), 21),
 	},
-	"eu-north-1": {
+	{Cloud: AWS, Region: "eu-north-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 248, 122, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 26, 128}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 26, 160}), 27),
@@ -2942,7 +2944,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 77, 137, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 77, 246, 0}), 24),
 	},
-	"eu-south-1": {
+	{Cloud: AWS, Region: "eu-south-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 21, 160}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 46, 64}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 46, 96}), 27),
@@ -3112,7 +3114,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 77, 159, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 77, 245, 0}), 24),
 	},
-	"eu-south-2": {
+	{Cloud: AWS, Region: "eu-south-2"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 38, 0}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 38, 128}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 38, 160}), 27),
@@ -3178,7 +3180,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 77, 55, 27}), 32),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 77, 55, 3}), 32),
 	},
-	"eu-west-1": {
+	{Cloud: AWS, Region: "eu-west-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{108, 128, 160, 0}), 23),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{108, 128, 162, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 248, 113, 0}), 24),
@@ -3552,7 +3554,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 82, 162, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 87, 32, 0}), 22),
 	},
-	"eu-west-2": {
+	{Cloud: AWS, Region: "eu-west-2"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 248, 120, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 18, 128}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 18, 160}), 27),
@@ -3864,7 +3866,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 77, 249, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 82, 169, 0}), 24),
 	},
-	"eu-west-3": {
+	{Cloud: AWS, Region: "eu-west-3"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 36, 160}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 36, 64}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 36, 96}), 27),
@@ -3998,7 +4000,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 77, 248, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 82, 161, 0}), 24),
 	},
-	"il-central-1": {
+	{Cloud: AWS, Region: "il-central-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 64, 192}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 64, 224}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 65, 0}), 27),
@@ -4055,7 +4057,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{54, 239, 1, 240}), 28),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 151, 152, 0}), 21),
 	},
-	"me-central-1": {
+	{Cloud: AWS, Region: "me-central-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 34, 128}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 34, 160}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 35, 0}), 27),
@@ -4117,7 +4119,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 77, 16, 0}), 21),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 77, 24, 0}), 22),
 	},
-	"me-south-1": {
+	{Cloud: AWS, Region: "me-south-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 15, 128}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 15, 160}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 20, 0}), 27),
@@ -4222,7 +4224,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 82, 144, 0}), 21),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 82, 152, 0}), 22),
 	},
-	"sa-east-1": {
+	{Cloud: AWS, Region: "sa-east-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 248, 114, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 14, 192}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 14, 224}), 27),
@@ -4453,7 +4455,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 77, 234, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 82, 164, 0}), 24),
 	},
-	"us-east-1": {
+	{Cloud: AWS, Region: "us-east-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 56, 11}), 32),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{104, 255, 56, 12}), 32),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{107, 20, 0, 0}), 14),
@@ -5605,7 +5607,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 83, 64, 0}), 21),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 83, 88, 0}), 21),
 	},
-	"us-east-2": {
+	{Cloud: AWS, Region: "us-east-2"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{108, 166, 248, 0}), 21),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 184, 0, 0}), 13),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 248, 111, 0}), 24),
@@ -5939,7 +5941,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 78, 176, 0}), 21),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 78, 216, 0}), 22),
 	},
-	"us-gov-east-1": {
+	{Cloud: AWS, Region: "us-gov-east-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{108, 175, 60, 0}), 22),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{157, 152, 0, 0}), 16),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{18, 252, 0, 0}), 16),
@@ -5995,7 +5997,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 151, 96, 0}), 21),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 77, 183, 0}), 24),
 	},
-	"us-gov-west-1": {
+	{Cloud: AWS, Region: "us-gov-west-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{108, 175, 56, 0}), 22),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{15, 200, 0, 0}), 16),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{15, 200, 141, 0}), 25),
@@ -6070,7 +6072,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{96, 127, 0, 0}), 17),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 77, 184, 0}), 24),
 	},
-	"us-west-1": {
+	{Cloud: AWS, Region: "us-west-1"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 21, 64}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 21, 96}), 27),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 34, 32, 0}), 27),
@@ -6583,7 +6585,7 @@ var regionToRanges = map[string][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 83, 97, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{99, 83, 98, 0}), 24),
 	},
-	"us-west-2": {
+	{Cloud: AWS, Region: "us-west-2"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{108, 166, 224, 0}), 21),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{108, 166, 240, 0}), 21),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 248, 112, 0}), 24),
