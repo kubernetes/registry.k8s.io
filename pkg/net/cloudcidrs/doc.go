@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// aws contains AWS CIDR matching
-package aws
+// cloudcidrs contains Cloud CIDR matching
+package cloudcidrs
 
 //go:generate ./internal/ranges2go/run.sh

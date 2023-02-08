@@ -19,12 +19,12 @@ package app
 import (
 	"testing"
 
-	"k8s.io/registry.k8s.io/pkg/net/cidrs/aws"
+	"k8s.io/registry.k8s.io/pkg/net/cloudcidrs"
 )
 
 func TestRegionToAWSRegionToS3URL(t *testing.T) {
 	// ensure all known regions return a configured bucket
-	regions := aws.Regions()
+	regions := cloudcidrs.Regions()
 	for region := range regions {
 		url := awsRegionToS3URL(region)
 		if url == "" {

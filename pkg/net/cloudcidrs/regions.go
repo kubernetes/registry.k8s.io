@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package aws
+package cloudcidrs
 
 // Regions returns a set-like map of all known AWS regions
 // based on the same underlying data as the rest of this package

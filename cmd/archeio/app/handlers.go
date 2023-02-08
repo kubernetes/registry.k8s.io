@@ -25,7 +25,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"k8s.io/registry.k8s.io/pkg/clientip"
-	"k8s.io/registry.k8s.io/pkg/net/cidrs/aws"
+	"k8s.io/registry.k8s.io/pkg/net/cloudcidrs"
 )
 
 type RegistryConfig struct {
@@ -73,7 +73,7 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 	// matches blob requests, captures the requested blob hash
 	reBlob := regexp.MustCompile("^/v2/.*/blobs/sha256:([0-9a-f]{64})$")
 	// initialize map of clientIP to AWS region
-	regionMapper := aws.NewAWSRegionMapper()
+	regionMapper := cloudcidrs.NewAWSRegionMapper()
 	// capture these in a http handler lambda
 	return func(w http.ResponseWriter, r *http.Request) {
 		rPath := r.URL.Path

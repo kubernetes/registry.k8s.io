@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package aws
+package cloudcidrs
 
 import "k8s.io/registry.k8s.io/pkg/net/cidrs"
 
