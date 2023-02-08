@@ -22,14 +22,14 @@ import (
 	"sort"
 )
 
-// regionsToPrefixesFromRaw parses raw AWS IP ranges JSON data
+// parseAWS parses raw AWS IP ranges JSON data
 // and processes it to a regionsToPrefixes map
-func regionsToPrefixesFromRaw(raw string) (regionsToPrefixes, error) {
-	parsed, err := parseIPRangesJSON([]byte(raw))
+func parseAWS(raw string) (regionsToPrefixes, error) {
+	parsed, err := parseAWSIPRangesJSON([]byte(raw))
 	if err != nil {
 		return nil, err
 	}
-	return regionsToPrefixesFromData(parsed)
+	return awsRegionsToPrefixesFromData(parsed)
 }
 
 /*
@@ -37,20 +37,20 @@ func regionsToPrefixesFromRaw(raw string) (regionsToPrefixes, error) {
 	https://docs.aws.amazon.com/general/latest/gr/aws-ip-ranges.html
 */
 
-type IPRangesJSON struct {
-	Prefixes     []Prefix     `json:"prefixes"`
-	IPv6Prefixes []IPv6Prefix `json:"ipv6_prefixes"`
+type AWSIPRangesJSON struct {
+	Prefixes     []AWSPrefix     `json:"prefixes"`
+	IPv6Prefixes []AWSIPv6Prefix `json:"ipv6_prefixes"`
 	// syncToken and createDate omitted
 }
 
-type Prefix struct {
+type AWSPrefix struct {
 	IPPrefix string `json:"ip_prefix"`
 	Region   string `json:"region"`
 	Service  string `json:"service"`
 	// network_border_group omitted
 }
 
-type IPv6Prefix struct {
+type AWSIPv6Prefix struct {
 	IPv6Prefix string `json:"ipv6_prefix"`
 	Region     string `json:"region"`
 	Service    string `json:"service"`
@@ -59,19 +59,16 @@ type IPv6Prefix struct {
 
 // parseIPRangesJSON parse AWS IP ranges JSON data
 // https://docs.aws.amazon.com/general/latest/gr/aws-ip-ranges.html
-func parseIPRangesJSON(rawJSON []byte) (*IPRangesJSON, error) {
-	r := &IPRangesJSON{}
+func parseAWSIPRangesJSON(rawJSON []byte) (*AWSIPRangesJSON, error) {
+	r := &AWSIPRangesJSON{}
 	if err := json.Unmarshal(rawJSON, r); err != nil {
 		return nil, err
 	}
 	return r, nil
 }
 
-// regionsToPrefixes is the structure we process the JSON into
-type regionsToPrefixes map[string][]netip.Prefix
-
-// regionsToPrefixesFromData processes the raw unmarshalled JSON into regionsToPrefixes map
-func regionsToPrefixesFromData(data *IPRangesJSON) (regionsToPrefixes, error) {
+// awsRegionsToPrefixesFromData processes the raw unmarshalled JSON into regionsToPrefixes map
+func awsRegionsToPrefixesFromData(data *AWSIPRangesJSON) (regionsToPrefixes, error) {
 	// convert from AWS published structure to a map by region, parse Prefixes
 	rtp := regionsToPrefixes{}
 	for _, prefix := range data.Prefixes {
@@ -104,21 +101,4 @@ func regionsToPrefixesFromData(data *IPRangesJSON) (regionsToPrefixes, error) {
 	}
 
 	return rtp, nil
-}
-
-func dedupeSortedPrefixes(s []netip.Prefix) []netip.Prefix {
-	l := len(s)
-	// nothing to do for <= 1
-	if l <= 1 {
-		return s
-	}
-	// for 1..len(s) if previous entry does not match, keep current
-	j := 0
-	for i := 1; i < l; i++ {
-		if s[i].String() != s[i-1].String() {
-			s[j] = s[i]
-			j++
-		}
-	}
-	return s[0:j]
 }

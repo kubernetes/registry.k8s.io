@@ -14,18 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package aws
+// cloudcidrs contains Cloud CIDR matching
+package cloudcidrs
 
-import "k8s.io/registry.k8s.io/pkg/net/cidrs"
-
-// NewAWSRegionMapper returns a new cidrs.IPMapper[string] mapping from
-// IP to AWS regions
-func NewAWSRegionMapper() cidrs.IPMapper[string] {
-	t := cidrs.NewTrieMap[string]()
-	for prefix, cidrs := range regionToRanges {
-		for _, cidr := range cidrs {
-			t.Insert(cidr, prefix)
-		}
-	}
-	return t
-}
+//go:generate ./internal/ranges2go/run.sh

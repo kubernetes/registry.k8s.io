@@ -25,7 +25,7 @@ import (
 	"k8s.io/klog/v2"
 
 	"k8s.io/registry.k8s.io/pkg/clientip"
-	"k8s.io/registry.k8s.io/pkg/net/cidrs/aws"
+	"k8s.io/registry.k8s.io/pkg/net/cloudcidrs"
 )
 
 type RegistryConfig struct {
@@ -33,6 +33,7 @@ type RegistryConfig struct {
 	UpstreamRegistryPath     string
 	InfoURL                  string
 	PrivacyURL               string
+	DefaultAWSBaseURL        string
 }
 
 // MakeHandler returns the root archeio HTTP handler
@@ -73,7 +74,7 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 	// matches blob requests, captures the requested blob hash
 	reBlob := regexp.MustCompile("^/v2/.*/blobs/sha256:([0-9a-f]{64})$")
 	// initialize map of clientIP to AWS region
-	regionMapper := aws.NewAWSRegionMapper()
+	regionMapper := cloudcidrs.NewIPMapper()
 	// capture these in a http handler lambda
 	return func(w http.ResponseWriter, r *http.Request) {
 		rPath := r.URL.Path
@@ -120,23 +121,26 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 			return
 		}
 
-		// check if client is known to be coming from an AWS region
-		awsRegion, ipIsKnown := regionMapper.GetIP(clientIP)
-		if !ipIsKnown {
-			// no region match, redirect to main upstream registry
+		// if client is coming from GCP, stay in GCP
+		ipInfo, ipIsKnown := regionMapper.GetIP(clientIP)
+		if ipIsKnown && ipInfo.Cloud == cloudcidrs.GCP {
 			redirectURL := upstreamRedirectURL(rc, rPath)
-			klog.V(2).InfoS("redirecting blob request to upstream registry", "path", rPath, "redirect", redirectURL)
+			klog.V(2).InfoS("redirecting GCP blob request to upstream registry", "path", rPath, "redirect", redirectURL)
 			http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 			return
 		}
 
-		// check if blob is available in our S3 bucket for the region
-		bucketURL := awsRegionToS3URL(awsRegion)
+		// check if blob is available in our AWS layer storage for the region
+		region := ""
+		if ipIsKnown {
+			region = ipInfo.Region
+		}
+		bucketURL := awsRegionToHostURL(region, rc.DefaultAWSBaseURL)
 		// this matches GCR's GCS layout, which we will use for other buckets
 		blobURL := bucketURL + "/containers/images/sha256%3A" + hash
 		if blobs.BlobExists(blobURL, bucketURL, hash) {
-			// blob known to be available in S3, redirect client there
-			klog.V(2).InfoS("redirecting blob request to S3", "path", rPath)
+			// blob known to be available in AWS, redirect client there
+			klog.V(2).InfoS("redirecting blob request to AWS", "path", rPath)
 			http.Redirect(w, r, blobURL, http.StatusTemporaryRedirect)
 			return
 		}

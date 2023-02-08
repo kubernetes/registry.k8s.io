@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The Kubernetes Authors.
+Copyright 2023 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,14 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package aws
+package main
 
-// Regions returns a set-like map of all known AWS regions
-// based on the same underlying data as the rest of this package
-func Regions() map[string]bool {
-	regions := map[string]bool{}
-	for region := range regionToRanges {
-		regions[region] = true
+import "net/netip"
+
+func dedupeSortedPrefixes(s []netip.Prefix) []netip.Prefix {
+	l := len(s)
+	// nothing to do for <= 1
+	if l <= 1 {
+		return s
 	}
-	return regions
+	// for 1..len(s) if previous entry does not match, keep current
+	j := 0
+	for i := 1; i < l; i++ {
+		if s[i].String() != s[i-1].String() {
+			s[j] = s[i]
+			j++
+		}
+	}
+	return s[0:j]
 }

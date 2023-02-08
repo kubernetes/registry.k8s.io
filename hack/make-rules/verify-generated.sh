@@ -28,9 +28,11 @@ trap 'rm -rf ${tmpdir?}' EXIT
 # generate and compare
 OUT_FILE="${tmpdir}"/zz_generated_range_data.go
 export OUT_FILE
-./pkg/net/cidrs/aws/internal/ranges2go/run.sh
+DATA_DIR="${REPO_ROOT}"/pkg/net/cloudcidrs/internal/ranges2go/data
+export DATA_DIR
+./pkg/net/cloudcidrs/internal/ranges2go/run.sh
 
-if ! diff "${OUT_FILE}" ./pkg/net/cidrs/aws/zz_generated_range_data.go; then
+if ! diff "${OUT_FILE}" ./pkg/net/cloudcidrs/zz_generated_range_data.go; then
     >&2 echo ""
     >&2 echo "generated file is out of date, please run 'go generate ./...' to regenerate"
     exit 1

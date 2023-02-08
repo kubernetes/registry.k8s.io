@@ -24,7 +24,7 @@ import (
 )
 
 func TestCachedBlobChecker(t *testing.T) {
-	bucket := awsRegionToS3URL("us-east-1")
+	bucket := awsRegionToHostURL("us-east-1", "")
 	blobs := newCachedBlobChecker()
 	testCases := []struct {
 		Name         string

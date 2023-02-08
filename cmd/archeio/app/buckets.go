@@ -23,10 +23,10 @@ import (
 	"k8s.io/klog/v2"
 )
 
-// awsRegionToS3URL returns the base S3 bucket URL for an OCI layer blob given the AWS region
+// awsRegionToHostURL returns the base S3 bucket URL for an OCI layer blob given the AWS region
 //
 // blobs in the buckets should be stored at /containers/images/sha256:$hash
-func awsRegionToS3URL(region string) string {
+func awsRegionToHostURL(region, defaultURL string) string {
 	switch region {
 	// each of these has the region in which we have a bucket listed first
 	// and then additional regions we're mapping to that bucket
@@ -66,15 +66,7 @@ func awsRegionToS3URL(region string) string {
 	case "eu-west-2", "eu-west-3", "eu-north-1":
 		return "https://prod-registry-k8s-io-eu-west-2.s3.dualstack.eu-west-2.amazonaws.com"
 	default:
-		// TestRegionToAWSRegionToS3URL checks we return a non-empty result for all regions
-		// that this app knows about
-		//
-		// we will not attempt to route to a region we do now know about
-		//
-		// if we see empty string returned, then we've failed to account for all regions
-		//
-		// we want to precompute the mapping for all regions
-		return ""
+		return defaultURL
 	}
 }
 

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package aws
+package cloudcidrs
 
 import (
 	"net/netip"
@@ -50,17 +50,17 @@ var testCasesIPv6 = []testCase{
 // append may re-use the first existing slice ...
 var allTestCases = append(append([]testCase{}, testCasesIPv4...), testCasesIPv6...)
 
-func TestNewAWSRegionMapper(t *testing.T) {
-	mapper := NewAWSRegionMapper()
+func TestNewIPMapper(t *testing.T) {
+	mapper := NewIPMapper()
 	for i := range allTestCases {
 		tc := allTestCases[i]
 		t.Run(tc.Addr.String(), func(t *testing.T) {
-			region, matched := mapper.GetIP(tc.Addr)
+			r, matched := mapper.GetIP(tc.Addr)
 			expectMatched := tc.ExpectedRegion != ""
-			if matched != expectMatched || region != tc.ExpectedRegion {
+			if matched != expectMatched || r.Region != tc.ExpectedRegion {
 				t.Fatalf(
 					"result does not match for %v, got: (%q, %t) expected: (%q, %t)",
-					tc.Addr, region, matched, tc.ExpectedRegion, expectMatched,
+					tc.Addr, r.Region, matched, tc.ExpectedRegion, expectMatched,
 				)
 			}
 		})
@@ -69,15 +69,15 @@ func TestNewAWSRegionMapper(t *testing.T) {
 
 /*  for benchmarking memory / init time */
 
-func BenchmarkNewAWSRegionMapper(b *testing.B) {
+func BenchmarkNewIPMapper(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		mapper := NewAWSRegionMapper()
+		mapper := NewIPMapper()
 		// get any address just to prevent mapper being optimized out
 		mapper.GetIP(allTestCases[0].Addr)
 	}
 }
 
-func BenchmarkNewAWSegionBruteForce(b *testing.B) {
+func BenchmarkNewegionBruteForce(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		mapper := cidrs.NewBruteForceMapper(regionToRanges)
 		// get any address just to prevent mapper being optimized out
@@ -87,61 +87,61 @@ func BenchmarkNewAWSegionBruteForce(b *testing.B) {
 
 /* for benchmarking matching time */
 
-func BenchmarkAWSRegionTrieMapIPv4(b *testing.B) {
-	mapper := NewAWSRegionMapper()
+func BenchmarkRegionTrieMapIPv4(b *testing.B) {
+	mapper := NewIPMapper()
 	for n := 0; n < b.N; n++ {
 		tc := testCasesIPv4[n%len(testCasesIPv4)]
-		region, matched := mapper.GetIP(tc.Addr)
+		r, matched := mapper.GetIP(tc.Addr)
 		expectMatched := tc.ExpectedRegion != ""
-		if matched != expectMatched || region != tc.ExpectedRegion {
+		if matched != expectMatched || r.Region != tc.ExpectedRegion {
 			b.Fatalf(
 				"result does not match for %v, got: (%q, %t) expected: (%q, %t)",
-				tc.Addr, region, matched, tc.ExpectedRegion, expectMatched,
+				tc.Addr, r.Region, matched, tc.ExpectedRegion, expectMatched,
 			)
 		}
 	}
 }
 
-func BenchmarkAWSRegionTrieMapIPv6(b *testing.B) {
-	mapper := NewAWSRegionMapper()
+func BenchmarkRegionTrieMapIPv6(b *testing.B) {
+	mapper := NewIPMapper()
 	for n := 0; n < b.N; n++ {
 		tc := testCasesIPv6[n%len(testCasesIPv6)]
-		region, matched := mapper.GetIP(tc.Addr)
+		r, matched := mapper.GetIP(tc.Addr)
 		expectMatched := tc.ExpectedRegion != ""
-		if matched != expectMatched || region != tc.ExpectedRegion {
+		if matched != expectMatched || r.Region != tc.ExpectedRegion {
 			b.Fatalf(
 				"result does not match for %v, got: (%q, %t) expected: (%q, %t)",
-				tc.Addr, region, matched, tc.ExpectedRegion, expectMatched,
+				tc.Addr, r.Region, matched, tc.ExpectedRegion, expectMatched,
 			)
 		}
 	}
 }
 
-func BenchmarkAWSRegionBruteForceIPv4(b *testing.B) {
+func BenchmarkRegionBruteForceIPv4(b *testing.B) {
 	mapper := cidrs.NewBruteForceMapper(regionToRanges)
 	for n := 0; n < b.N; n++ {
 		tc := testCasesIPv4[n%len(testCasesIPv4)]
-		region, matched := mapper.GetIP(tc.Addr)
+		r, matched := mapper.GetIP(tc.Addr)
 		expectMatched := tc.ExpectedRegion != ""
-		if matched != expectMatched || region != tc.ExpectedRegion {
+		if matched != expectMatched || r.Region != tc.ExpectedRegion {
 			b.Fatalf(
 				"result does not match for %v, got: (%q, %t) expected: (%q, %t)",
-				tc.Addr, region, matched, tc.ExpectedRegion, expectMatched,
+				tc.Addr, r.Region, matched, tc.ExpectedRegion, expectMatched,
 			)
 		}
 	}
 }
 
-func BenchmarkAWSRegionBruteForceIPv6(b *testing.B) {
+func BenchmarkRegionBruteForceIPv6(b *testing.B) {
 	mapper := cidrs.NewBruteForceMapper(regionToRanges)
 	for n := 0; n < b.N; n++ {
 		tc := testCasesIPv6[n%len(testCasesIPv6)]
-		region, matched := mapper.GetIP(tc.Addr)
+		r, matched := mapper.GetIP(tc.Addr)
 		expectMatched := tc.ExpectedRegion != ""
-		if matched != expectMatched || region != tc.ExpectedRegion {
+		if matched != expectMatched || r.Region != tc.ExpectedRegion {
 			b.Fatalf(
 				"result does not match for %v, got: (%q, %t) expected: (%q, %t)",
-				tc.Addr, region, matched, tc.ExpectedRegion, expectMatched,
+				tc.Addr, r.Region, matched, tc.ExpectedRegion, expectMatched,
 			)
 		}
 	}
