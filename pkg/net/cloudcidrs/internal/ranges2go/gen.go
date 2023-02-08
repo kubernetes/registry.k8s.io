@@ -46,19 +46,51 @@ import (
 	"net/netip"
 )
 
-const AWS = "AWS"
-
-// regionToRanges contains a preparsed map of AWS regions to netip.Prefix
-var regionToRanges = map[IPInfo][]netip.Prefix{
 `
 
-func generateRangesGo(w io.Writer, rtp regionsToPrefixes) error {
-	// generate source file
+func generateRangesGo(w io.Writer, cloudToRTP map[string]regionsToPrefixes) error {
+	// generate source file header
 	if _, err := io.WriteString(w, fileHeader); err != nil {
 		return err
 	}
 
-	// ensure iteration order is predictable
+	// ensure iteration order is predictable for reproducible codegen
+	clouds := make([]string, 0, len(cloudToRTP))
+	for cloud := range cloudToRTP {
+		clouds = append(clouds, cloud)
+	}
+	sort.Strings(clouds)
+
+	// generate constants for each cloud
+	for _, cloud := range clouds {
+		if _, err := fmt.Fprintf(w, "// %s cloud\nconst %s = %q\n", cloud, cloud, cloud); err != nil {
+			return err
+		}
+	}
+
+	// generate main data variable
+	if _, err := io.WriteString(w, `
+// regionToRanges contains a preparsed map of cloud IPInfo to netip.Prefix
+var regionToRanges = map[IPInfo][]netip.Prefix{
+`,
+	); err != nil {
+		return err
+	}
+	for _, cloud := range clouds {
+		rtp := cloudToRTP[cloud]
+		if err := genCloud(w, cloud, rtp); err != nil {
+			return err
+		}
+	}
+	if _, err := io.WriteString(w, "}\n"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func genCloud(w io.Writer, cloud string, rtp regionsToPrefixes) error {
+	// ensure iteration order is predictable for reproducible codegen
 	regions := make([]string, 0, len(rtp))
 	for region := range rtp {
 		regions = append(regions, region)
@@ -66,7 +98,7 @@ func generateRangesGo(w io.Writer, rtp regionsToPrefixes) error {
 	sort.Strings(regions)
 	for _, region := range regions {
 		prefixes := rtp[region]
-		if _, err := fmt.Fprintf(w, "\t{Cloud: AWS, Region: %q}: {\n", region); err != nil {
+		if _, err := fmt.Fprintf(w, "\t{Cloud: %s, Region: %q}: {\n", cloud, region); err != nil {
 			return err
 		}
 		for _, prefix := range prefixes {
@@ -99,9 +131,5 @@ func generateRangesGo(w io.Writer, rtp regionsToPrefixes) error {
 			return err
 		}
 	}
-	if _, err := io.WriteString(w, "}\n"); err != nil {
-		return err
-	}
-
 	return nil
 }

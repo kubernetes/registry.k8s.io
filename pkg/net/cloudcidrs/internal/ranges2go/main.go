@@ -18,16 +18,31 @@ limitations under the License.
 // See also genrawdata.sh for downloading the raw data to this binary.
 package main
 
-import "os"
+import (
+	"os"
+	"path/filepath"
+)
 
 func main() {
 	// overridable for make verify
 	outputPath := os.Getenv("OUT_FILE")
+	dataDir := os.Getenv("DATA_DIR")
 	if outputPath == "" {
 		outputPath = "./zz_generated_range_data.go"
 	}
+	if dataDir == "" {
+		dataDir = "./internal/ranges2go/data"
+	}
+	// read in data
+	awsRaw := mustReadFile(filepath.Join(dataDir, "aws-ip-ranges.json"))
+	gcpRaw := mustReadFile(filepath.Join(dataDir, "gcp-cloud.json"))
 	// parse raw AWS IP range data
-	rtp, err := regionsToPrefixesFromRaw(ipRangesRaw)
+	awsRTP, err := parseAWS(awsRaw)
+	if err != nil {
+		panic(err)
+	}
+	// parse GCP IP range data
+	gcpRTP, err := parseGCP(gcpRaw)
 	if err != nil {
 		panic(err)
 	}
@@ -36,7 +51,19 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	if err := generateRangesGo(f, rtp); err != nil {
+	cloudToRTP := map[string]regionsToPrefixes{
+		"AWS": awsRTP,
+		"GCP": gcpRTP,
+	}
+	if err := generateRangesGo(f, cloudToRTP); err != nil {
 		panic(err)
 	}
+}
+
+func mustReadFile(filePath string) string {
+	contents, err := os.ReadFile(filePath)
+	if err != nil {
+		panic(err)
+	}
+	return string(contents)
 }

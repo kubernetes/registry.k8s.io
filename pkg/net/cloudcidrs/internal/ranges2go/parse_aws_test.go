@@ -21,7 +21,7 @@ import (
 	"testing"
 )
 
-func TestParseIPRangesJSON(t *testing.T) {
+func TestAWSParseIPRangesJSON(t *testing.T) {
 	// parse a snapshot of a valid subsest of data
 	const testData = `{
   "syncToken": "1649878400",
@@ -43,15 +43,15 @@ func TestParseIPRangesJSON(t *testing.T) {
     }
   ]
 }`
-	expectedParsed := &IPRangesJSON{
-		Prefixes: []Prefix{
+	expectedParsed := &AWSIPRangesJSON{
+		Prefixes: []AWSPrefix{
 			{
 				IPPrefix: "3.5.140.0/22",
 				Region:   "ap-northeast-2",
 				Service:  "AMAZON",
 			},
 		},
-		IPv6Prefixes: []IPv6Prefix{
+		IPv6Prefixes: []AWSIPv6Prefix{
 			{
 				IPv6Prefix: "2a05:d07a:a000::/40",
 				Region:     "eu-south-1",
@@ -59,7 +59,7 @@ func TestParseIPRangesJSON(t *testing.T) {
 			},
 		},
 	}
-	parsed, err := parseIPRangesJSON([]byte(testData))
+	parsed, err := parseAWSIPRangesJSON([]byte(testData))
 	if err != nil {
 		t.Fatalf("unexpected error parsing testdata: %v", err)
 	}
@@ -72,17 +72,17 @@ func TestParseIPRangesJSON(t *testing.T) {
 	}
 
 	// parse some bogus data
-	_, err = parseIPRangesJSON([]byte(`{"prefixes": false}`))
+	_, err = parseAWSIPRangesJSON([]byte(`{"prefixes": false}`))
 	if err == nil {
 		t.Fatal("expected error parsing garbage data but got none")
 	}
 }
 
-func TestRegionsToPrefixesFromData(t *testing.T) {
+func TestAWSRegionsToPrefixesFromData(t *testing.T) {
 	t.Run("bad IPv4 prefixes", func(t *testing.T) {
 		t.Parallel()
-		badV4Prefixes := &IPRangesJSON{
-			Prefixes: []Prefix{
+		badV4Prefixes := &AWSIPRangesJSON{
+			Prefixes: []AWSPrefix{
 				{
 					IPPrefix: "asdf;asdf,",
 					Service:  "AMAZON",
@@ -90,22 +90,22 @@ func TestRegionsToPrefixesFromData(t *testing.T) {
 				},
 			},
 		}
-		_, err := regionsToPrefixesFromData(badV4Prefixes)
+		_, err := awsRegionsToPrefixesFromData(badV4Prefixes)
 		if err == nil {
 			t.Fatal("expected error parsing bogus prefix but got none")
 		}
 	})
 	t.Run("bad IPv6 prefixes", func(t *testing.T) {
 		t.Parallel()
-		badV6Prefixes := &IPRangesJSON{
-			Prefixes: []Prefix{
+		badV6Prefixes := &AWSIPRangesJSON{
+			Prefixes: []AWSPrefix{
 				{
 					IPPrefix: "127.0.0.1/32",
 					Service:  "AMAZON",
 					Region:   "us-east-1",
 				},
 			},
-			IPv6Prefixes: []IPv6Prefix{
+			IPv6Prefixes: []AWSIPv6Prefix{
 				{
 					IPv6Prefix: "asdfasdf----....",
 					Service:    "AMAZON",
@@ -113,18 +113,18 @@ func TestRegionsToPrefixesFromData(t *testing.T) {
 				},
 			},
 		}
-		_, err := regionsToPrefixesFromData(badV6Prefixes)
+		_, err := awsRegionsToPrefixesFromData(badV6Prefixes)
 		if err == nil {
 			t.Fatal("expected error parsing bogus prefix but got none")
 		}
 	})
 }
 
-func TestRegionsToPrefixesFromRaw(t *testing.T) {
+func TestParseAWS(t *testing.T) {
 	t.Run("unparsable data", func(t *testing.T) {
 		t.Parallel()
 		badJSON := `{"prefixes":false}`
-		_, err := regionsToPrefixesFromRaw(badJSON)
+		_, err := parseAWS(badJSON)
 		if err == nil {
 			t.Fatal("expected error parsing bogus raw JSON but got none")
 		}

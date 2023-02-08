@@ -80,7 +80,7 @@ func TestGenerateRangesGo(t *testing.T) {
   ]
 }
 `
-	rtp, err := regionsToPrefixesFromRaw(rawData)
+	rtp, err := parseAWS(rawData)
 	if err != nil {
 		t.Fatalf("unexpected error parsing test data: %v", err)
 	}
@@ -110,9 +110,10 @@ import (
 	"net/netip"
 )
 
+// AWS cloud
 const AWS = "AWS"
 
-// regionToRanges contains a preparsed map of AWS regions to netip.Prefix
+// regionToRanges contains a preparsed map of cloud IPInfo to netip.Prefix
 var regionToRanges = map[IPInfo][]netip.Prefix{
 	{Cloud: AWS, Region: "ap-northeast-2"}: {
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{3, 5, 140, 0}), 22),
@@ -130,7 +131,7 @@ var regionToRanges = map[IPInfo][]netip.Prefix{
 `
 	// generate and compare
 	w := &bytes.Buffer{}
-	if err := generateRangesGo(w, rtp); err != nil {
+	if err := generateRangesGo(w, map[string]regionsToPrefixes{"AWS": rtp}); err != nil {
 		t.Fatalf("unexpected error generating: %v", err)
 	}
 	result := w.String()
