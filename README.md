@@ -18,21 +18,24 @@ soon as possible.
 
 However, unequivocally: **DO NOT** depend on the implementation details of this registry.
 
-**Other than registry.k8s.io serving a compliant [OCI][distribution-spec] registry, API endpoints 
-and backing services used are subject to change at anytime as needed by the 
-project and as resources become available to us.**
+**Other than `registry.k8s.io` serving an [OCI][distribution-spec] compliant registry:
+API endpoints, IP addresses, and backing services used 
+are subject to change at _anytime_ as new resources become available or as otherwise
+necessary.**
 
-**If you need to allow-list domains to pull these images, we highly recommend
-mirroring them instead.**
+**If you need to allow-list domains or IPs in your environment, we highly recommend
+mirroring images to a location you control instead.**
 
 The Kubernetes project is currently sending traffic to GCP and AWS
 thanks to their donations but we hope to redirect traffic to more
 sponsors and their respective API endpoints in the future to keep the project
 sustainable.
 
-Please note that there is also **No SLA** as this is a free, volunteer managed
+Please also note that there is **No SLA** as this is a free, volunteer managed
 service. We will however do our best to respond to issues and the system is
-designed to be low-touch.
+designed to be reliable and low-maintenance.
+
+See Also: https://kubernetes.io/blog/2022/11/28/registry-k8s-io-faster-cheaper-ga
 
 <!--TODO: link out to a doc with suggestion(s) for mirroring--->
 ## Privacy
