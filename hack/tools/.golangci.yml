@@ -12,9 +12,7 @@ linters:
     - ineffassign
     - staticcheck
     - typecheck
-    # TODO: reenable, seems to be broken in go 1.18
-    # keep an eye on https://github.com/golangci/golangci-lint/issues/2649
-    #- unused
+    - unused
 
     # additional lints
     - gochecknoinits
