@@ -27,7 +27,8 @@ import (
 	"k8s.io/klog/v2"
 )
 
-type walkImageFunc func(ref name.Reference, image v1.Image) error
+// WalkImageFunc is used to visit an image
+type WalkImageFunc func(ref name.Reference, image v1.Image) error
 
 // Unfortunately this is only doable on GCP currently.
 //
@@ -39,14 +40,14 @@ type walkImageFunc func(ref name.Reference, image v1.Image) error
 // It's also simpler and more efficient.
 //
 // See: https://github.com/opencontainers/distribution-spec/issues/222
-func walkImagesGCP(repo name.Repository, walkImage walkImageFunc) error {
+func WalkImagesGCP(repo name.Repository, walkImage WalkImageFunc) error {
 	return google.Walk(repo, func(repo name.Repository, tags *google.Tags, err error) error {
 		for digest := range tags.Manifests {
 			ref, err := name.ParseReference(fmt.Sprintf("%s@%s", repo, digest))
 			if err != nil {
 				return err
 			}
-			if err := walkManifestToImages(ref, walkImage); err != nil {
+			if err := walkManifestImage(ref, walkImage); err != nil {
 				return err
 			}
 		}
@@ -54,46 +55,33 @@ func walkImagesGCP(repo name.Repository, walkImage walkImageFunc) error {
 	})
 }
 
-func walkManifestToImages(ref name.Reference, walkImage walkImageFunc) error {
+func walkManifestImage(ref name.Reference, walkImage WalkImageFunc) error {
 	desc, err := remote.Get(ref)
 	if err != nil {
 		return err
 	}
-	// TODO: application/vnd.docker.distribution.manifest.v1+prettyjws
-	// https://github.com/google/go-containerregistry/issues/377
-	if desc.MediaType == types.DockerManifestSchema1Signed {
-		klog.Warning("Skipping ancient v1+prettyjws image: " + ref.String())
+
+	// google.Walk already resolves these to individual manifests
+	if desc.MediaType.IsIndex() {
 		return nil
 	}
-	// treat everything else not an index as an image
-	if !desc.MediaType.IsIndex() {
-		image, err := desc.Image()
-		if err != nil {
-			return err
-		}
-		return walkImage(ref, image)
+
+	// It's unlikely we need to support these
+	// https://github.com/google/go-containerregistry/issues/377
+	if desc.MediaType == types.DockerManifestSchema1 || desc.MediaType == types.DockerManifestSchema1Signed {
+		klog.Warning("Skipping ancient schema 1 image: " + ref.String())
+		return nil
 	}
-	// otherwise process index ("manifest list")
-	index, err := desc.ImageIndex()
+
+	// we don't expect anything other than index, or image ...
+	if !desc.MediaType.IsImage() {
+		klog.Warningf("Un-handled type: %s", desc.MediaType)
+		return nil
+	}
+
+	image, err := desc.Image()
 	if err != nil {
 		return err
 	}
-	im, err := index.IndexManifest()
-	if err != nil {
-		return err
-	}
-	for _, manifest := range im.Manifests {
-		newRef, err := name.ParseReference(ref.Context().String() + "@" + manifest.Digest.String())
-		if err != nil {
-			return err
-		}
-		image, err := index.Image(manifest.Digest)
-		if err != nil {
-			return err
-		}
-		if err := walkImage(newRef, image); err != nil {
-			return err
-		}
-	}
-	return nil
+	return walkImage(ref, image)
 }

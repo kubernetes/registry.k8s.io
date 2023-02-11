@@ -42,7 +42,7 @@ func main() {
 	}
 
 	// copy layers from all images in the repo
-	err = walkImagesGCP(repo, func(ref name.Reference, image v1.Image) error {
+	err = WalkImagesGCP(repo, func(ref name.Reference, image v1.Image) error {
 		klog.Infof("Processing image: %s", ref.String())
 		copyImageLayers(s3Uploader, s3Bucket, image)
 		return nil
@@ -55,10 +55,6 @@ func main() {
 }
 
 func copyImageLayers(s3Uploader *s3Uploader, bucket string, image v1.Image) error {
-
-	// debug
-	return nil
-
 	// get all image blobs as v1.Layer
 	layers, err := image.Layers()
 	if err != nil {
