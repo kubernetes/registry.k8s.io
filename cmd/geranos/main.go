@@ -55,6 +55,10 @@ func main() {
 }
 
 func copyImageLayers(s3Uploader *s3Uploader, bucket string, image v1.Image) error {
+
+	// debug
+	return nil
+
 	// get all image blobs as v1.Layer
 	layers, err := image.Layers()
 	if err != nil {
