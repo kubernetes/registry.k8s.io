@@ -20,10 +20,14 @@ import (
 	"fmt"
 
 	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/google"
+	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/types"
+	"k8s.io/klog/v2"
 )
 
-type walkManifestsFunc func(ref name.Reference) error
+type walkImageFunc func(ref name.Reference, image v1.Image) error
 
 // Unfortunately this is only doable on GCP currently.
 //
@@ -35,17 +39,61 @@ type walkManifestsFunc func(ref name.Reference) error
 // It's also simpler and more efficient.
 //
 // See: https://github.com/opencontainers/distribution-spec/issues/222
-func walkManifestsGCP(repo name.Repository, walkManifest walkManifestsFunc) error {
+func walkImagesGCP(repo name.Repository, walkImage walkImageFunc) error {
 	return google.Walk(repo, func(repo name.Repository, tags *google.Tags, err error) error {
 		for digest := range tags.Manifests {
 			ref, err := name.ParseReference(fmt.Sprintf("%s@%s", repo, digest))
 			if err != nil {
 				return err
 			}
-			if err := walkManifest(ref); err != nil {
+			if err := walkManifestToImages(ref, walkImage); err != nil {
 				return err
 			}
 		}
 		return nil
 	})
+}
+
+func walkManifestToImages(ref name.Reference, walkImage walkImageFunc) error {
+	desc, err := remote.Get(ref)
+	if err != nil {
+		return err
+	}
+	// TODO: application/vnd.docker.distribution.manifest.v1+prettyjws
+	// https://github.com/google/go-containerregistry/issues/377
+	if desc.MediaType == types.DockerManifestSchema1Signed {
+		klog.Warning("Skipping ancient v1+prettyjws image: " + ref.String())
+		return nil
+	}
+	// treat everything else not an index as an image
+	if !desc.MediaType.IsIndex() {
+		image, err := desc.Image()
+		if err != nil {
+			return err
+		}
+		return walkImage(ref, image)
+	}
+	// otherwise process index ("manifest list")
+	index, err := desc.ImageIndex()
+	if err != nil {
+		return err
+	}
+	im, err := index.IndexManifest()
+	if err != nil {
+		return err
+	}
+	for _, manifest := range im.Manifests {
+		newRef, err := name.ParseReference(ref.Context().String() + "@" + manifest.Digest.String())
+		if err != nil {
+			return err
+		}
+		image, err := index.Image(manifest.Digest)
+		if err != nil {
+			return err
+		}
+		if err := walkImage(newRef, image); err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -18,8 +18,8 @@ package main
 
 import (
 	"github.com/google/go-containerregistry/pkg/name"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/partial"
-	"github.com/google/go-containerregistry/pkg/v1/remote"
 
 	"k8s.io/klog/v2"
 )
@@ -41,29 +41,10 @@ func main() {
 		klog.Fatal(err)
 	}
 
-	// walk all images in the repo
-	err = walkManifestsGCP(repo, func(ref name.Reference) error {
-		klog.Infof("Processing image: %s", ref)
-		image, err := remote.Image(ref)
-		if err != nil {
-			return err
-		}
-		// get all image blobs as v1.Layer
-		layers, err := image.Layers()
-		if err != nil {
-			return err
-		}
-		configLayer, err := partial.ConfigLayer(image)
-		if err != nil {
-			return err
-		}
-		layers = append(layers, configLayer)
-		// copy all layers
-		for _, layer := range layers {
-			if err := s3Uploader.CopyToS3(s3Bucket, layer); err != nil {
-				return err
-			}
-		}
+	// copy layers from all images in the repo
+	err = walkImagesGCP(repo, func(ref name.Reference, image v1.Image) error {
+		klog.Infof("Processing image: %s", ref.String())
+		copyImageLayers(s3Uploader, s3Bucket, image)
 		return nil
 	})
 	if err != nil {
@@ -71,4 +52,24 @@ func main() {
 	} else {
 		klog.Info("Done!")
 	}
+}
+
+func copyImageLayers(s3Uploader *s3Uploader, bucket string, image v1.Image) error {
+	// get all image blobs as v1.Layer
+	layers, err := image.Layers()
+	if err != nil {
+		return err
+	}
+	configLayer, err := partial.ConfigLayer(image)
+	if err != nil {
+		return err
+	}
+	layers = append(layers, configLayer)
+	// copy all layers
+	for _, layer := range layers {
+		if err := s3Uploader.CopyToS3(bucket, layer); err != nil {
+			return err
+		}
+	}
+	return nil
 }
