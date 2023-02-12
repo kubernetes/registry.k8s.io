@@ -17,6 +17,8 @@ limitations under the License.
 package main
 
 import (
+	"os"
+
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/partial"
@@ -25,6 +27,18 @@ import (
 )
 
 func main() {
+	Main()
+}
+
+// Main is the application entrypoint, which injects globals to Run
+func Main() {
+	if err := Run(os.Args); err != nil {
+		klog.Fatal(err)
+	}
+}
+
+// Run implements the actual application logic, accepting global inputs
+func Run(argv []string) error {
 	// one of the backing registries for registry.k8s.io
 	// TODO: make configurable later
 	const sourceRegistry = "us-central1-docker.pkg.dev/k8s-artifacts-prod/images"
@@ -44,14 +58,12 @@ func main() {
 	// copy layers from all images in the repo
 	err = WalkImagesGCP(repo, func(ref name.Reference, image v1.Image) error {
 		klog.Infof("Processing image: %s", ref.String())
-		copyImageLayers(s3Uploader, s3Bucket, image)
-		return nil
+		return copyImageLayers(s3Uploader, s3Bucket, image)
 	})
-	if err != nil {
-		klog.Fatal(err)
-	} else {
+	if err == nil {
 		klog.Info("Done!")
 	}
+	return err
 }
 
 func copyImageLayers(s3Uploader *s3Uploader, bucket string, image v1.Image) error {
