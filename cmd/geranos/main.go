@@ -21,7 +21,6 @@ import (
 
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
-	"github.com/google/go-containerregistry/pkg/v1/partial"
 
 	"k8s.io/klog/v2"
 )
@@ -59,9 +58,9 @@ func Run(_ []string) error {
 	}
 
 	// copy layers from all images in the repo
-	err = WalkImagesGCP(repo, func(ref name.Reference, image v1.Image) error {
+	err = WalkImageLayersGCP(repo, func(ref name.Reference, layers []v1.Layer) error {
 		klog.Infof("Processing image: %s", ref.String())
-		return copyImageLayers(s3Uploader, s3Bucket, image)
+		return copyImageLayers(s3Uploader, s3Bucket, layers)
 	})
 	if err == nil {
 		klog.Info("Done!")
@@ -69,17 +68,7 @@ func Run(_ []string) error {
 	return err
 }
 
-func copyImageLayers(s3Uploader *s3Uploader, bucket string, image v1.Image) error {
-	// get all image blobs as v1.Layer
-	layers, err := image.Layers()
-	if err != nil {
-		return err
-	}
-	configLayer, err := partial.ConfigLayer(image)
-	if err != nil {
-		return err
-	}
-	layers = append(layers, configLayer)
+func copyImageLayers(s3Uploader *s3Uploader, bucket string, layers []v1.Layer) error {
 	// copy all layers
 	for _, layer := range layers {
 		if err := s3Uploader.CopyToS3(bucket, layer); err != nil {

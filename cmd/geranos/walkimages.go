@@ -22,13 +22,14 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/google"
+	"github.com/google/go-containerregistry/pkg/v1/partial"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"k8s.io/klog/v2"
 )
 
-// WalkImageFunc is used to visit an image
-type WalkImageFunc func(ref name.Reference, image v1.Image) error
+// WalkImageLAyersFunc is used to visit an image
+type WalkImageLayersFunc func(ref name.Reference, layers []v1.Layer) error
 
 // Unfortunately this is only doable on GCP currently.
 //
@@ -40,14 +41,14 @@ type WalkImageFunc func(ref name.Reference, image v1.Image) error
 // It's also simpler and more efficient.
 //
 // See: https://github.com/opencontainers/distribution-spec/issues/222
-func WalkImagesGCP(repo name.Repository, walkImage WalkImageFunc) error {
+func WalkImageLayersGCP(repo name.Repository, walkImageLayers WalkImageLayersFunc) error {
 	return google.Walk(repo, func(repo name.Repository, tags *google.Tags, err error) error {
 		for digest := range tags.Manifests {
 			ref, err := name.ParseReference(fmt.Sprintf("%s@%s", repo, digest))
 			if err != nil {
 				return err
 			}
-			if err := walkManifestImage(ref, walkImage); err != nil {
+			if err := walkManifestLayers(ref, walkImageLayers); err != nil {
 				return err
 			}
 		}
@@ -55,7 +56,7 @@ func WalkImagesGCP(repo name.Repository, walkImage WalkImageFunc) error {
 	})
 }
 
-func walkManifestImage(ref name.Reference, walkImage WalkImageFunc) error {
+func walkManifestLayers(ref name.Reference, walkImageLayers WalkImageLayersFunc) error {
 	desc, err := remote.Get(ref)
 	if err != nil {
 		return err
@@ -66,11 +67,14 @@ func walkManifestImage(ref name.Reference, walkImage WalkImageFunc) error {
 		return nil
 	}
 
-	// It's unlikely we need to support these
+	// Specially handle schema 1
 	// https://github.com/google/go-containerregistry/issues/377
 	if desc.MediaType == types.DockerManifestSchema1 || desc.MediaType == types.DockerManifestSchema1Signed {
-		klog.Warning("Skipping ancient schema 1 image: " + ref.String())
-		return nil
+		layers, err := layersForV1(ref, desc)
+		if err != nil {
+			return err
+		}
+		return walkImageLayers(ref, layers)
 	}
 
 	// we don't expect anything other than index, or image ...
@@ -79,9 +83,26 @@ func walkManifestImage(ref name.Reference, walkImage WalkImageFunc) error {
 		return nil
 	}
 
+	// Handle normal images
 	image, err := desc.Image()
 	if err != nil {
 		return err
 	}
-	return walkImage(ref, image)
+	layers, err := imageToLayers(image)
+	if err != nil {
+		return err
+	}
+	return walkImageLayers(ref, layers)
+}
+
+func imageToLayers(image v1.Image) ([]v1.Layer, error) {
+	layers, err := image.Layers()
+	if err != nil {
+		return nil, err
+	}
+	configLayer, err := partial.ConfigLayer(image)
+	if err != nil {
+		return nil, err
+	}
+	return append(layers, configLayer), nil
 }
