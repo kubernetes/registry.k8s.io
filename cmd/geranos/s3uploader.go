@@ -17,6 +17,9 @@ limitations under the License.
 package main
 
 import (
+	"encoding/base64"
+	"encoding/hex"
+
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -35,10 +38,14 @@ type s3Uploader struct {
 	svc          *s3.S3
 	uploader     *s3manager.Uploader
 	skipExisting bool
+	dryRun       bool
 }
 
 func newS3Uploader() (*s3Uploader, error) {
-	sess := session.Must(session.NewSession())
+	sess, err := session.NewSession()
+	if err != nil {
+		return nil, err
+	}
 	r := &s3Uploader{}
 	r.svc = s3.New(sess)
 	r.uploader = s3manager.NewUploaderWithClient(r.svc)
@@ -46,10 +53,11 @@ func newS3Uploader() (*s3Uploader, error) {
 }
 
 func (s *s3Uploader) CopyToS3(bucket string, layer v1.Layer) error {
-	key, err := keyForLayer(layer)
+	digest, err := layer.Digest()
 	if err != nil {
 		return err
 	}
+	key := keyForLayer(digest)
 	if s.skipExisting {
 		exists, err := s.blobExists(bucket, key)
 		if err != nil {
@@ -63,20 +71,31 @@ func (s *s3Uploader) CopyToS3(bucket string, layer v1.Layer) error {
 		return err
 	}
 	defer r.Close()
-	_, err = s.uploader.Upload(&s3manager.UploadInput{
+	uploadInput := &s3manager.UploadInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 		Body:   r,
-	})
+	}
+	// TODO: what if it isn't sha256?
+	// We also depend on this in cmd/archeio currently
+	if digest.Algorithm == "SHA256" {
+		b, err := hex.DecodeString(digest.Hex)
+		if err != nil {
+			return err
+		}
+		uploadInput.ChecksumSHA256 = aws.String(base64.StdEncoding.EncodeToString(b))
+	}
+	// skip actually uploading if this is a dry-run, otherwise finally upload
+	klog.Infof("Uploading Layer: %s", key)
+	if s.dryRun {
+		return nil
+	}
+	_, err = s.uploader.Upload(uploadInput)
 	return err
 }
 
-func keyForLayer(layer v1.Layer) (string, error) {
-	digest, err := layer.Digest()
-	if err != nil {
-		return "", err
-	}
-	return blobKeyPrefix + digest.String(), nil
+func keyForLayer(digest v1.Hash) string {
+	return blobKeyPrefix + digest.String()
 }
 
 func (s *s3Uploader) blobExists(bucket, key string) (bool, error) {
