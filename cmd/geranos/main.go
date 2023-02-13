@@ -38,7 +38,7 @@ func Main() {
 }
 
 // Run implements the actual application logic, accepting global inputs
-func Run(argv []string) error {
+func Run(_ []string) error {
 	// one of the backing registries for registry.k8s.io
 	// TODO: make configurable later
 	const sourceRegistry = "us-central1-docker.pkg.dev/k8s-artifacts-prod/images"
@@ -51,6 +51,9 @@ func Run(argv []string) error {
 		klog.Fatal(err)
 	}
 	s3Uploader, err := newS3Uploader()
+	// for debugging: force this true
+	// TODO: make configurable
+	s3Uploader.dryRun = true
 	if err != nil {
 		klog.Fatal(err)
 	}
