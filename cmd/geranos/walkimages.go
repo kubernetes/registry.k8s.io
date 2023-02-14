@@ -46,18 +46,30 @@ type WalkImageLayersFunc func(ref name.Reference, layers []v1.Layer) error
 // See: https://github.com/opencontainers/distribution-spec/issues/222
 func WalkImageLayersGCP(repo name.Repository, walkImageLayers WalkImageLayersFunc) error {
 	g := new(errgroup.Group)
+	// TODO: This is really just an approximation to avoid exceeding typical socket limits
+	// See also quota limits:
+	// https://cloud.google.com/artifact-registry/quotas
+	g.SetLimit(400)
 	g.Go(func() error {
-		return google.Walk(repo, func(repo name.Repository, tags *google.Tags, err error) error {
-			for digest := range tags.Manifests {
+		return google.Walk(repo, func(r name.Repository, tags *google.Tags, err error) error {
+			if err != nil {
+				return err
+			}
+			for digest, metadata := range tags.Manifests {
 				digest := digest
-				ref, err := name.ParseReference(fmt.Sprintf("%s@%s", repo, digest))
+				ref, err := name.ParseReference(fmt.Sprintf("%s@%s", r, digest))
 				if err != nil {
 					return err
+				}
+				// google.Walk already walks the child manifests, skip these early
+				// to avoid an unnecessary request to backend
+				if metadata.MediaType == string(types.DockerManifestList) || metadata.MediaType == string(types.OCIImageIndex) {
+					klog.Infof("Skipping index: %s", ref.String())
+					continue
 				}
 				g.Go(func() error {
 					return walkManifestLayers(ref, walkImageLayers)
 				})
-				return nil
 			}
 			return nil
 		})
