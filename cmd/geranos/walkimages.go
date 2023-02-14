@@ -19,13 +19,16 @@ package main
 import (
 	"fmt"
 
+	"golang.org/x/sync/errgroup"
+
+	"k8s.io/klog/v2"
+
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/partial"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/types"
-	"k8s.io/klog/v2"
 )
 
 // WalkImageLAyersFunc is used to visit an image
@@ -42,18 +45,24 @@ type WalkImageLayersFunc func(ref name.Reference, layers []v1.Layer) error
 //
 // See: https://github.com/opencontainers/distribution-spec/issues/222
 func WalkImageLayersGCP(repo name.Repository, walkImageLayers WalkImageLayersFunc) error {
-	return google.Walk(repo, func(repo name.Repository, tags *google.Tags, err error) error {
-		for digest := range tags.Manifests {
-			ref, err := name.ParseReference(fmt.Sprintf("%s@%s", repo, digest))
-			if err != nil {
-				return err
+	g := new(errgroup.Group)
+	g.Go(func() error {
+		return google.Walk(repo, func(repo name.Repository, tags *google.Tags, err error) error {
+			for digest := range tags.Manifests {
+				digest := digest
+				ref, err := name.ParseReference(fmt.Sprintf("%s@%s", repo, digest))
+				if err != nil {
+					return err
+				}
+				g.Go(func() error {
+					return walkManifestLayers(ref, walkImageLayers)
+				})
+				return nil
 			}
-			if err := walkManifestLayers(ref, walkImageLayers); err != nil {
-				return err
-			}
-		}
-		return nil
+			return nil
+		})
 	})
+	return g.Wait()
 }
 
 func walkManifestLayers(ref name.Reference, walkImageLayers WalkImageLayersFunc) error {
@@ -64,6 +73,7 @@ func walkManifestLayers(ref name.Reference, walkImageLayers WalkImageLayersFunc)
 
 	// google.Walk already resolves these to individual manifests
 	if desc.MediaType.IsIndex() {
+		klog.Warningf("Skipping Index: %s", ref.String())
 		return nil
 	}
 
@@ -79,7 +89,7 @@ func walkManifestLayers(ref name.Reference, walkImageLayers WalkImageLayersFunc)
 
 	// we don't expect anything other than index, or image ...
 	if !desc.MediaType.IsImage() {
-		klog.Warningf("Un-handled type: %s", desc.MediaType)
+		klog.Warningf("Un-handled type: %s for %s", desc.MediaType, ref.String())
 		return nil
 	}
 
