@@ -47,25 +47,27 @@ func Run(_ []string) error {
 
 	repo, err := name.NewRepository(sourceRegistry)
 	if err != nil {
-		klog.Fatal(err)
+		return err
 	}
 	s3Uploader, err := newS3Uploader()
+	if err != nil {
+		return err
+	}
+
 	// for debugging: force this true
 	// TODO: make configurable
 	s3Uploader.dryRun = true
-	if err != nil {
-		klog.Fatal(err)
-	}
 
 	// copy layers from all images in the repo
 	err = WalkImageLayersGCP(repo, func(ref name.Reference, layers []v1.Layer) error {
 		klog.Infof("Processing image: %s", ref.String())
 		return copyImageLayers(s3Uploader, s3Bucket, layers)
 	})
-	if err == nil {
-		klog.Info("Done!")
+	if err != nil {
+		return err
 	}
-	return err
+	klog.Info("Done!")
+	return nil
 }
 
 func copyImageLayers(s3Uploader *s3Uploader, bucket string, layers []v1.Layer) error {
