@@ -17,9 +17,15 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
+	"io"
+	"strings"
 
+	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -35,6 +41,10 @@ import (
 // see cmd/archeio, this matches the layout of GCR's GCS bucket
 // containers/images/sha256:$layer_digest
 const blobKeyPrefix = "containers/images/"
+
+// this is where geranos *internally* records manifests
+// these are not for user consumption
+const manifestKeyPrefix = "/geranos/uploaded-images/"
 
 type s3Uploader struct {
 	svc            *s3.S3
@@ -63,12 +73,85 @@ func newS3Uploader(dryRun bool) (*s3Uploader, error) {
 	return r, nil
 }
 
-func (s *s3Uploader) CopyToS3(bucket string, layer v1.Layer) error {
+func (s *s3Uploader) UploadImage(bucket string, ref name.Reference, layers []v1.Layer, opts ...crane.Option) error {
+	for _, layer := range layers {
+		if err := s.copyLayerToS3(bucket, layer); err != nil {
+			return err
+		}
+	}
+	m, err := manifestBlobFromRef(ref, opts...)
+	if err != nil {
+		return err
+	}
+	return s.copyManifestToS3(bucket, m)
+}
+
+func (s *s3Uploader) ImageAlreadyUploaded(bucket string, imageDigest string) (bool, error) {
+	return s.blobExists(bucket, keyForImageRecord(imageDigest))
+}
+
+// imageBlob requires the subset of v1.Layer methods
+// required for uploading a blob
+type imageBlob interface {
+	Digest() (v1.Hash, error)
+	Compressed() (io.ReadCloser, error)
+}
+
+type manifestBlob struct {
+	raw    []byte
+	digest v1.Hash
+}
+
+func manifestBlobFromRef(ref name.Reference, opts ...crane.Option) (*manifestBlob, error) {
+	p := strings.Split(ref.Name(), "@")
+	if len(p) != 2 {
+		return nil, errors.New("invalid reference")
+	}
+	digest, err := v1.NewHash(p[1])
+	if err != nil {
+		return nil, err
+	}
+	manifest, err := crane.Manifest(ref.Name(), opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &manifestBlob{
+		raw:    manifest,
+		digest: digest,
+	}, nil
+}
+
+func (m *manifestBlob) Digest() (v1.Hash, error) {
+	return m.digest, nil
+}
+
+func (m *manifestBlob) Compressed() (io.ReadCloser, error) {
+	return io.NopCloser(bytes.NewReader(m.raw)), nil
+}
+
+func (s *s3Uploader) copyManifestToS3(bucket string, layer imageBlob) error {
 	digest, err := layer.Digest()
 	if err != nil {
 		return err
 	}
-	key := keyForLayer(digest)
+	key := keyForImageRecord(digest.String())
+	return s.copyToS3(bucket, key, layer)
+}
+
+func (s *s3Uploader) copyLayerToS3(bucket string, layer imageBlob) error {
+	digest, err := layer.Digest()
+	if err != nil {
+		return err
+	}
+	key := keyForLayer(digest.String())
+	return s.copyToS3(bucket, key, layer)
+}
+
+func (s *s3Uploader) copyToS3(bucket, key string, layer imageBlob) error {
+	digest, err := layer.Digest()
+	if err != nil {
+		return err
+	}
 	if !s.reuploadLayers {
 		exists, err := s.blobExists(bucket, key)
 		if err != nil {
@@ -105,8 +188,12 @@ func (s *s3Uploader) CopyToS3(bucket string, layer v1.Layer) error {
 	return err
 }
 
-func keyForLayer(digest v1.Hash) string {
-	return blobKeyPrefix + digest.String()
+func keyForLayer(digest string) string {
+	return blobKeyPrefix + digest
+}
+
+func keyForImageRecord(imageDigest string) string {
+	return manifestKeyPrefix + imageDigest
 }
 
 func (s *s3Uploader) blobExists(bucket, key string) (bool, error) {
