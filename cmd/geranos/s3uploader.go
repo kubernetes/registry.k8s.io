@@ -24,6 +24,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -32,22 +33,32 @@ import (
 )
 
 // see cmd/archeio, this matches the layout of GCR's GCS bucket
-const blobKeyPrefix = "/containers/images/"
+// containers/images/sha256:$layer_digest
+const blobKeyPrefix = "containers/images/"
 
 type s3Uploader struct {
-	svc          *s3.S3
-	uploader     *s3manager.Uploader
-	skipExisting bool
-	dryRun       bool
+	svc            *s3.S3
+	uploader       *s3manager.Uploader
+	reuploadLayers bool
+	dryRun         bool
 }
 
-func newS3Uploader() (*s3Uploader, error) {
-	sess, err := session.NewSession()
+func newS3Uploader(dryRun bool) (*s3Uploader, error) {
+	cfg := []*aws.Config{}
+	// force anonymous configs for dry run uploaders
+	if dryRun {
+		cfg = append(cfg, &aws.Config{
+			Credentials: credentials.AnonymousCredentials,
+		})
+	}
+	sess, err := session.NewSession(cfg...)
 	if err != nil {
 		return nil, err
 	}
-	r := &s3Uploader{}
-	r.svc = s3.New(sess)
+	r := &s3Uploader{
+		dryRun: dryRun,
+		svc:    s3.New(sess),
+	}
 	r.uploader = s3manager.NewUploaderWithClient(r.svc)
 	return r, nil
 }
@@ -58,11 +69,12 @@ func (s *s3Uploader) CopyToS3(bucket string, layer v1.Layer) error {
 		return err
 	}
 	key := keyForLayer(digest)
-	if s.skipExisting {
+	if !s.reuploadLayers {
 		exists, err := s.blobExists(bucket, key)
 		if err != nil {
 			klog.Errorf("failed to check if blob exists: %v", err)
 		} else if exists {
+			klog.Infof("Layer already exists: %s", key)
 			return nil
 		}
 	}
@@ -86,7 +98,7 @@ func (s *s3Uploader) CopyToS3(bucket string, layer v1.Layer) error {
 		uploadInput.ChecksumSHA256 = aws.String(base64.StdEncoding.EncodeToString(b))
 	}
 	// skip actually uploading if this is a dry-run, otherwise finally upload
-	klog.Infof("Uploading Layer: %s", key)
+	klog.Infof("Uploading layer: %s", key)
 	if s.dryRun {
 		return nil
 	}
