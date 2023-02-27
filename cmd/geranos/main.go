@@ -43,20 +43,16 @@ func Run(_ []string) error {
 	const sourceRegistry = "us-central1-docker.pkg.dev/k8s-artifacts-prod/images"
 
 	// TODO: make configurable later
-	const s3Bucket = "s3:prod-registry-k8s-io-us-east-2"
+	const s3Bucket = "prod-registry-k8s-io-us-east-2"
 
 	repo, err := name.NewRepository(sourceRegistry)
 	if err != nil {
 		return err
 	}
-	s3Uploader, err := newS3Uploader()
+	s3Uploader, err := newS3Uploader(os.Getenv("REALLY_UPLOAD") == "")
 	if err != nil {
 		return err
 	}
-
-	// for debugging: force this true
-	// TODO: make configurable
-	s3Uploader.dryRun = true
 
 	// copy layers from all images in the repo
 	err = WalkImageLayersGCP(repo, func(ref name.Reference, layers []v1.Layer) error {
