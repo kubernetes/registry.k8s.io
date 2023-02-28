@@ -55,6 +55,9 @@ func Run(_ []string) error {
 	}
 
 	// copy layers from all images in the repo
+	// TODO: print some progress logs at lower frequency instead of logging each image
+	// We will punt this temporarily, as we're about to refactor how this works anyhow
+	// to avoid fetching manifests for images we've already uploaded
 	err = WalkImageLayersGCP(repo, func(ref name.Reference, layers []v1.Layer) error {
 		klog.Infof("Processing image: %s", ref.String())
 		return copyImageLayers(s3Uploader, s3Bucket, layers)

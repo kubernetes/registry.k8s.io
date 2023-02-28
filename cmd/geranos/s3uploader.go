@@ -74,7 +74,7 @@ func (s *s3Uploader) CopyToS3(bucket string, layer v1.Layer) error {
 		if err != nil {
 			klog.Errorf("failed to check if blob exists: %v", err)
 		} else if exists {
-			klog.Infof("Layer already exists: %s", key)
+			klog.V(4).Infof("Layer already exists: %s", key)
 			return nil
 		}
 	}
