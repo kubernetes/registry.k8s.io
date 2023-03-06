@@ -26,7 +26,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/google"
-	"github.com/google/go-containerregistry/pkg/v1/partial"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 )
@@ -122,9 +121,14 @@ func imageToLayers(image v1.Image) ([]v1.Layer, error) {
 	if err != nil {
 		return nil, err
 	}
-	configLayer, err := partial.ConfigLayer(image)
-	if err != nil {
-		return nil, err
-	}
-	return append(layers, configLayer), nil
+	// TODO: upload and use config layers
+	// for now: not uploading them matches rclone syncing from the GCR GCS
+	/*
+			configLayer, err := partial.ConfigLayer(image)
+			if err != nil {
+				return nil, err
+			}
+		return append(layers, configLayer), nil
+	*/
+	return layers, nil
 }
