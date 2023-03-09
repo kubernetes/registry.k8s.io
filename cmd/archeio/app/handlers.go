@@ -99,6 +99,12 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 			w.WriteHeader(http.StatusOK)
 			return
 		}
+		// we don't support the non-standard _catalog API
+		// https://github.com/kubernetes/registry.k8s.io/issues/162
+		if rPath == "/v2/_catalog" {
+			http.Error(w, "_catalog is not supported", http.StatusNotFound)
+			return
+		}
 
 		// check if blob request
 		matches := reBlob.FindStringSubmatch(rPath)

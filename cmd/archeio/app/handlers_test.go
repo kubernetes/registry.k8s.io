@@ -186,6 +186,15 @@ func TestMakeV2Handler(t *testing.T) {
 			ExpectedStatus: http.StatusBadRequest,
 		},
 		{
+			Name: "/v2/_catalog",
+			Request: func() *http.Request {
+				r := httptest.NewRequest("GET", "http://localhost:8080/v2/_catalog", nil)
+				r.RemoteAddr = "35.180.1.1:888"
+				return r
+			}(),
+			ExpectedStatus: http.StatusNotFound,
+		},
+		{
 			Name: "AWS IP, /v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 			Request: func() *http.Request {
 				r := httptest.NewRequest("GET", "http://localhost:8080/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil)
