@@ -45,6 +45,10 @@ func Run(_ []string) error {
 	// TODO: make configurable later
 	const s3Bucket = "prod-registry-k8s-io-us-east-2"
 
+	// 60*60s = 3600 RPM, which should be well below our current 5000 RPM
+	// limit, even with the host node making other registry API calls
+	registryRateLimit := NewRateLimitRoundTripper(60, 1)
+
 	repo, err := name.NewRepository(sourceRegistry)
 	if err != nil {
 		return err
@@ -58,7 +62,7 @@ func Run(_ []string) error {
 	// TODO: print some progress logs at lower frequency instead of logging each image
 	// We will punt this temporarily, as we're about to refactor how this works anyhow
 	// to avoid fetching manifests for images we've already uploaded
-	err = WalkImageLayersGCP(repo, func(ref name.Reference, layers []v1.Layer) error {
+	err = WalkImageLayersGCP(registryRateLimit, repo, func(ref name.Reference, layers []v1.Layer) error {
 		klog.Infof("Processing image: %s", ref.String())
 		return copyImageLayers(s3Uploader, s3Bucket, layers)
 	})

@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -27,7 +28,7 @@ import (
 )
 
 // layersForV1 gets the layers for a v1 schema image
-func layersForV1(ref name.Reference, desc *remote.Descriptor) ([]v1.Layer, error) {
+func layersForV1(transport http.RoundTripper, ref name.Reference, desc *remote.Descriptor) ([]v1.Layer, error) {
 	m := &schema1{}
 	if err := json.NewDecoder(bytes.NewReader(desc.Manifest)).Decode(m); err != nil {
 		return nil, err
@@ -38,7 +39,7 @@ func layersForV1(ref name.Reference, desc *remote.Descriptor) ([]v1.Layer, error
 		if err != nil {
 			return nil, err
 		}
-		layer, err := remote.Layer(layerDigest)
+		layer, err := remote.Layer(layerDigest, remote.WithTransport(transport))
 		if err != nil {
 			return nil, err
 		}

@@ -17,11 +17,10 @@ limitations under the License.
 package main
 
 import (
-	"context"
 	"fmt"
+	"net/http"
 
 	"golang.org/x/sync/errgroup"
-	"golang.org/x/time/rate"
 
 	"k8s.io/klog/v2"
 
@@ -31,12 +30,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 )
-
-// 40*60s = 2400 RPM, which leaves 100 overhead for list calls to reach 2500
-// our actual limit currently is 5000 RPM but we're proposing lowering it ...
-// TODO: unfortunately this is inherently global state, but the current approach
-// is kinda hacky
-var gcpRateLimiter *rate.Limiter = rate.NewLimiter(40, 1)
 
 // WalkImageLAyersFunc is used to visit an image
 type WalkImageLayersFunc func(ref name.Reference, layers []v1.Layer) error
@@ -51,12 +44,12 @@ type WalkImageLayersFunc func(ref name.Reference, layers []v1.Layer) error
 // It's also simpler and more efficient.
 //
 // See: https://github.com/opencontainers/distribution-spec/issues/222
-func WalkImageLayersGCP(repo name.Repository, walkImageLayers WalkImageLayersFunc) error {
+func WalkImageLayersGCP(transport http.RoundTripper, repo name.Repository, walkImageLayers WalkImageLayersFunc) error {
 	g := new(errgroup.Group)
 	// TODO: This is really just an approximation to avoid exceeding typical socket limits
 	// See also quota limits:
 	// https://cloud.google.com/artifact-registry/quotas
-	g.SetLimit(10)
+	g.SetLimit(1000)
 	g.Go(func() error {
 		return google.Walk(repo, func(r name.Repository, tags *google.Tags, err error) error {
 			if err != nil {
@@ -73,18 +66,17 @@ func WalkImageLayersGCP(repo name.Repository, walkImageLayers WalkImageLayersFun
 					return err
 				}
 				g.Go(func() error {
-					return walkManifestLayers(ref, walkImageLayers)
+					return walkManifestLayers(transport, ref, walkImageLayers)
 				})
 			}
 			return nil
-		})
+		}, google.WithTransport(transport))
 	})
 	return g.Wait()
 }
 
-func walkManifestLayers(ref name.Reference, walkImageLayers WalkImageLayersFunc) error {
-	_ = gcpRateLimiter.Wait(context.Background())
-	desc, err := remote.Get(ref)
+func walkManifestLayers(transport http.RoundTripper, ref name.Reference, walkImageLayers WalkImageLayersFunc) error {
+	desc, err := remote.Get(ref, remote.WithTransport(transport))
 	if err != nil {
 		return err
 	}
@@ -98,7 +90,7 @@ func walkManifestLayers(ref name.Reference, walkImageLayers WalkImageLayersFunc)
 	// Specially handle schema 1
 	// https://github.com/google/go-containerregistry/issues/377
 	if desc.MediaType == types.DockerManifestSchema1 || desc.MediaType == types.DockerManifestSchema1Signed {
-		layers, err := layersForV1(ref, desc)
+		layers, err := layersForV1(transport, ref, desc)
 		if err != nil {
 			return err
 		}
