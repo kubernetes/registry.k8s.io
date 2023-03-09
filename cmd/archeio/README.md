@@ -23,9 +23,6 @@ Kubernetes SIG K8s-Infra's needs. However, some of the packages under
 [`pkg/`](./../../pkg/) may be useful if you have a similar problem,
 and they should be pretty generalized and re-usable.
 
-We are looking towards making this application easily re-usable by other projects
-in the future, if you're interested please reach out to SIG K8s Infra to discuss.
-
 -----
 
 For a rough TLDR of the current design:
