@@ -61,6 +61,8 @@ see https://github.com/kubernetes/k8s.io/wiki/New-Registry-url-for-Kubernetes-(r
 
 Essentially, this repo implements the backend sources for the steps outlined there.
 
+For a talk with more details see: ["Why We Moved the Kubernetes Image Registry"](https://www.youtube.com/watch?v=9CdzisDQkjE)
+
 ## Community, discussion, contribution, and support
 
 Learn how to engage with the Kubernetes community on the [community page](http://kubernetes.io/community/).
