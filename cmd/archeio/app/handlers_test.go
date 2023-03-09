@@ -97,6 +97,16 @@ func TestMakeHandler(t *testing.T) {
 			ExpectedStatus: http.StatusTemporaryRedirect,
 			ExpectedURL:    "https://us.gcr.io/v2/k8s-artifacts-prod/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 		},
+		{
+			Name: "GCP IP, /v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			Request: func() *http.Request {
+				r := httptest.NewRequest("GET", "http://localhost:8080/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil)
+				r.RemoteAddr = "35.220.26.1:888"
+				return r
+			}(),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://us.gcr.io/v2/k8s-artifacts-prod/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+		},
 	}
 	for i := range testCases {
 		tc := testCases[i]
