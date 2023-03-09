@@ -5,6 +5,8 @@ go 1.19
 require (
 	github.com/aws/aws-sdk-go v1.44.199
 	github.com/google/go-containerregistry v0.13.0
+	golang.org/x/sync v0.1.0
+	golang.org/x/time v0.3.0
 	k8s.io/klog/v2 v2.80.1
 )
 
@@ -25,7 +27,6 @@ require (
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	golang.org/x/net v0.1.0 // indirect
 	golang.org/x/oauth2 v0.1.0 // indirect
-	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.1.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect

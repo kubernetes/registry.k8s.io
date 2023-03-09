@@ -17,9 +17,11 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/time/rate"
 
 	"k8s.io/klog/v2"
 
@@ -29,6 +31,12 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 )
+
+// 40*60s = 2400 RPM, which leaves 100 overhead for list calls to reach 2500
+// our actual limit currently is 5000 RPM but we're proposing lowering it ...
+// TODO: unfortunately this is inherently global state, but the current approach
+// is kinda hacky
+var gcpRateLimiter *rate.Limiter = rate.NewLimiter(40, 1)
 
 // WalkImageLAyersFunc is used to visit an image
 type WalkImageLayersFunc func(ref name.Reference, layers []v1.Layer) error
@@ -56,15 +64,13 @@ func WalkImageLayersGCP(repo name.Repository, walkImageLayers WalkImageLayersFun
 			}
 			for digest, metadata := range tags.Manifests {
 				digest := digest
+				// google.Walk already walks the child manifests
+				if metadata.MediaType == string(types.DockerManifestList) || metadata.MediaType == string(types.OCIImageIndex) {
+					continue
+				}
 				ref, err := name.ParseReference(fmt.Sprintf("%s@%s", r, digest))
 				if err != nil {
 					return err
-				}
-				// google.Walk already walks the child manifests, skip these early
-				// to avoid an unnecessary request to backend
-				if metadata.MediaType == string(types.DockerManifestList) || metadata.MediaType == string(types.OCIImageIndex) {
-					klog.Infof("Skipping index: %s", ref.String())
-					continue
 				}
 				g.Go(func() error {
 					return walkManifestLayers(ref, walkImageLayers)
@@ -77,6 +83,7 @@ func WalkImageLayersGCP(repo name.Repository, walkImageLayers WalkImageLayersFun
 }
 
 func walkManifestLayers(ref name.Reference, walkImageLayers WalkImageLayersFunc) error {
+	_ = gcpRateLimiter.Wait(context.Background())
 	desc, err := remote.Get(ref)
 	if err != nil {
 		return err
