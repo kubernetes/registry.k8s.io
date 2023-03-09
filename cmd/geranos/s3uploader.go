@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/hex"
 
@@ -78,6 +79,7 @@ func (s *s3Uploader) CopyToS3(bucket string, layer v1.Layer) error {
 			return nil
 		}
 	}
+	_ = gcpRateLimiter.Wait(context.Background())
 	r, err := layer.Compressed()
 	if err != nil {
 		return err
