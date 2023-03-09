@@ -45,9 +45,9 @@ func Run(_ []string) error {
 	// TODO: make configurable later
 	const s3Bucket = "prod-registry-k8s-io-us-east-2"
 
-	// 60*60s = 3600 RPM, which should be well below our current 5000 RPM
-	// limit, even with the host node making other registry API calls
-	registryRateLimit := NewRateLimitRoundTripper(60, 1)
+	// 80*60s = 4800 RPM, below our current 5000 RPM per-user limit on the registry
+	// Even with the host node making other registry API calls
+	registryRateLimit := NewRateLimitRoundTripper(80, 1)
 
 	repo, err := name.NewRepository(sourceRegistry)
 	if err != nil {
