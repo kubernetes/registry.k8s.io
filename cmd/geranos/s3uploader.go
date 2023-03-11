@@ -89,7 +89,6 @@ func (s *s3Uploader) CopyToS3(bucket string, layer v1.Layer) error {
 		Body:   r,
 	}
 	// TODO: what if it isn't sha256?
-	// We also depend on this in cmd/archeio currently
 	if digest.Algorithm == "SHA256" {
 		b, err := hex.DecodeString(digest.Hex)
 		if err != nil {
