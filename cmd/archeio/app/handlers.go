@@ -72,7 +72,12 @@ func MakeHandler(rc RegistryConfig) http.Handler {
 
 func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWriter, r *http.Request) {
 	// matches blob requests, captures the requested blob hash
-	reBlob := regexp.MustCompile("^/v2/.*/blobs/sha256:([0-9a-f]{64})$")
+	// https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pull
+	// Blobs are at `/v2/<name>/blobs/<digest>`
+	// Note that ':' cannot be contained in <name> but *must* be contained in <digest>
+	// <digest> also cannot contain `/` so we can use a relatively simple and cheap regex
+	// to match blob requests and capture the digest
+	reBlob := regexp.MustCompile("^/v2/.*/blobs/([^/]+:[a-zA-Z0-9=_-]+)$")
 	// initialize map of clientIP to AWS region
 	regionMapper := cloudcidrs.NewIPMapper()
 	// capture these in a http handler lambda
@@ -116,7 +121,7 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 			return
 		}
 		// it is a blob request, grab the hash for later
-		hash := matches[1]
+		digest := matches[1]
 
 		// for blob requests, check the client IP and determine the best backend
 		clientIP, err := clientip.Get(r)
@@ -143,8 +148,8 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		}
 		bucketURL := awsRegionToHostURL(region, rc.DefaultAWSBaseURL)
 		// this matches GCR's GCS layout, which we will use for other buckets
-		blobURL := bucketURL + "/containers/images/sha256%3A" + hash
-		if blobs.BlobExists(blobURL, bucketURL, hash) {
+		blobURL := bucketURL + "/containers/images/" + digest
+		if blobs.BlobExists(blobURL, bucketURL, digest) {
 			// blob known to be available in AWS, redirect client there
 			klog.V(2).InfoS("redirecting blob request to AWS", "path", rPath)
 			http.Redirect(w, r, blobURL, http.StatusTemporaryRedirect)

@@ -160,15 +160,15 @@ func TestMakeV2Handler(t *testing.T) {
 	}
 	blobs := fakeBlobsChecker{
 		knownURLs: map[string]bool{
-			"https://prod-registry-k8s-io-ap-south-1.s3.dualstack.ap-south-1.amazonaws.com/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":         true,
-			"https://prod-registry-k8s-io-ap-southeast-1.s3.dualstack.ap-southeast-1.amazonaws.com/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e": true,
-			"https://prod-registry-k8s-io-eu-central-1.s3.dualstack.eu-central-1.amazonaws.com/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":     true,
-			"https://prod-registry-k8s-io-eu-west-1.s3.dualstack.eu-west-1.amazonaws.com/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
-			"https://prod-registry-k8s-io-us-east-1.s3.dualstack.us-east-2.amazonaws.com/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
-			"https://prod-registry-k8s-io-us-east-2.s3.dualstack.us-east-2.amazonaws.com/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
-			"https://prod-registry-k8s-io-us-west-1.s3.dualstack.us-west-1.amazonaws.com/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
-			"https://prod-registry-k8s-io-us-west-2.s3.dualstack.us-west-2.amazonaws.com/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
-			"https://prod-registry-k8s-io-eu-west-2.s3.dualstack.eu-west-2.amazonaws.com/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
+			"https://prod-registry-k8s-io-ap-south-1.s3.dualstack.ap-south-1.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":         true,
+			"https://prod-registry-k8s-io-ap-southeast-1.s3.dualstack.ap-southeast-1.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e": true,
+			"https://prod-registry-k8s-io-eu-central-1.s3.dualstack.eu-central-1.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":     true,
+			"https://prod-registry-k8s-io-eu-west-1.s3.dualstack.eu-west-1.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
+			"https://prod-registry-k8s-io-us-east-1.s3.dualstack.us-east-2.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
+			"https://prod-registry-k8s-io-us-east-2.s3.dualstack.us-east-2.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
+			"https://prod-registry-k8s-io-us-west-1.s3.dualstack.us-west-1.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
+			"https://prod-registry-k8s-io-us-west-2.s3.dualstack.us-west-2.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
+			"https://prod-registry-k8s-io-eu-west-2.s3.dualstack.eu-west-2.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
 		},
 	}
 	handler := makeV2Handler(registryConfig, &blobs)
@@ -183,6 +183,13 @@ func TestMakeV2Handler(t *testing.T) {
 			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil),
 			ExpectedStatus: http.StatusTemporaryRedirect,
 			ExpectedURL:    "https://k8s.gcr.io/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+		},
+		{
+			// future-proofing tests for other digest algorithms, even though we only have sha256 content as of March 2023
+			Name:           "/v2/pause/blobs/sha512:3b0998121425143be7164ea1555efbdf5b8a02ceedaa26e01910e7d017ff78ddbba27877bd42510a06cc14ac1bc6c451128ca3f0d0afba28b695e29b2702c9c7",
+			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/blobs/sha256:3b0998121425143be7164ea1555efbdf5b8a02ceedaa26e01910e7d017ff78ddbba27877bd42510a06cc14ac1bc6c451128ca3f0d0afba28b695e29b2702c9c7", nil),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://k8s.gcr.io/v2/pause/blobs/sha256:3b0998121425143be7164ea1555efbdf5b8a02ceedaa26e01910e7d017ff78ddbba27877bd42510a06cc14ac1bc6c451128ca3f0d0afba28b695e29b2702c9c7",
 		},
 		{
 			Name: "Somehow bogus remote addr, /v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
@@ -212,7 +219,7 @@ func TestMakeV2Handler(t *testing.T) {
 				return r
 			}(),
 			ExpectedStatus: http.StatusTemporaryRedirect,
-			ExpectedURL:    "https://prod-registry-k8s-io-eu-west-2.s3.dualstack.eu-west-2.amazonaws.com/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			ExpectedURL:    "https://prod-registry-k8s-io-eu-west-2.s3.dualstack.eu-west-2.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 		},
 		{
 			Name:           "AWS IP, /v2/pause/manifests/latest",
