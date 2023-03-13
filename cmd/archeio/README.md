@@ -47,4 +47,4 @@ any usage outside of the development of this project and may or may not be
 working at any given time. Changes will be deployed there before we deploy
 to production, and be exercised by a subset of Kubernetes' own CI.
 
-For AWS client-IP matching, see [`pkg/net/cidrs/aws`](./../../pkg/net/cidrs/aws)
+For IP matching info for both AWS and GCP ranges, see [`pkg/net/cloudcidrs`](./../../pkg/net/cloudcidrs)
