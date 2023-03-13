@@ -21,9 +21,11 @@ flowchart TD
 A(Does the request path start with /v2/?) -->|No, it is not a registry API call| B(Is the request for /?)
 B -->|No| D[Is the request for /privacy?]
 D -->|No, it is an unknown path| C[Serve 404 error]
-D -->|Yes| K[Serve redirect to linux foundation privacy policy page]
+D -->|Yes| K[Serve redirect to Linux Foundation privacy policy page]
 B -->|Yes| E[Serve redirect to registry wiki page]
-A -->|Yes, it is a registry API call| F(Is it a blob request?)
+A -->|Yes, it is a registry API call| L(Is it an OCI Distribution Standard API Call?)
+L -->|No, it is a non-standard API call.<br>Currently: `/v2/_catalog`.| M[Serve 404 error]
+L -->|Yes, it is a standard API call| F(Is it a blob request?)
 F -->|No| G[Serve redirect to Source Registry on GCP]
 F -->|Yes, it matches known blob request format| H(Is the client IP known to be from GCP?)
 H -->|Yes| G
