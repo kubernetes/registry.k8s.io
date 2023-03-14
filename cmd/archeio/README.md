@@ -15,7 +15,7 @@ Kubernetes SIG K8s-Infra's needs. However, some of the packages under
 [`pkg/`](./../../pkg/) may be useful if you have a similar problem,
 and they should be pretty generalized and re-usable.
 
-Please also see the main repo README and in particular [the "stability" note](./../../#stability).
+Please also see the main repo README and in particular [the "stability" note](../../README.md#stability).
 
 -----
 
