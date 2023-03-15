@@ -39,8 +39,6 @@ var knownFailingFiles = sets.NewString(
 	// this code is used only at development time and integration testing it
 	// is probably excessive
 	"k8s.io/registry.k8s.io/pkg/net/cloudcidrs/internal/ranges2go/main.go",
-	// TODO: this is reasonable to test and has poor coverage currently
-	"k8s.io/registry.k8s.io/pkg/net/cloudcidrs/internal/ranges2go/parse_gcp.go",
 	// TODO: this is reasonable to test but shy of 100% coverage, mostly error handling ...
 	"k8s.io/registry.k8s.io/pkg/net/cloudcidrs/internal/ranges2go/gen.go",
 	// geranos is not easily tested and is not in the blocking path in production
