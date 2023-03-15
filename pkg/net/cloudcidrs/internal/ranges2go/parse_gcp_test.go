@@ -62,7 +62,7 @@ func TestGCPParseIPRangesJSON(t *testing.T) {
 	}
 
 	// parse some bogus data
-	_, err = parseAWSIPRangesJSON([]byte(`{"prefixes": false}`))
+	_, err = parseGCPCloudJSON([]byte(`{"prefixes": false}`))
 	if err == nil {
 		t.Fatal("expected error parsing garbage data but got none")
 	}
@@ -99,6 +99,20 @@ func TestGCPRegionsToPrefixesFromData(t *testing.T) {
 			},
 		}
 		_, err := gcpRegionsToPrefixesFromData(badV6Prefixes)
+		if err == nil {
+			t.Fatal("expected error parsing bogus prefix but got none")
+		}
+	})
+	t.Run("bad no prefixes", func(t *testing.T) {
+		t.Parallel()
+		badNoPrefixes := &GCPCloudJSON{
+			Prefixes: []GCPPrefix{
+				{
+					Scope: "us-east-1",
+				},
+			},
+		}
+		_, err := gcpRegionsToPrefixesFromData(badNoPrefixes)
 		if err == nil {
 			t.Fatal("expected error parsing bogus prefix but got none")
 		}
