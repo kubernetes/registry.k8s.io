@@ -59,7 +59,7 @@ var knownFailingFiles = sets.NewString(
 
 func main() {
 	fmt.Println("Checking coverage ...")
-	profiles, err := cover.ParseProfiles("./../../bin/all-filtered.cov")
+	profiles, err := cover.ParseProfiles("./../../bin/all.cov")
 	if err != nil {
 		panic(err)
 	}
