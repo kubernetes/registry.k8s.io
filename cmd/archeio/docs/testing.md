@@ -12,7 +12,7 @@ methods, we also have unit tests covering the HTTP Handlers and full
 
 **This level of coverage must be maintained**, it is imperative that we have robust
 testing in this project that may soon serve all Kubernetes project image downloads.
-TODO: this should be enforced by CI. Currently it is enforced by reviewers.
+We automatically enforce 100% code coverage for archeio sources.
 
 Coverage results are visible by clicking the `pull-oci-proxy-test` context link
 at the bottom of the pull request.

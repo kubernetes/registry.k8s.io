@@ -23,7 +23,7 @@ import (
 
 func TestGenerateRangesGo(t *testing.T) {
 	// raw data to generate from
-	const rawData = `{
+	const rawAWSData = `{
   "syncToken": "1649878400",
   "createDate": "2022-04-13-19-33-20",
   "prefixes": [
@@ -80,7 +80,41 @@ func TestGenerateRangesGo(t *testing.T) {
   ]
 }
 `
-	rtp, err := parseAWS(rawData)
+	awsRTP, err := parseAWS(rawAWSData)
+	if err != nil {
+		t.Fatalf("unexpected error parsing test data: %v", err)
+	}
+	const rawGCPData = `{
+  "syncToken": "1678334702365",
+  "creationTime": "2023-03-08T20:05:02.365608",
+  "prefixes": [{
+    "ipv4Prefix": "34.80.0.0/15",
+    "service": "Google Cloud",
+    "scope": "asia-east1"
+  }, {
+    "ipv4Prefix": "34.137.0.0/16",
+    "service": "Google Cloud",
+    "scope": "asia-east1"
+  }, {
+    "ipv4Prefix": "35.185.128.0/19",
+    "service": "Google Cloud",
+    "scope": "asia-east1"
+  }, {
+    "ipv4Prefix": "130.211.240.0/20",
+    "service": "Google Cloud",
+    "scope": "asia-east1"
+  }, {
+    "ipv6Prefix": "2600:1900:4030::/44",
+    "service": "Google Cloud",
+    "scope": "asia-east1"
+  }, {
+    "ipv6Prefix": "2600:1900:4180::/44",
+    "service": "Google Cloud",
+    "scope": "us-west4"
+  }]
+}
+`
+	gcpRTP, err := parseGCP(rawGCPData)
 	if err != nil {
 		t.Fatalf("unexpected error parsing test data: %v", err)
 	}
@@ -112,6 +146,8 @@ import (
 
 // AWS cloud
 const AWS = "AWS"
+// GCP cloud
+const GCP = "GCP"
 
 // regionToRanges contains a preparsed map of cloud IPInfo to netip.Prefix
 var regionToRanges = map[IPInfo][]netip.Prefix{
@@ -127,11 +163,25 @@ var regionToRanges = map[IPInfo][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{52, 95, 174, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{69, 107, 7, 136}), 29),
 	},
+	{Cloud: GCP, Region: "asia-east1"}: {
+		netip.PrefixFrom(netip.AddrFrom16([16]byte{38, 0, 25, 0, 64, 48, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}), 44),
+		netip.PrefixFrom(netip.AddrFrom4([4]byte{34, 137, 0, 0}), 16),
+		netip.PrefixFrom(netip.AddrFrom4([4]byte{34, 80, 0, 0}), 15),
+		netip.PrefixFrom(netip.AddrFrom4([4]byte{35, 185, 128, 0}), 19),
+	},
+	{Cloud: GCP, Region: "us-west4"}: {
+		netip.PrefixFrom(netip.AddrFrom16([16]byte{38, 0, 25, 0, 65, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}), 44),
+	},
 }
 `
+
+	cloudToRTP := map[string]regionsToPrefixes{
+		"AWS": awsRTP,
+		"GCP": gcpRTP,
+	}
 	// generate and compare
 	w := &bytes.Buffer{}
-	if err := generateRangesGo(w, map[string]regionsToPrefixes{"AWS": rtp}); err != nil {
+	if err := generateRangesGo(w, cloudToRTP); err != nil {
 		t.Fatalf("unexpected error generating: %v", err)
 	}
 	result := w.String()

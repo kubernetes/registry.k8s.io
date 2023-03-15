@@ -39,6 +39,8 @@ if [[ "${MODE}" = 'unit' ]]; then
   go_test_opts+=('-tags=nointegration')
 elif [[ "${MODE}" = 'integration' ]]; then
   go_test_opts+=('-run' '^TestIntegration')
+else
+  MODE="all"
 fi
 
 # run unit tests with coverage enabled and junit output
@@ -48,15 +50,19 @@ fi
     -- "${go_test_opts[@]}" './...'
 )
 
-# filter out generated files
-sed '/zz_generated/d' "${REPO_ROOT}/bin/${MODE}.cov" > "${REPO_ROOT}/bin/${MODE}-filtered.cov"
-
 # generate cover html
-go tool cover -html="${REPO_ROOT}/bin/${MODE}-filtered.cov" -o "${REPO_ROOT}/bin/${MODE}-filtered.html"
+go tool cover -html="${REPO_ROOT}/bin/${MODE}.cov" -o "${REPO_ROOT}/bin/${MODE}.html"
 
 # if we are in CI, copy to the artifact upload location
 if [[ -n "${ARTIFACTS:-}" ]]; then
   cp "bin/${MODE}-junit.xml" "${ARTIFACTS:?}/junit.xml"
-  cp "${REPO_ROOT}/bin/${MODE}-filtered.cov" "${ARTIFACTS:?}/filtered.cov"
-  cp "${REPO_ROOT}/bin/${MODE}-filtered.html" "${ARTIFACTS:?}/filtered.html"
+  # TODO: currently these names are required in $ARTIFACTS in order to render
+  # in the spyglass view. however we're not filtering anymore
+  cp "${REPO_ROOT}/bin/${MODE}.cov" "${ARTIFACTS:?}/filtered.cov"
+  cp "${REPO_ROOT}/bin/${MODE}.html" "${ARTIFACTS:?}/filtered.html"
+fi
+
+# enforce coverage levels if we're running all tests
+if [[ "${MODE}" = 'all' ]]; then
+  (set -x; cd ./hack/tools && go run ./require-coverage)
 fi
