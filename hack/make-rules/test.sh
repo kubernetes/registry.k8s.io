@@ -39,6 +39,8 @@ if [[ "${MODE}" = 'unit' ]]; then
   go_test_opts+=('-tags=nointegration')
 elif [[ "${MODE}" = 'integration' ]]; then
   go_test_opts+=('-run' '^TestIntegration')
+else
+  MODE="all"
 fi
 
 # run unit tests with coverage enabled and junit output
@@ -59,4 +61,9 @@ if [[ -n "${ARTIFACTS:-}" ]]; then
   cp "bin/${MODE}-junit.xml" "${ARTIFACTS:?}/junit.xml"
   cp "${REPO_ROOT}/bin/${MODE}-filtered.cov" "${ARTIFACTS:?}/filtered.cov"
   cp "${REPO_ROOT}/bin/${MODE}-filtered.html" "${ARTIFACTS:?}/filtered.html"
+fi
+
+# enforce coverage levels if we're running all tests
+if [[ "${MODE}" = 'all' ]]; then
+  (set -x; cd ./hack/tools && go run ./require-coverage)
 fi
