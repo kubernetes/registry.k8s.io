@@ -64,6 +64,7 @@ func main() {
 		panic(err)
 	}
 	failedAny := false
+	needToRemove := []string{}
 	for _, profile := range profiles {
 		coverage := coverPercent(profile)
 		file := profile.FileName
@@ -75,6 +76,9 @@ func main() {
 				fmt.Printf("IGNORE: %s %v%%\n", file, coverage)
 			}
 		} else {
+			if knownFailingFiles.Has(file) {
+				needToRemove = append(needToRemove, file)
+			}
 			fmt.Printf("PASSED: %s %v%%\n", file, coverage)
 		}
 	}
@@ -83,6 +87,13 @@ func main() {
 		os.Exit(-1)
 	} else {
 		fmt.Println("All code coverage either acceptable or ignored")
+	}
+	if len(needToRemove) > 0 {
+		fmt.Println("FAILED: The following files are now passing and must be removed frmo the ignored list:")
+		for _, file := range needToRemove {
+			fmt.Println(file)
+		}
+		os.Exit(-1)
 	}
 }
 
