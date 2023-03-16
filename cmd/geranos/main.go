@@ -47,7 +47,7 @@ func Run(_ []string) error {
 
 	// 80*60s = 4800 RPM, below our current 5000 RPM per-user limit on the registry
 	// Even with the host node making other registry API calls
-	registryRateLimit := NewRateLimitRoundTripper(80, 1)
+	registryRateLimit := NewRateLimitRoundTripper(80)
 
 	repo, err := name.NewRepository(sourceRegistry)
 	if err != nil {

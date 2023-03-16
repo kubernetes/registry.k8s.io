@@ -31,9 +31,9 @@ type RateLimitRoundTripper struct {
 
 var _ http.RoundTripper = &RateLimitRoundTripper{}
 
-func NewRateLimitRoundTripper(limit rate.Limit, burst int) *RateLimitRoundTripper {
+func NewRateLimitRoundTripper(limit rate.Limit) *RateLimitRoundTripper {
 	return &RateLimitRoundTripper{
-		rateLimiter:  rate.NewLimiter(limit, burst),
+		rateLimiter:  rate.NewLimiter(limit, 1),
 		roundTripper: http.DefaultTransport,
 	}
 }
