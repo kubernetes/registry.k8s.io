@@ -1,6 +1,6 @@
 # Debugging issues with registry.k8s.io
 
-The registry.k8s.io is a Kubernetes container images registry that behaves generally like an [OCI](https://github.com/opencontainers/distribution-spec) compliant registry. Since registry.k8s.io is a proxy routing traffic to the closest available source, you ill need connectivity to several domains to download images. It is also best for performance to create your own registry mirror.
+The registry.k8s.io is a Kubernetes container images registry that behaves generally like an [OCI](https://github.com/opencontainers/distribution-spec) compliant registry. Since registry.k8s.io is a proxy routing traffic to the closest available source, you will need connectivity to several domains to download images. It is also best for performance to create your own registry mirror.
 
 When you are debugging issues, make sure you run these commands on the node that is attempting to run images. Things may be working fine on your laptop, but not on the Kubernetes node.
 
@@ -11,7 +11,7 @@ You may use the `dig` or `nslookup` command to validate DNS resolution of the re
 ;; ANSWER SECTION:
 registry.k8s.io.	3600	IN	A	34.107.244.51
 ```
-If you cannot successfully resolve a domain, check your DNS configuration often in your resolv.conf file.
+If you cannot successfully resolve a domain, check your DNS configuration, often configured in your resolv.conf file.
 
 
 ## Verify HTTP connectivity
