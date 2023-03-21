@@ -56,6 +56,17 @@ For `oras` use `oras copy registry.k8s.io/pause:3.9 my-registry.com/pause:3.9`.
 Docs: https://oras.land/cli_reference/4_oras_copy/
 
 
+### Mirroring With Harbor
+
+You can use Harbor to set up a proxy cache for Kubernetes images.
+
+From the Harbor web interface, go to "Registries" and click "New Endpoint".
+Create an endpoint `registry.k8s.io` with the endpoint URL https://registry.k8s.io.
+Go to "Projects" and click "New Project".
+Create a project named something like 'k8s', click "Proxy Cache" and select your `registry.k8s.io` endpoint.
+Docs: https://goharbor.io/docs/2.1.0/administration/configure-proxy-cache/
+
+
 ## Using Mirrored Images
 <!--
 NOTE: Wherever possible do not duplicate external content.
