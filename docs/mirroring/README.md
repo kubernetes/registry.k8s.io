@@ -48,6 +48,14 @@ Docs: https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/cra
 For `gcrane` see: https://cloud.google.com/container-registry/docs/migrate-external-containers
 
 
+### Mirroring With `oras`
+
+`oras` is an open-source tool for managing images and other artifacts in OCI registries.
+
+For `oras` use `oras copy registry.k8s.io/pause:3.9 my-registry.com/pause:3.9`.
+Docs: https://oras.land/cli_reference/4_oras_copy/
+
+
 ## Using Mirrored Images
 <!--
 NOTE: Wherever possible do not duplicate external content.
