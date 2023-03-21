@@ -6,10 +6,11 @@ image registry.
 For more details on the implementation see [cmd/archeio](./cmd/archeio/README.md)
 
 The community deployment configs are documented at in the k8s.io repo with
-the rest of the community infra deployments:
-https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io
+the rest of the community infra deployments, but primarily 
+[here][infra-configs].
 
-For publishing to registry.k8s.io, refer to the docs at https://git.k8s.io/k8s.io/k8s.gcr.io#managing-kubernetes-container-registries
+For publishing to registry.k8s.io, refer to [the docs][publishing] at in k8s.io 
+under `registry.k8s.io/`.
 
 ## Stability
 
@@ -24,7 +25,7 @@ are subject to change at _anytime_ as new resources become available or as other
 necessary.**
 
 **If you need to allow-list domains or IPs in your environment, we highly recommend
-mirroring images to a location you control instead.**
+[mirroring] images to a location you control instead.**
 
 The Kubernetes project is currently sending traffic to GCP and AWS
 thanks to their donations but we hope to redirect traffic to more
@@ -35,9 +36,10 @@ Please also note that there is **No SLA** as this is a free, volunteer managed
 service. We will however do our best to respond to issues and the system is
 designed to be reliable and low-maintenance.
 
-See Also: https://kubernetes.io/blog/2022/11/28/registry-k8s-io-faster-cheaper-ga
+See Also:
+- https://kubernetes.io/blog/2022/11/28/registry-k8s-io-faster-cheaper-ga
+- [mirroring]
 
-<!--TODO: link out to a doc with suggestion(s) for mirroring--->
 ## Privacy
 
 This project abides by the Linux Foundation privacy policy, as documented at
@@ -48,8 +50,8 @@ https://registry.k8s.io/privacy
 Previously all of Kubernetes' image hosting has been out of gcr.io ("Google Container Registry").
 
 We've incurred significant egress traffic costs from users on other cloud providers
-in particular in doing so, severely limiting our ability to use the infra budget
-for purposes other than hosting end-user downloads.
+in particular in doing so, severely limiting our ability to use the 
+GCP credits from Google for purposes other than hosting end-user downloads.
 
 We're now moving to shift all traffic behind a community controlled domain, so
 we can quickly implement cost-cutting measures like serving the bulk of the traffic
@@ -79,3 +81,6 @@ Participation in the Kubernetes community is governed by the [Kubernetes Code of
 [owners]: https://git.k8s.io/community/contributors/guide/owners.md
 [Creative Commons 4.0]: https://git.k8s.io/website/LICENSE
 [distribution-spec]: https://github.com/opencontainers/distribution-spec
+[publishing]: https://git.k8s.io/k8s.io/registry.k8s.io#managing-kubernetes-container-registries
+[infra-configs]: https://github.com/kubernetes/k8s.io/tree/main/infra/gcp/terraform
+[mirroring]: ./docs/mirroring/README.md

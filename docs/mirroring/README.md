@@ -1,0 +1,63 @@
+# Mirroring
+
+This guide covers mirroring images you use on registry.k8s.io
+to a host under your own control and using those images.
+
+The specific sub-steps will depend on the tools you use, but in general you will need to:
+
+1. Identify the images you need: [Identifying Images To Mirror](#Identifying-Images-To-Mirror)
+2. Mirror those images to your own registry: [Mirroring Images](#Mirroring-Images)
+3. Configure your tools to use the mirrored images: [Using Mirrored Images](#Using-Mirrored-Images)
+
+We have guides here for each of these steps.
+
+## Identifying Images To Mirror
+<!--
+NOTE: Wherever possible do not duplicate external content.
+
+Instead, link to existing official guides and merely provide a lightweight pointer here.
+
+See: https://kubernetes.io/docs/contribute/style/content-guide/#dual-sourced-content
+-->
+
+<!--TODO: Generically identifying registry.k8s.io images in manifests / charts / addons.-->
+
+For containerd see: [containerd.md](./containerd.md)
+For kubeadm see: [kubeadm.md](./kubeadm.md)
+
+
+## Mirroring Images
+<!--
+NOTE: Wherever possible do not duplicate external content.
+
+Instead, link to existing official guides and merely provide a lightweight pointer here.
+
+See: https://kubernetes.io/docs/contribute/style/content-guide/#dual-sourced-content
+-->
+
+This section covers some options for copying images you wish to mirror to your own registry.
+
+### Mirroring With `crane` Or `gcrane`
+
+`crane` is an open-source tool for interacting with remote images and registries.
+`gcrane` is a superset of crane with GCP specific additional features.
+
+For `crane` use `crane copy registry.k8s.io/pause:3.9 my-registry.com/pause:3.9`.
+Docs: https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane_copy.md
+
+For `gcrane` see: https://cloud.google.com/container-registry/docs/migrate-external-containers
+
+
+## Using Mirrored Images
+<!--
+NOTE: Wherever possible do not duplicate external content.
+
+Instead, link to existing official guides and merely provide a lightweight pointer here.
+
+See: https://kubernetes.io/docs/contribute/style/content-guide/#dual-sourced-content
+-->
+
+<!--TODO: cri-o, general manifests-->
+
+For containerd see: [containerd.md](./containerd.md)
+For kubeadm see: [kubeadm.md](./kubeadm.md)
