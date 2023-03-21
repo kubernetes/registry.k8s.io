@@ -38,7 +38,7 @@ designed to be reliable and low-maintenance.
 
 See Also:
 - https://kubernetes.io/blog/2022/11/28/registry-k8s-io-faster-cheaper-ga
-- [mirroring]
+- Our [mirroring guide][mirroring] for Kubernetes images
 
 ## Privacy
 
