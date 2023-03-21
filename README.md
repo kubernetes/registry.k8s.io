@@ -6,10 +6,11 @@ image registry.
 For more details on the implementation see [cmd/archeio](./cmd/archeio/README.md)
 
 The community deployment configs are documented at in the k8s.io repo with
-the rest of the community infra deployments:
-https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io
+the rest of the community infra deployments, but primarily 
+[here][infra-configs].
 
-For publishing to registry.k8s.io, refer to the docs at https://git.k8s.io/k8s.io/k8s.gcr.io#managing-kubernetes-container-registries
+For publishing to registry.k8s.io, refer to [the docs][publishing] at in k8s.io 
+under `registry.k8s.io/`.
 
 ## Stability
 
@@ -79,3 +80,5 @@ Participation in the Kubernetes community is governed by the [Kubernetes Code of
 [owners]: https://git.k8s.io/community/contributors/guide/owners.md
 [Creative Commons 4.0]: https://git.k8s.io/website/LICENSE
 [distribution-spec]: https://github.com/opencontainers/distribution-spec
+[publishing]: https://git.k8s.io/k8s.io/registry.k8s.io#managing-kubernetes-container-registries
+[infra-configs]: https://github.com/kubernetes/k8s.io/tree/main/infra/gcp/terraform
