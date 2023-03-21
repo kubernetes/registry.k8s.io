@@ -25,7 +25,7 @@ are subject to change at _anytime_ as new resources become available or as other
 necessary.**
 
 **If you need to allow-list domains or IPs in your environment, we highly recommend
-mirroring images to a location you control instead.**
+[mirroring] images to a location you control instead.**
 
 The Kubernetes project is currently sending traffic to GCP and AWS
 thanks to their donations but we hope to redirect traffic to more
@@ -36,9 +36,10 @@ Please also note that there is **No SLA** as this is a free, volunteer managed
 service. We will however do our best to respond to issues and the system is
 designed to be reliable and low-maintenance.
 
-See Also: https://kubernetes.io/blog/2022/11/28/registry-k8s-io-faster-cheaper-ga
+See Also:
+- https://kubernetes.io/blog/2022/11/28/registry-k8s-io-faster-cheaper-ga
+- [mirroring]
 
-<!--TODO: link out to a doc with suggestion(s) for mirroring--->
 ## Privacy
 
 This project abides by the Linux Foundation privacy policy, as documented at
@@ -82,3 +83,4 @@ Participation in the Kubernetes community is governed by the [Kubernetes Code of
 [distribution-spec]: https://github.com/opencontainers/distribution-spec
 [publishing]: https://git.k8s.io/k8s.io/registry.k8s.io#managing-kubernetes-container-registries
 [infra-configs]: https://github.com/kubernetes/k8s.io/tree/main/infra/gcp/terraform
+[mirroring]: ./docs/mirroring/README.md
