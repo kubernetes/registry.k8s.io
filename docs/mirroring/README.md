@@ -22,8 +22,8 @@ See: https://kubernetes.io/docs/contribute/style/content-guide/#dual-sourced-con
 
 <!--TODO: Generically identifying registry.k8s.io images in manifests / charts / addons.-->
 
-For containerd see: [containerd.md](./containerd.md)
-For kubeadm see: [kubeadm.md](./kubeadm.md)
+- For containerd see: [containerd.md](./containerd.md)
+- For kubeadm see: [kubeadm.md](./kubeadm.md)
 
 
 ## Mirroring Images
@@ -67,5 +67,5 @@ See: https://kubernetes.io/docs/contribute/style/content-guide/#dual-sourced-con
 
 <!--TODO: cri-o, general manifests-->
 
-For containerd see: [containerd.md](./containerd.md)
-For kubeadm see: [kubeadm.md](./kubeadm.md)
+- For containerd see: [containerd.md](./containerd.md)
+- For kubeadm see: [kubeadm.md](./kubeadm.md)
