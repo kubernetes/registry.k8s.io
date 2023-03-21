@@ -49,8 +49,8 @@ https://registry.k8s.io/privacy
 Previously all of Kubernetes' image hosting has been out of gcr.io ("Google Container Registry").
 
 We've incurred significant egress traffic costs from users on other cloud providers
-in particular in doing so, severely limiting our ability to use the infra budget
-for purposes other than hosting end-user downloads.
+in particular in doing so, severely limiting our ability to use the 
+GCP credits from Google for purposes other than hosting end-user downloads.
 
 We're now moving to shift all traffic behind a community controlled domain, so
 we can quickly implement cost-cutting measures like serving the bulk of the traffic
