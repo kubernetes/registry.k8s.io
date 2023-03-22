@@ -21,11 +21,17 @@ Please also see the main repo README and in particular [the "stability" note](..
 
 For a rough TLDR of the current design:
 
-- Images are hosted primarily in the existing Kubernetes [GCR](https://gcr.io/) registry
-- Mirrors *of content* blobs are hosted in S3 buckets in AWS
-- AWS clients are detected by client IP address and redirect to a local S3 bucket copy
-*only* when requesting content blobs, *not* manifests, manifest lists, tags etc.
-- GCP clients and other requests are rerouted to the regional upstream source Artifact Registries
+- Images are hosted primarily in [Artifact Registry][artifact-registry] instances as the source of truth
+  - Why AR?
+    - Kubernetes has non-trivial tooling for managing, securing, monitoring etc. of our registries using GCP APIs that fill gaps in the OCI distribution spec, and otherwise allow synchronization and discovery of content, notably https://github.com/opencontainers/distribution-spec/issues/222
+    - We have directly migrated all of this infrastructure from GCR (previously k8s.gcr.io) to AR with ~no code changes
+    - Until recently our infrastructure funding has primarily been GCP (now matched by AWS) and GCP remains a significant source of funding
+- Mirrors *of content-addressed* layers are hosted in S3 buckets in AWS
+  - Why mirror only [Content-Addresed][content-addressed] Image APIs?
+    - Image Layers (which are content-addressed) in particular are the vast majority of bandwidth == costs. Serving them from one cloud to another is expensive.
+    - Content Addressed APIs are relatively safe to serve from untrusted or less-secured hosts, since all major clients confirming the result matches the requested digest
+- We detect client IP address and match it to Cloud Providers we use in order to serve content-addressed API calls from the most local and cost-effective copy
+- Other API calls (getting and listing tags etc) are redirected to the regional upstream source-of-truth Artifact Registries
 
 This allows us to offload substantial bandwidth securely, while not having to fully
 implement a registry from scratch and maintaining the project's existing security
@@ -33,7 +39,8 @@ controls around the GCP source registries (implemented elsewhere in the Kubernet
 We only re-route some content-addressed storage requests to additional hosts.
 
 Clients do still need to either pull by digest (`registry.k8s.io/foo@sha256:...`),
-verify sigstore signatures, or else trust that the redirector instance is secure.
+verify sigstore signatures, or else trust that the redirector instance is secure,
+but not the S3 buckets or additional future content-addressed storage hosts.
 
 We maintain relatively tight control over the production redirector instance and
 the source registries. Very few contributors have access to this infrastructure.
@@ -44,6 +51,7 @@ may or may not be working at any given time.
 Changes will be deployed there before we deploy to production, and be exercised
 by a subset of Kubernetes' own CI.
 
+Mirroring content-addressed content to object storage is currently handled by [`cmd/geranos`](./../geranos).
 
 For more detail see:
 - How requests are handled: [docs/request-handling.md](./docs/request-handling.md)
@@ -82,3 +90,6 @@ to detect and route users on dimensions other than "is a known AWS IP in a known
 
 More changes will come in the future, and these implementation details while documented
 **CANNOT** be depended on.
+
+[artifact-registry]: https://cloud.google.com/artifact-registry
+[content-addressed]: https://en.wikipedia.org/wiki/Content-addressable_storage
