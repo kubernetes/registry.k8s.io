@@ -80,3 +80,4 @@ See: https://kubernetes.io/docs/contribute/style/content-guide/#dual-sourced-con
 
 - For containerd see: [containerd.md](./containerd.md)
 - For kubeadm see: [kubeadm.md](./kubeadm.md)
+- For kOps see: [kOps.md](./kOps.md)
