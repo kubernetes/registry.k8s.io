@@ -22,6 +22,15 @@ See: https://kubernetes.io/docs/contribute/style/content-guide/#dual-sourced-con
 
 <!--TODO: Generically identifying registry.k8s.io images in manifests / charts / addons.-->
 
+If you have a running cluster then our [community-images] krew plugin can
+help you identify Kubernetes Project image references to mirror like this:
+
+```console
+kubectl community-images --mirror
+```
+
+We also have tooling specific guides:
+
 - For containerd see: [containerd.md](./containerd.md)
 - For kubeadm see: [kubeadm.md](./kubeadm.md)
 
@@ -85,3 +94,5 @@ See: https://kubernetes.io/docs/contribute/style/content-guide/#dual-sourced-con
 - For containerd see: [containerd.md](./containerd.md)
 - For kubeadm see: [kubeadm.md](./kubeadm.md)
 - For kOps see: [kOps.md](./kOps.md)
+
+[community-images]: https://github.com/kubernetes-sigs/community-images
