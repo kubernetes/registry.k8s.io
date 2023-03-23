@@ -58,6 +58,14 @@ Docs: https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/cra
 
 For `gcrane` see: https://cloud.google.com/container-registry/docs/migrate-external-containers
 
+To mirror all images surfaced by [community-images], you can use this shell snippet:
+```shell
+# set MIRROR to your own host
+export MIRROR=my-registry.com
+# copy all Kubernetes project images in your current cluster to MIRROR
+kubectl community-images --mirror --plain |\
+   xargs -i bash -c 'set -x; crane copy "$1" "${1/registry.k8s.io/'"${MIRROR}"'}"' - '{}'
+```
 
 ### Mirroring With `oras`
 
@@ -65,6 +73,15 @@ For `gcrane` see: https://cloud.google.com/container-registry/docs/migrate-exter
 
 For `oras` use `oras copy registry.k8s.io/pause:3.9 my-registry.com/pause:3.9`.
 Docs: https://oras.land/cli_reference/4_oras_copy/
+
+To mirror all images surfaced by [community-images], you can use this shell snippet:
+```shell
+# set MIRROR to your own host
+export MIRROR=my-registry.com
+# copy all Kubernetes project images in your current cluster to MIRROR
+kubectl community-images --mirror --plain |\
+   xargs -i bash -c 'set -x; oras copy "$1" "${1/registry.k8s.io/'"${MIRROR}"'}"' - '{}'
+```
 
 
 ### Mirroring With Harbor
