@@ -29,7 +29,10 @@ help you identify Kubernetes Project image references to mirror like this:
 kubectl community-images --mirror
 ```
 
-We also have tooling specific guides:
+**NOTE**: This will only find images specified in your currently running pods,
+and not for example the "pause" image used to implement pods in containerd / cri-o / dockershim.
+
+Tooling specific guides:
 
 - For containerd see: [containerd.md](./containerd.md)
 - For kubeadm see: [kubeadm.md](./kubeadm.md)
