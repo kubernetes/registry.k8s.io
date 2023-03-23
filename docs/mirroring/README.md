@@ -35,7 +35,9 @@ Instead, link to existing official guides and merely provide a lightweight point
 See: https://kubernetes.io/docs/contribute/style/content-guide/#dual-sourced-content
 -->
 
-This section covers some options for copying images you wish to mirror to your own registry.
+Here are some options for copying images you wish to mirror to your own registry.
+
+<!-- FOSS Mirroring Tools First -->
 
 ### Mirroring With `crane` Or `gcrane`
 
@@ -66,6 +68,8 @@ Go to "Projects" and click "New Project".
 Create a project named something like 'k8s', click "Proxy Cache" and select your `registry.k8s.io` endpoint.
 Docs: https://goharbor.io/docs/2.1.0/administration/configure-proxy-cache/
 
+<!-- NON-FOSS Mirroring Tools Below Here -->
+
 
 ## Using Mirrored Images
 <!--
@@ -80,3 +84,4 @@ See: https://kubernetes.io/docs/contribute/style/content-guide/#dual-sourced-con
 
 - For containerd see: [containerd.md](./containerd.md)
 - For kubeadm see: [kubeadm.md](./kubeadm.md)
+- For kOps see: [kOps.md](./kOps.md)
