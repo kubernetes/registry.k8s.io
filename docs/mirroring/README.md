@@ -112,7 +112,7 @@ See: https://kubernetes.io/docs/contribute/style/content-guide/#dual-sourced-con
 
 <!--TODO: cri-o-->
 
-A simple option for many cases is to update the `image` fields in your 
+In many cases it is sufficient to update the `image` fields in your
 Kubernetes manifests (deployments, pods, replicasets, etc) to reference
 your mirrored images instead.
 
