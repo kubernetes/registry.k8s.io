@@ -5,9 +5,9 @@ to a host under your own control and using those images.
 
 The specific sub-steps will depend on the tools you use, but in general you will need to:
 
-1. Identify the images you need: [Identifying Images To Mirror](#Identifying-Images-To-Mirror)
-2. Mirror those images to your own registry: [Mirroring Images](#Mirroring-Images)
-3. Configure your tools to use the mirrored images: [Using Mirrored Images](#Using-Mirrored-Images)
+1. Identify the images you need: [Identifying Images To Mirror][identifying-images]
+2. Mirror those images to your own registry: [Mirroring Images][mirroring-images]
+3. Configure your tools to use the mirrored images: [Using Mirrored Images][using-mirrored-images]
 
 We have guides here for each of these steps.
 
@@ -73,6 +73,8 @@ kubectl community-images --mirror --plain |\
    xargs -i bash -c 'set -x; crane copy "$1" "${1/registry.k8s.io/'"${MIRROR}"'}"' - '{}'
 ```
 
+Once you're done, see [Using Mirrored Images][using-mirrored-images].
+
 ### Mirroring With `oras`
 
 `oras` is an open-source tool for managing images and other artifacts in OCI registries.
@@ -89,6 +91,7 @@ kubectl community-images --mirror --plain |\
    xargs -i bash -c 'set -x; oras copy "$1" "${1/registry.k8s.io/'"${MIRROR}"'}"' - '{}'
 ```
 
+Once you're done, see [Using Mirrored Images][using-mirrored-images].
 
 ### Mirroring With Harbor
 
@@ -99,6 +102,8 @@ Create an endpoint `registry.k8s.io` with the endpoint URL https://registry.k8s.
 Go to "Projects" and click "New Project".
 Create a project named something like 'k8s', click "Proxy Cache" and select your `registry.k8s.io` endpoint.
 Docs: https://goharbor.io/docs/2.1.0/administration/configure-proxy-cache/
+
+Once you're done, see [Using Mirrored Images][using-mirrored-images].
 
 <!-- NON-FOSS Mirroring Tools Below Here -->
 
@@ -124,4 +129,8 @@ For specific tools we have these guides:
 - For kubeadm see: [kubeadm.md](./kubeadm.md)
 - For kOps see: [kOps.md](./kOps.md)
 
+[identifying-images]: #Identifying-Images-To-Mirror
+[mirroring-images]: #Mirroring-Images
+[using-mirrored-images]: #Using-Mirrored-Images
 [community-images]: https://github.com/kubernetes-sigs/community-images
+
