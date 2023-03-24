@@ -35,6 +35,7 @@ and not for example the "pause" image used to implement pods in containerd / cri
 For specific tools we have these guides:
 
 - For containerd see: [containerd.md](./containerd.md)
+- For cri-o see: [cri-o.md](./cri-o.md)
 - For kubeadm see: [kubeadm.md](./kubeadm.md)
 - For kOps see: [kOps.md](./kOps.md)
 
@@ -110,8 +111,6 @@ Instead, link to existing official guides and merely provide a lightweight point
 See: https://kubernetes.io/docs/contribute/style/content-guide/#dual-sourced-content
 -->
 
-<!--TODO: cri-o-->
-
 In many cases it is sufficient to update the `image` fields in your
 Kubernetes manifests (deployments, pods, replicasets, etc) to reference
 your mirrored images instead.
@@ -119,6 +118,7 @@ your mirrored images instead.
 For specific tools we have these guides:
 
 - For containerd see: [containerd.md](./containerd.md)
+- For cri-o see: [cri-o.md](./cri-o.md)
 - For kubeadm see: [kubeadm.md](./kubeadm.md)
 - For kOps see: [kOps.md](./kOps.md)
 
