@@ -32,10 +32,11 @@ kubectl community-images --mirror
 **NOTE**: This will only find images specified in your currently running pods,
 and not for example the "pause" image used to implement pods in containerd / cri-o / dockershim.
 
-Tooling specific guides:
+For specific tools we have these guides:
 
 - For containerd see: [containerd.md](./containerd.md)
 - For kubeadm see: [kubeadm.md](./kubeadm.md)
+- For kOps see: [kOps.md](./kOps.md)
 
 
 ## Mirroring Images
@@ -109,7 +110,13 @@ Instead, link to existing official guides and merely provide a lightweight point
 See: https://kubernetes.io/docs/contribute/style/content-guide/#dual-sourced-content
 -->
 
-<!--TODO: cri-o, general manifests-->
+<!--TODO: cri-o-->
+
+A simple option for many cases is to update the `image` fields in your 
+Kubernetes manifests (deployments, pods, replicasets, etc) to reference
+your mirrored images instead.
+
+For specific tools we have these guides:
 
 - For containerd see: [containerd.md](./containerd.md)
 - For kubeadm see: [kubeadm.md](./kubeadm.md)
