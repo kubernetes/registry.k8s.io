@@ -36,6 +36,7 @@ For specific tools we have these guides:
 
 - For containerd see: [containerd.md](./containerd.md)
 - For cri-o see: [cri-o.md](./cri-o.md)
+- For cri-dockerd see: [cri-dockerd.md](./cri-dockerd.md)
 - For kubeadm see: [kubeadm.md](./kubeadm.md)
 - For kOps see: [kOps.md](./kOps.md)
 
@@ -119,6 +120,7 @@ For specific tools we have these guides:
 
 - For containerd see: [containerd.md](./containerd.md)
 - For cri-o see: [cri-o.md](./cri-o.md)
+- For cri-dockerd see: [cri-dockerd.md](./cri-dockerd.md)
 - For kubeadm see: [kubeadm.md](./kubeadm.md)
 - For kOps see: [kOps.md](./kOps.md)
 
