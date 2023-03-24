@@ -22,6 +22,18 @@ See: https://kubernetes.io/docs/contribute/style/content-guide/#dual-sourced-con
 
 <!--TODO: Generically identifying registry.k8s.io images in manifests / charts / addons.-->
 
+If you have a running cluster then our [community-images] krew plugin can
+help you identify Kubernetes Project image references to mirror like this:
+
+```console
+kubectl community-images --mirror
+```
+
+**NOTE**: This will only find images specified in your currently running pods,
+and not for example the "pause" image used to implement pods in containerd / cri-o / dockershim.
+
+Tooling specific guides:
+
 - For containerd see: [containerd.md](./containerd.md)
 - For kubeadm see: [kubeadm.md](./kubeadm.md)
 
@@ -49,6 +61,14 @@ Docs: https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/cra
 
 For `gcrane` see: https://cloud.google.com/container-registry/docs/migrate-external-containers
 
+To mirror all images surfaced by [community-images], you can use this shell snippet:
+```shell
+# set MIRROR to your own host
+export MIRROR=my-registry.com
+# copy all Kubernetes project images in your current cluster to MIRROR
+kubectl community-images --mirror --plain |\
+   xargs -i bash -c 'set -x; crane copy "$1" "${1/registry.k8s.io/'"${MIRROR}"'}"' - '{}'
+```
 
 ### Mirroring With `oras`
 
@@ -56,6 +76,15 @@ For `gcrane` see: https://cloud.google.com/container-registry/docs/migrate-exter
 
 For `oras` use `oras copy registry.k8s.io/pause:3.9 my-registry.com/pause:3.9`.
 Docs: https://oras.land/cli_reference/4_oras_copy/
+
+To mirror all images surfaced by [community-images], you can use this shell snippet:
+```shell
+# set MIRROR to your own host
+export MIRROR=my-registry.com
+# copy all Kubernetes project images in your current cluster to MIRROR
+kubectl community-images --mirror --plain |\
+   xargs -i bash -c 'set -x; oras copy "$1" "${1/registry.k8s.io/'"${MIRROR}"'}"' - '{}'
+```
 
 
 ### Mirroring With Harbor
@@ -85,3 +114,5 @@ See: https://kubernetes.io/docs/contribute/style/content-guide/#dual-sourced-con
 - For containerd see: [containerd.md](./containerd.md)
 - For kubeadm see: [kubeadm.md](./kubeadm.md)
 - For kOps see: [kOps.md](./kOps.md)
+
+[community-images]: https://github.com/kubernetes-sigs/community-images
