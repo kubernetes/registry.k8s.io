@@ -19,6 +19,7 @@ package app
 import (
 	"net/http"
 	"sync"
+	"time"
 
 	"k8s.io/klog/v2"
 )
@@ -82,7 +83,7 @@ type blobChecker interface {
 // TODO: potentially replace with a caching implementation
 // should be plenty fast for now, HTTP HEAD on s3 is cheap
 type cachedBlobChecker struct {
-	http.Client
+	client *http.Client
 	blobCache
 }
 
@@ -91,6 +92,15 @@ func newCachedBlobChecker() *cachedBlobChecker {
 		blobCache: blobCache{
 			cache: make(map[string]map[string]struct{}),
 		},
+		client: newHTTPClient(),
+	}
+}
+
+func newHTTPClient() *http.Client {
+	// ensure sensible timeouts
+	// this client will be used to make HEAD calls
+	return &http.Client{
+		Timeout: time.Second * 5,
 	}
 }
 
@@ -127,7 +137,7 @@ func (c *cachedBlobChecker) BlobExists(blobURL, bucket, layerHash string) bool {
 		return true
 	}
 	klog.V(3).InfoS("blob existence cache miss", "url", blobURL)
-	r, err := c.Client.Head(blobURL)
+	r, err := c.client.Head(blobURL)
 	// fallback to assuming blob is unavailable on errors
 	if err != nil {
 		return false
