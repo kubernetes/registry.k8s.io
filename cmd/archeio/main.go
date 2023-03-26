@@ -26,7 +26,8 @@ import (
 	"time"
 
 	"k8s.io/klog/v2"
-	"k8s.io/registry.k8s.io/cmd/archeio/app"
+
+	"k8s.io/registry.k8s.io/cmd/archeio/internal/app"
 )
 
 func main() {
