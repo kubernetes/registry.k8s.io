@@ -4,6 +4,17 @@ The registry.k8s.io is a Kubernetes container images registry that behaves gener
 
 When you are debugging issues, make sure you run these commands on the node that is attempting to run images. Things may be working fine on your laptop, but not on the Kubernetes node.
 
+<!--TODO: identify what this looks like on s3 etc.-->
+> **Note**
+>
+> If you see a [403 error][http-403] like `Your client does not have permission to get URL`,
+> this error is not specific to the Kubernetes project / registry.k8s.io and
+> you need to work with your cloud vendor / service provider to get unblocked
+> by GCP.
+>
+> Please file an issue with your provider, the Kubernetes project does not
+> control this and it is not specific to us.
+
 ## Verify DNS resolution
 
 You may use the `dig` or `nslookup` command to validate DNS resolution of the registry.k8s.io domain or any domain it references. For example, running `dig registry.k8s.io` should return an answer that contains:
@@ -116,3 +127,5 @@ Mar 17 11:33:05 kind-control-plane containerd[224]: time="2023-03-17T11:33:05.19
 - https://github.com/kubernetes-sigs/kind/issues/1895#issuecomment-1468991168
 - https://github.com/kubernetes/registry.k8s.io/issues/174#issuecomment-1467646821
 - https://github.com/kubernetes/registry.k8s.io/issues/154#issuecomment-1435028502
+
+[http-403]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/403
