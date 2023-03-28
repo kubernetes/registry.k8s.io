@@ -39,6 +39,7 @@ For specific tools we have these guides:
 - For cri-dockerd see: [cri-dockerd.md](./cri-dockerd.md)
 - For kubeadm see: [kubeadm.md](./kubeadm.md)
 - For kOps see: [kOps.md](./kOps.md)
+- For Cluster API see: [cluster-api.md](./cluster-api.md)
 
 
 ## Mirroring Images
@@ -128,6 +129,7 @@ For specific tools we have these guides:
 - For cri-dockerd see: [cri-dockerd.md](./cri-dockerd.md)
 - For kubeadm see: [kubeadm.md](./kubeadm.md)
 - For kOps see: [kOps.md](./kOps.md)
+- For Cluster API see: [cluster-api.md](./cluster-api.md)
 
 [identifying-images]: #Identifying-Images-To-Mirror
 [mirroring-images]: #Mirroring-Images
