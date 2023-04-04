@@ -1,4 +1,6 @@
 # See https://cloud.google.com/cloud-build/docs/build-config
+options:
+  machineType: E2_HIGHCPU_8
 steps:
   - id: build-image
     name: gcr.io/cloud-builders/docker
