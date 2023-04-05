@@ -34,6 +34,7 @@ TAG="${TAG:-"$(date +v%Y%m%d)-$(git describe --always --dirty)"}"
 IMAGE_REPO="${IMAGE_REPO:-gcr.io/k8s-staging-infra-tools/archeio}"
 (cd "${REPO_ROOT}"/hack/tools && go build -o "${REPO_ROOT}"/bin/crane github.com/google/go-containerregistry/cmd/crane)
 IMAGE_DIGEST="${IMAGE_DIGEST:-$(bin/crane digest "${IMAGE_REPO}:${TAG}")}"
+export IMAGE_DIGEST
 
 # cd to staging terraform and apply
 cd "${k8sio_dir}"/infra/gcp/terraform/k8s-infra-oci-proxy
@@ -44,4 +45,4 @@ fi
 terraform -v
 terraform init
 # NOTE: this must use :? expansion to ensure we will not run with unset variables
-terraform apply -auto-approve -var digest="${IMAGE_DIGEST:?}"
+(set -x; terraform apply -auto-approve -var digest="${IMAGE_DIGEST:?}")
