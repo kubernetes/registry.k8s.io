@@ -1,6 +1,6 @@
 name: Report an issue with registry.k8s.io
 description: Report a bug encountered while using registry.k8s.io
-labels: ["sig/k8s-infra", "kind/bug", "needs/triage"]
+labels: ["sig/k8s-infra", "kind/support", "needs/triage"]
 body:
   - type: checkboxes
     attributes:
