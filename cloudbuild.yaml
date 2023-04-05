@@ -8,14 +8,33 @@ steps:
     args:
       - "push-images"
       - "TAG=$_GIT_TAG"
+  - id: clone-k8s.io
+    name: gcr.io/cloud-builders/git
+    entrypoint: git
+    args:
+    - clone
+    - --filter=tree:0
+    - https://github.com/kubernetes/k8s.io
+    - /k8s.io
+    volumes:
+    # make deploy assumes k8s.io will be at ./../k8s.io
+    # default working dir in cloudbuild is /workspace
+    - name: 'k8sio'
+      path: '/k8s.io'
+    # run immediately
+    waitFor: ['-']
   - id: deploy-staging
-    name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    name: "gcr.io/k8s-staging-infra-tools/k8s-infra:v20220912-7d7ed3258@sha256:48fb967be4c36da551584c3004330c7ce37568e4226ea7233eeb08c979374bc6"
     entrypoint: "/usr/bin/make"
+    volumes:
+    - name: 'k8sio'
+      path: '/k8s.io'
     args:
       - "deploy"
       - "TAG=$_GIT_TAG"
     waitFor:
       - build-image
+      - clone-k8s.io
 substitutions:
   # variables set by kubernetes/test-infra/images/builder
   # set by image-builder to vYYYYMMDD-hash
