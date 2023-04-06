@@ -28,4 +28,5 @@ go build -o "${REPO_ROOT}"/bin/golangci-lint github.com/golangci/golangci-lint/c
 cd "${REPO_ROOT}"
 
 # lint the main module
+go mod download # fetch deps first to avoid including it in timeout
 "${REPO_ROOT}"/bin/golangci-lint --config "${REPO_ROOT}/hack/tools/.golangci.yml" run ./...
