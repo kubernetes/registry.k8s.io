@@ -22,7 +22,6 @@ cd "${REPO_ROOT}"
 # if we're in cloudbuild then we might want to change the project to point
 # at where we're deploying instead of deploying from
 if [[ -n "${CLOUDBUILD_SET_PROJECT:-}" ]]; then
-    gcloud auth application-default set-quota-project "${CLOUDBUILD_SET_PROJECT:?}"
     gcloud config set project "${CLOUDBUILD_SET_PROJECT:?}"
 fi
 
