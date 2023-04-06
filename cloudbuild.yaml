@@ -32,6 +32,7 @@ steps:
     args:
       - "deploy"
       - "TAG=$_GIT_TAG"
+      - "CLOUDBUILD_SET_PROJECT=k8s-infra-oci-proxy"
     waitFor:
       - build-image
       - clone-k8s.io

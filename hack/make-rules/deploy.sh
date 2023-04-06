@@ -19,6 +19,13 @@ set -o errexit -o nounset -o pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 cd "${REPO_ROOT}"
 
+# if we're in cloudbuild then we might want to change the project to point
+# at where we're deploying instead of deploying from
+if [[ -n "${CLOUDBUILD_SET_PROJECT:-}" ]]; then
+    gcloud auth application-default set-quota-project "${CLOUDBUILD_SET_PROJECT:?}"
+    gcloud config set project "${CLOUDBUILD_SET_PROJECT:?}"
+fi
+
 # make sure we have a k8s.io clone for the prod terraform
 k8sio_dir="$(cd "${REPO_ROOT}"/../k8s.io && pwd -P)"
 if [[ ! -d "${k8sio_dir}" ]]; then
