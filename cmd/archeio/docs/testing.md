@@ -51,7 +51,14 @@ and `make e2e-test-local`. We run `make e2e-test` against the staging instance.
 These are limited to clients we can run locally and in containerize CI
 without privilege escalation (e.g. [crane] again).
 
-Results are at TODO: add testgrid pointer once these are merged and running
+These run immediately in the staging deploy jobs and
+continuously against the staging instance here:
+
+https://testgrid.k8s.io/sig-k8s-infra-registry#registry-sandbox-e2e-gcp
+https://testgrid.k8s.io/sig-k8s-infra-registry#registry-sandbox-e2e-aws
+
+`make e2e-test-local` runs against PRs to ensure the e2e tests themselves work
+and must pass before merge.
 
 ### Cluster e2e Testing
 
@@ -61,7 +68,7 @@ regions.
 
 This E2E CI should be consulted before promoting code to stable release + registry.k8s.io.
 
-Results are visible in [testgrid] at: https://testgrid.k8s.io/sig-k8s-infra-oci-proxy#Summary
+Results are visible in [testgrid] at: https://testgrid.k8s.io/sig-k8s-infra-registry#Summary
 
 The Kubernetes project itself has substantial assorted CI usage of the production instance
 and many CI jobs that primarily exist for other purposes will alert us if pulling from it fails.
