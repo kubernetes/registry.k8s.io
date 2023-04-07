@@ -48,10 +48,8 @@ var knownFailingFiles = sets.NewString(
 	"k8s.io/registry.k8s.io/cmd/geranos/s3uploader.go",
 	"k8s.io/registry.k8s.io/cmd/geranos/schemav1.go",
 	"k8s.io/registry.k8s.io/cmd/geranos/walkimages.go",
-	// integration test utilites
-	"k8s.io/registry.k8s.io/internal/integration/paths.go",
-	"k8s.io/registry.k8s.io/internal/integration/bins.go",
-	// TODO: we can cover this
+	// We cover this with integration tests and including integration coverage
+	// here would mask a lack of unit test coverage.
 	"k8s.io/registry.k8s.io/cmd/archeio/main.go",
 )
 

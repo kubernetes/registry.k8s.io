@@ -16,14 +16,35 @@ limitations under the License.
 
 package integration
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 func TestModuleRootDir(t *testing.T) {
 	root, err := ModuleRootDir()
 	if err != nil {
 		t.Fatalf("unexpected error getting root dir: %v", err)
+	} else if root == "" {
+		t.Fatal("expected root dir to be non-empty string")
 	}
-	if root == "" {
-		t.Fatalf("expected root dir to be non-empty string")
+
+	// we reasonably assume the filesystem root is not a module
+	wdAlwaysRoot := func() (string, error) { return "/", nil }
+	root, err = moduleRootDir(wdAlwaysRoot)
+	if err == nil {
+		t.Fatal("expected error getting moduleRootDir for /")
+	} else if root != "" {
+		t.Fatal("did not expect non-empty string getting moduleRootDir for /")
+	}
+
+	// test error handling for os.Getwd
+	expectErr := errors.New("err")
+	wdAlwaysError := func() (string, error) { return "", expectErr }
+	root, err = moduleRootDir(wdAlwaysError)
+	if err == nil {
+		t.Fatal("expected error getting moduleRootDir with erroring getWD")
+	} else if root != "" {
+		t.Fatal("did not expect non-empty string getting moduleRootDir for erroring getWD")
 	}
 }
