@@ -22,6 +22,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"net/netip"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -31,6 +32,7 @@ import (
 	"github.com/google/go-containerregistry/cmd/crane/cmd"
 	"github.com/google/go-containerregistry/pkg/crane"
 	"k8s.io/registry.k8s.io/internal/integration"
+	"k8s.io/registry.k8s.io/pkg/net/cloudcidrs"
 )
 
 type integrationTestCase struct {
@@ -90,7 +92,7 @@ func TestIntegrationMain(t *testing.T) {
 	}
 
 	// perform many test pulls ...
-	testCases := makeTestCases()
+	testCases := makeTestCases(t)
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.Name, func(t *testing.T) {
@@ -116,7 +118,8 @@ func TestIntegrationMain(t *testing.T) {
 	}
 }
 
-func makeTestCases() []integrationTestCase {
+func makeTestCases(t *testing.T) []integrationTestCase {
+	// a few small images that we really should be able to pull
 	wellKnownImages := []struct {
 		Name   string
 		Digest string
@@ -131,27 +134,37 @@ func makeTestCases() []integrationTestCase {
 		},
 	}
 
-	interestingIPs := []struct {
+	// collect interesting IPs after checking that they meet expectations
+	type interestingIP struct {
 		Name string
 		IP   string
-	}{
-		{
-			Name: "GCP",
-			IP:   "35.220.26.1",
-		},
-		{
-			Name: "AWS",
-			IP:   "35.180.1.1",
-		},
-		{
-			Name: "Definitely-External",
-			// we obviously won't see this in the wild, but we also know
-			// it should not match GCP, AWS or any future providers
-			IP: "192.168.0.1",
-		},
 	}
+	interestingIPs := []interestingIP{}
+	cidrs := cloudcidrs.NewIPMapper()
 
-	// generate testcases from test data
+	// One for GCP because we host there and have code paths for this
+	const gcpIP = "35.220.26.1"
+	if info, matches := cidrs.GetIP(netip.MustParseAddr(gcpIP)); !matches || info.Cloud != cloudcidrs.GCP {
+		t.Fatalf("Expected %q to be a GCP IP but is not detected as one with current data", gcpIP)
+	}
+	interestingIPs = append(interestingIPs, interestingIP{Name: "GCP", IP: gcpIP})
+
+	// One for AWS because we host there and have code paths for this
+	const awsIP = "35.180.1.1"
+	if info, matches := cidrs.GetIP(netip.MustParseAddr(awsIP)); !matches || info.Cloud != cloudcidrs.AWS {
+		t.Fatalf("Expected %q to be an AWS IP but is not detected as one with current data", awsIP)
+	}
+	interestingIPs = append(interestingIPs, interestingIP{Name: "AWS", IP: awsIP})
+
+	// we obviously won't see this in the wild, but we also know
+	// it should not match GCP, AWS or any future providers
+	const externalIP = "192.168.0.1"
+	if _, matches := cidrs.GetIP(netip.MustParseAddr(externalIP)); matches {
+		t.Fatalf("Expected %q to not match any provider IP range but it dies", externalIP)
+	}
+	interestingIPs = append(interestingIPs, interestingIP{Name: "External", IP: externalIP})
+
+	// generate testcases from test data, for every interesting IP pull each image
 	testCases := []integrationTestCase{}
 	for _, image := range wellKnownImages {
 		for _, ip := range interestingIPs {
