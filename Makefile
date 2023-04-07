@@ -79,9 +79,16 @@ unit:
 # integration tests
 integration:
 	MODE=integration hack/make-rules/test.sh
-# all tests
+# unit + integration tests
 test:
 	hack/make-rules/test.sh
+# e2e tests
+e2e-test:
+	hack/make-rules/e2e-test.sh
+# e2e tests, but against a local instance instead of staging
+# useful for developing the tests if staging is broken, otherwise use e2e-test
+e2e-test-local:
+	hack/make-rules/e2e-test-local.sh
 ################################################################################
 # ================================= Cleanup ====================================
 # standard cleanup target
@@ -112,4 +119,4 @@ lint:
 shellcheck:
 	hack/make-rules/shellcheck.sh
 #################################################################################
-.PHONY: all archeio build unit integration clean update gofmt verify verify-generated lint shellcheck
+.PHONY: all archeio build unit integration test e2e-test clean update gofmt verify verify-generated lint shellcheck

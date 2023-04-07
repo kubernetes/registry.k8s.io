@@ -36,7 +36,7 @@ go_test_opts=(
   '-coverpkg' 'k8s.io/registry.k8s.io/...'
 )
 if [[ "${MODE}" = 'unit' ]]; then
-  go_test_opts+=('-tags=nointegration')
+  go_test_opts+=('-tags=nointegration,noe2e')
 elif [[ "${MODE}" = 'integration' ]]; then
   go_test_opts+=('-run' '^TestIntegration')
 else
