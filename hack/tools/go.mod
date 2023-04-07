@@ -4,9 +4,10 @@ go 1.19
 
 require (
 	github.com/golangci/golangci-lint v1.51.1
-	github.com/google/go-containerregistry v0.13.1-0.20230310164735-e94d40893b2d
 	github.com/google/ko v0.13.0
+	golang.org/x/tools v0.7.0
 	gotest.tools/gotestsum v1.9.0
+	k8s.io/apimachinery v0.26.2
 )
 
 require (
@@ -121,6 +122,7 @@ require (
 	github.com/golangci/revgrep v0.0.0-20220804021717-745bb2f7c2e6 // indirect
 	github.com/golangci/unconvert v0.0.0-20180507085042-28b1c447d1f4 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/google/go-containerregistry v0.13.1-0.20230310164735-e94d40893b2d // indirect
 	github.com/google/safetext v0.0.0-20220905092116-b49f7bc46da2 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/gordonklaus/ineffassign v0.0.0-20230107090616-13ace0543b28 // indirect
@@ -248,7 +250,6 @@ require (
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/term v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
-	golang.org/x/tools v0.7.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230209215440-0dfe4f8abfcc // indirect
 	google.golang.org/grpc v1.53.0 // indirect
@@ -258,7 +259,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/tools v0.4.0 // indirect
-	k8s.io/apimachinery v0.26.2 // indirect
 	k8s.io/klog/v2 v2.90.0 // indirect
 	k8s.io/utils v0.0.0-20230115233650-391b47cb4029 // indirect
 	mvdan.cc/gofumpt v0.4.0 // indirect
