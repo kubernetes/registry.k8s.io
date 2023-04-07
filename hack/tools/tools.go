@@ -32,7 +32,4 @@ import (
 
 	// image builder
 	_ "github.com/google/ko"
-
-	// for testing
-	_ "github.com/google/go-containerregistry/cmd/crane"
 )
