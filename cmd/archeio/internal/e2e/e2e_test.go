@@ -100,6 +100,10 @@ func goInstall(t *testing.T, tool string) {
 	}
 }
 
+func binPath(name string) string {
+	return filepath.Join(binDir, name)
+}
+
 // common helper for executing test pull and checking output
 func testPull(t *testing.T, tc *testCase, pullCmd *exec.Cmd) {
 	out, err := pullCmd.CombinedOutput()
@@ -123,8 +127,8 @@ func TestE2ECranePull(t *testing.T) {
 		tc := &testCases[i]
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
-			pullCmd := exec.Command("./crane", "pull", "--verbose", tc.Ref(), "/dev/null")
-			pullCmd.Dir = binDir
+			// nolint:gosec
+			pullCmd := exec.Command(binPath("crane"), "pull", "--verbose", tc.Ref(), "/dev/null")
 			testPull(t, tc, pullCmd)
 		})
 	}
