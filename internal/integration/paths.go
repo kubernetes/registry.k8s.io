@@ -23,8 +23,12 @@ import (
 )
 
 func ModuleRootDir() (string, error) {
+	return moduleRootDir(os.Getwd)
+}
+
+func moduleRootDir(getWD func() (string, error)) (string, error) {
 	// in a test, the working directory will be the test package source dir
-	wd, err := os.Getwd()
+	wd, err := getWD()
 	if err != nil {
 		return "", err
 	}
@@ -35,8 +39,6 @@ func ModuleRootDir() (string, error) {
 		_, err := os.Stat(filepath.Join(currDir, "go.mod"))
 		if err == nil {
 			return currDir, nil
-		} else if !os.IsNotExist(err) {
-			return "", err
 		}
 		// if we get back the same path, we've hit the disk / volume root
 		nextDir := filepath.Dir(currDir)
@@ -45,12 +47,4 @@ func ModuleRootDir() (string, error) {
 		}
 		currDir = nextDir
 	}
-}
-
-func rootToBinDir(root string) string {
-	return filepath.Join(root, "bin")
-}
-
-func rootToToolsDir(root string) string {
-	return filepath.Join(root, "hack", "tools")
 }
