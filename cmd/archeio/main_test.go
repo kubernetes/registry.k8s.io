@@ -29,8 +29,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/go-containerregistry/cmd/crane/cmd"
 	"github.com/google/go-containerregistry/pkg/crane"
+	"github.com/google/go-containerregistry/pkg/v1/validate"
+
 	"k8s.io/registry.k8s.io/internal/integration"
 	"k8s.io/registry.k8s.io/pkg/net/cloudcidrs"
 )
@@ -180,9 +181,11 @@ func makeTestCases(t *testing.T) []integrationTestCase {
 }
 
 func pull(image string, options ...crane.Option) error {
-	puller := cmd.NewCmdPull(&options)
-	puller.SetArgs([]string{image, "/dev/null"})
-	return puller.Execute()
+	img, err := crane.Pull(image, options...)
+	if err != nil {
+		return err
+	}
+	return validate.Image(img)
 }
 
 type fakeIPTransport struct {
