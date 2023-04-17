@@ -38,8 +38,9 @@ go_test_opts=(
 if [[ "${MODE}" = 'unit' ]]; then
   go_test_opts+=('-tags=nointegration,noe2e')
 elif [[ "${MODE}" = 'integration' ]]; then
-  go_test_opts+=('-run' '^TestIntegration')
+  go_test_opts+=('-run' '^TestIntegration' '-tags=noe2e')
 else
+  go_test_opts+=('-tags=noe2e')
   MODE="all"
 fi
 
