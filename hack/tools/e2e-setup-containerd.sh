@@ -30,7 +30,7 @@ if [[ -f "${containerd_path}" ]] && "${containerd_path}" --version | grep -q "${
 else
     # downlod containerd to bindir
     mkdir -p "${CONTAINERD_INSTALL_DIR}"
-    wget -qO- \
+    curl -sSL \
         "https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz" \
     | tar -C "${CONTAINERD_INSTALL_DIR}/" -zxvf - --strip-components=1
 fi
