@@ -75,7 +75,7 @@ func awsRegionToHostURL(region, defaultURL string) string {
 type blobChecker interface {
 	// BlobExists should check that blobURL exists
 	// bucket and layerHash may be used for caching purposes
-	BlobExists(blobURL, bucket, layerHash string) bool
+	BlobExists(blobURL string) bool
 }
 
 // cachedBlobChecker just performs an HTTP HEAD check against the blob
@@ -83,61 +83,39 @@ type blobChecker interface {
 // TODO: potentially replace with a caching implementation
 // should be plenty fast for now, HTTP HEAD on s3 is cheap
 type cachedBlobChecker struct {
-	client *http.Client
 	blobCache
 }
 
 func newCachedBlobChecker() *cachedBlobChecker {
-	return &cachedBlobChecker{
-		blobCache: blobCache{
-			cache: make(map[string]map[string]struct{}),
-		},
-		client: newHTTPClient(),
-	}
-}
-
-func newHTTPClient() *http.Client {
-	// ensure sensible timeouts
-	// this client will be used to make HEAD calls
-	return &http.Client{
-		Timeout: time.Second * 5,
-	}
+	return &cachedBlobChecker{}
 }
 
 type blobCache struct {
-	// cache contains bucket:key for observed keys
-	// it is not bounded, we can afford to store all keys if need be
-	// and the cloud run container will spin down after an idle period
-	cache map[string]map[string]struct{}
-	lock  sync.RWMutex
+	m sync.Map
 }
 
-func (b *blobCache) Get(bucket, layerHash string) bool {
-	b.lock.RLock()
-	defer b.lock.RUnlock()
-	if m, exists := b.cache[bucket]; exists {
-		_, exists = m[layerHash]
-		return exists
-	}
-	return false
+func (b *blobCache) Get(blobURL string) bool {
+	_, exists := b.m.Load(blobURL)
+	return exists
 }
 
-func (b *blobCache) Put(bucket, layerHash string) {
-	b.lock.Lock()
-	defer b.lock.Unlock()
-	if _, exists := b.cache[bucket]; !exists {
-		b.cache[bucket] = make(map[string]struct{})
-	}
-	b.cache[bucket][layerHash] = struct{}{}
+func (b *blobCache) Put(blobURL string) {
+	b.m.Store(blobURL, struct{}{})
 }
 
-func (c *cachedBlobChecker) BlobExists(blobURL, bucket, layerHash string) bool {
-	if c.blobCache.Get(bucket, layerHash) {
+func (c *cachedBlobChecker) BlobExists(blobURL string) bool {
+	if c.blobCache.Get(blobURL) {
 		klog.V(3).InfoS("blob existence cache hit", "url", blobURL)
 		return true
 	}
 	klog.V(3).InfoS("blob existence cache miss", "url", blobURL)
-	r, err := c.client.Head(blobURL)
+	// NOTE: this client will still share http.DefaultTransport
+	// We do not wish to share the rest of the client state currently
+	client := &http.Client{
+		// ensure sensible timeouts
+		Timeout: time.Second * 5,
+	}
+	r, err := client.Head(blobURL)
 	// fallback to assuming blob is unavailable on errors
 	if err != nil {
 		return false
@@ -146,7 +124,7 @@ func (c *cachedBlobChecker) BlobExists(blobURL, bucket, layerHash string) bool {
 	// if the blob exists it HEAD should return 200 OK
 	// this is true for S3 and for OCI registries
 	if r.StatusCode == http.StatusOK {
-		c.blobCache.Put(bucket, layerHash)
+		c.blobCache.Put(blobURL)
 		return true
 	}
 	return false

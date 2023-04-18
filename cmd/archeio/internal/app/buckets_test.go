@@ -44,3 +44,14 @@ func TestRegionToAWSRegionToHostURL(t *testing.T) {
 		t.Fatalf("received non-empty URL string for made up region \"nonsensical-region\": %q", url)
 	}
 }
+
+func TestBlobCache(t *testing.T) {
+	bc := &blobCache{}
+	bc.Put("foo")
+	if !bc.Get("foo") {
+		t.Fatal("Cache did not contain key we just put")
+	}
+	if bc.Get("bar") {
+		t.Fatal("Cache contained key we did not put")
+	}
+}

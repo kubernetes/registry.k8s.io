@@ -149,7 +149,7 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		bucketURL := awsRegionToHostURL(region, rc.DefaultAWSBaseURL)
 		// this matches GCR's GCS layout, which we will use for other buckets
 		blobURL := bucketURL + "/containers/images/" + digest
-		if blobs.BlobExists(blobURL, bucketURL, digest) {
+		if blobs.BlobExists(blobURL) {
 			// blob known to be available in AWS, redirect client there
 			klog.V(2).InfoS("redirecting blob request to AWS", "path", rPath)
 			http.Redirect(w, r, blobURL, http.StatusTemporaryRedirect)
