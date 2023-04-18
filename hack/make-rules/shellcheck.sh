@@ -23,14 +23,13 @@ set -o pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." &> /dev/null && pwd -P)"
 cd "${REPO_ROOT}"
 
-# allow overriding docker cli, which should work fine for this script
-DOCKER="${DOCKER:-docker}"
+# we will be installing under bin_dir if necessary, and re-using if possible
+bin_dir="${REPO_ROOT}/bin"
+export PATH="${bin_dir}:${PATH}"
 
-# required version for this script, if not installed on the host we will
-# use the official docker image instead. keep this in sync with SHELLCHECK_IMAGE
+# required version for this script, if not installed on the host already we will
+# install it under bin/
 SHELLCHECK_VERSION="0.8.0"
-# upstream shellcheck latest stable image as of October 23rd, 2019
-SHELLCHECK_IMAGE="docker.io/koalaman/shellcheck-alpine@sha256:f42fde76d2d14a645a848826e54a4d650150e151d9c81057c898da89a82c8a56"
 
 # Find all shell scripts excluding:
 # - Anything git-ignored - No need to lint untracked files.
@@ -61,29 +60,47 @@ SHELLCHECK_OPTIONS=(
 # detect if the host machine has the required shellcheck version installed
 # if so, we will use that instead.
 HAVE_SHELLCHECK=false
-if which shellcheck &>/dev/null; then
+if command -v shellcheck &>/dev/null; then
   detected_version="$(shellcheck --version | grep 'version: .*')"
   if [[ "${detected_version}" = "version: ${SHELLCHECK_VERSION}" ]]; then
     HAVE_SHELLCHECK=true
   fi
 fi
 
-
-# tell the user which we've selected and lint all scripts
-# The shellcheck errors are printed to stdout by default, hence they need to be redirected
-# to stderr in order to be well parsed for Junit representation by juLog function
-res=0
-if ${HAVE_SHELLCHECK}; then
-  echo "Using host shellcheck ${SHELLCHECK_VERSION} binary."
-  shellcheck "${SHELLCHECK_OPTIONS[@]}" "${all_shell_scripts[@]}" >&2 || res=$?
-else
-  echo "Using shellcheck ${SHELLCHECK_VERSION} docker image."
-  "${DOCKER}" run \
-    --rm -v "${REPO_ROOT}:${REPO_ROOT}" -w "${REPO_ROOT}" \
-    "${SHELLCHECK_IMAGE}" \
-  shellcheck "${SHELLCHECK_OPTIONS[@]}" "${all_shell_scripts[@]}" >&2 || res=$?
+# install shellcheck to bin/ if missing or the wrong version
+if ! ${HAVE_SHELLCHECK}; then
+  echo "Installing shellcheck v${SHELLCHECK_VERSION} under bin/ ..." >&2
+  # in CI we can install xz so we can untar the upstream release
+  # otherwise tell the user they must install xz or shellcheck
+  if ! command -v xz &>/dev/null; then
+    if [[ -n "${PROW_JOB_ID}" ]]; then
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get -qq update
+      DEBCONF_NOWARNINGS="yes" apt-get -qq install --no-install-recommends xz-utils >/dev/null
+    else
+      echo "xz is required to install shellcheck in bin/!" >&2
+      echo "either install xz or install shellcheck v${SHELLCHECK_VERSION}" >&2
+      exit 1
+    fi
+  fi
+  os=$(uname | tr '[:upper:]' '[:lower:]')
+  arch=$(uname -m)
+  # TODO: shellcheck currently only has x86_64 binaries on macOS, but those will work on M1
+  if [[ "${os}" == 'darwin' ]]; then
+    arch='x86_64'
+  fi
+  mkdir -p "${bin_dir}"
+  # download and untar shellcheck into bin_dir
+  curl -sSL "https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION?}/shellcheck-v${SHELLCHECK_VERSION?}.${os}.${arch}.tar.xz" \
+    | tar -C "${bin_dir}" --strip-components=1 -xJ -f - "shellcheck-v${SHELLCHECK_VERSION}/shellcheck"
+  # debug newly setup version
+  shellcheck --version >&2
 fi
 
+
+# lint all scripts
+res=0
+shellcheck "${SHELLCHECK_OPTIONS[@]}" "${all_shell_scripts[@]}" >&2 || res=$?
 # print a message based on the result
 if [ $res -eq 0 ]; then
   echo 'Congratulations! All shell files are passing lint :-)'
