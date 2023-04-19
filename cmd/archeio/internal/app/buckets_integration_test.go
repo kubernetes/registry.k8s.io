@@ -36,21 +36,22 @@ func TestCachedBlobChecker(t *testing.T) {
 		{
 			Name:         "known bucket entry",
 			BlobURL:      bucket + "/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
-			Bucket:       bucket,
-			HashKey:      "3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			ExpectExists: true,
+		},
+		// to cover the case that we get a cache hit
+		{
+			Name:         "same-known bucket entry",
+			BlobURL:      bucket + "/containers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 			ExpectExists: true,
 		},
 		{
 			Name:         "known bucket, bad entry",
-			Bucket:       bucket,
 			BlobURL:      bucket + "/c0ntainers/images/sha256%3Ada86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 			ExpectExists: false,
 		},
 		{
 			Name:         "bogus bucket on domain without webserver",
-			Bucket:       "http://bogus.k8s.io/",
 			BlobURL:      "http://bogus.k8s.io/foo",
-			HashKey:      "b0guS",
 			ExpectExists: false,
 		},
 	}
@@ -60,9 +61,8 @@ func TestCachedBlobChecker(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.Name, func(t *testing.T) {
-			t.Parallel()
 			url := tc.BlobURL
-			exists := blobs.BlobExists(url, tc.Bucket, tc.HashKey)
+			exists := blobs.BlobExists(url)
 			if exists != tc.ExpectExists {
 				t.Fatalf("expected: %v but got: %v", tc.ExpectExists, exists)
 			}
@@ -72,11 +72,10 @@ func TestCachedBlobChecker(t *testing.T) {
 		tc := testCases[i]
 		t.Run(tc.Name, func(t *testing.T) {
 			url := tc.BlobURL
-			exists := blobs.BlobExists(url, tc.Bucket, tc.HashKey)
+			exists := blobs.BlobExists(url)
 			if exists != tc.ExpectExists {
 				t.Fatalf("expected: %v but got: %v", tc.ExpectExists, exists)
 			}
 		})
 	}
-
 }

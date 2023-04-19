@@ -147,7 +147,7 @@ type fakeBlobsChecker struct {
 	knownURLs map[string]bool
 }
 
-func (f *fakeBlobsChecker) BlobExists(blobURL, bucket, hashKey string) bool {
+func (f *fakeBlobsChecker) BlobExists(blobURL string) bool {
 	return f.knownURLs[blobURL]
 }
 
