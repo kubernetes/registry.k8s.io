@@ -94,6 +94,20 @@ func testE2EContainerdPull(t *testing.T, containerdVersion string) {
 		}
 	})
 
+	// wait for containerd to be ready
+	containerdReady := false
+	for i := 0; i < 5; i++ {
+		// nolint:gosec
+		if err := exec.Command(filepath.Join(installDir, "ctr"), "--address="+socketAddress, "version").Run(); err == nil {
+			containerdReady = true
+			break
+		}
+		time.Sleep(time.Duration(i) * time.Second)
+	}
+	if !containerdReady {
+		t.Fatalf("Failed to wait for containerd to be ready")
+	}
+
 	// pull test images
 	for i := range testCases {
 		tc := &testCases[i]
