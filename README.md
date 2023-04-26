@@ -3,7 +3,9 @@
 This project implements the backend for registry.k8s.io, Kubernetes's container
 image registry.
 
-For more details on the implementation see [cmd/archeio](./cmd/archeio/README.md)
+Known user-facing issues will be pinned at the top of [our issue tracker][issues].
+
+For details on the implementation see [cmd/archeio](./cmd/archeio/README.md)
 
 The community deployment configs are documented at in the k8s.io repo with
 the rest of the community infra deployments, but primarily 
@@ -17,7 +19,12 @@ under `registry.k8s.io/`.
 registry.k8s.io is GA and we ask that all users migrate from k8s.gcr.io as
 soon as possible.
 
-However, unequivocally: **DO NOT** depend on the implementation details of this registry.
+However, unequivocally: **DO NOT depend on the implementation details of this registry.**
+
+**Please note that there is NO uptime SLA as this is a free, volunteer managed
+service**. We will however do our best to respond to issues and the system is
+designed to be reliable and low-maintenance. If you need higher uptime guarantees
+please consider [mirroring] images to a location you control.
 
 **Other than `registry.k8s.io` serving an [OCI][distribution-spec] compliant registry:
 API endpoints, IP addresses, and backing services used 
@@ -32,13 +39,10 @@ thanks to their donations but we hope to redirect traffic to more
 sponsors and their respective API endpoints in the future to keep the project
 sustainable.
 
-Please also note that there is **No SLA** as this is a free, volunteer managed
-service. We will however do our best to respond to issues and the system is
-designed to be reliable and low-maintenance.
-
 See Also:
-- https://kubernetes.io/blog/2022/11/28/registry-k8s-io-faster-cheaper-ga
-- Our [mirroring guide][mirroring] for Kubernetes images
+- Pinned issues in our [our issue tracker][issues]
+- Our [debugging guide][debugging] for identifying and resolving or reporting issues
+- Our [mirroring guide][mirroring] for how to mirror and use mirrored Kubernetes images
 
 ## Privacy
 
@@ -59,7 +63,7 @@ for AWS-users from AWS-local storage funded by Amazon, or potentially leveraging
 other providers in the future.
 
 For additional context on why we did this and what we're changing about kubernetes images
-see https://github.com/kubernetes/k8s.io/wiki/New-Registry-url-for-Kubernetes-(registry.k8s.io)
+see: https://kubernetes.io/blog/2022/11/28/registry-k8s-io-faster-cheaper-ga
 
 Essentially, this repo implements the backend sources for the steps outlined there.
 
@@ -84,3 +88,5 @@ Participation in the Kubernetes community is governed by the [Kubernetes Code of
 [publishing]: https://git.k8s.io/k8s.io/registry.k8s.io#managing-kubernetes-container-registries
 [infra-configs]: https://github.com/kubernetes/k8s.io/tree/main/infra/gcp/terraform
 [mirroring]: ./docs/mirroring/README.md
+[debugging]: ./docs/debugging.md
+[issues]: https://github.com/kubernetes/registry.k8s.io/issues
