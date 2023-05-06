@@ -29,3 +29,13 @@ func NewIPMapper() cidrs.IPMapper[IPInfo] {
 	}
 	return t
 }
+
+// AllIPInfos returns a slice of all known results that a NewIPMapper could
+// return
+func AllIPInfos() []IPInfo {
+	r := make([]IPInfo, 0, len(regionToRanges))
+	for v := range regionToRanges {
+		r = append(r, v)
+	}
+	return r
+}
