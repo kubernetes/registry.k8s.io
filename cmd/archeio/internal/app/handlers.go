@@ -24,7 +24,7 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"k8s.io/registry.k8s.io/pkg/clientip"
+	"k8s.io/registry.k8s.io/pkg/net/clientip"
 	"k8s.io/registry.k8s.io/pkg/net/cloudcidrs"
 )
 
