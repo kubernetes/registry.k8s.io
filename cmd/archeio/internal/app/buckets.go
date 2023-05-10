@@ -37,13 +37,13 @@ func awsRegionToHostURL(region, defaultURL string) string {
 	// shifting other regions that do not have their own bucket
 
 	// US East (N. Virginia)
-	case "us-east-1", "sa-east-1", "us-gov-east-1", "GLOBAL":
+	case "us-east-1", "sa-east-1":
 		return "https://prod-registry-k8s-io-us-east-1.s3.dualstack.us-east-1.amazonaws.com"
 	// US East (Ohio)
 	case "us-east-2", "ca-central-1":
 		return "https://prod-registry-k8s-io-us-east-2.s3.dualstack.us-east-2.amazonaws.com"
 	// US West (N. California)
-	case "us-west-1", "us-gov-west-1":
+	case "us-west-1":
 		return "https://prod-registry-k8s-io-us-west-1.s3.dualstack.us-west-1.amazonaws.com"
 	// US West (Oregon)
 	case "us-west-2", "ca-west-1":
