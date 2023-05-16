@@ -44,7 +44,7 @@ const blobKeyPrefix = "containers/images/"
 
 // this is where geranos *internally* records manifests
 // these are not for user consumption
-const manifestKeyPrefix = "/geranos/uploaded-images/"
+const manifestKeyPrefix = "geranos/uploaded-images/"
 
 type s3Uploader struct {
 	svc            *s3.S3

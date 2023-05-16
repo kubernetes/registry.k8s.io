@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"flag"
 	"os"
 
 	"github.com/google/go-containerregistry/pkg/crane"
@@ -32,6 +33,8 @@ func main() {
 
 // Main is the application entrypoint, which injects globals to Run
 func Main() {
+	klog.InitFlags(flag.CommandLine)
+	flag.Parse()
 	if err := Run(os.Args); err != nil {
 		klog.Fatal(err)
 	}
