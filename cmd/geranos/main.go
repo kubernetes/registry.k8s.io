@@ -19,6 +19,7 @@ package main
 import (
 	"os"
 
+	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
@@ -62,23 +63,18 @@ func Run(_ []string) error {
 	// TODO: print some progress logs at lower frequency instead of logging each image
 	// We will punt this temporarily, as we're about to refactor how this works anyhow
 	// to avoid fetching manifests for images we've already uploaded
-	err = WalkImageLayersGCP(registryRateLimit, repo, func(ref name.Reference, layers []v1.Layer) error {
-		klog.Infof("Processing image: %s", ref.String())
-		return copyImageLayers(s3Uploader, s3Bucket, layers)
-	})
-	if err != nil {
-		return err
+	err = WalkImageLayersGCP(registryRateLimit, repo,
+		func(ref name.Reference, layers []v1.Layer) error {
+			klog.Infof("Processing image: %s", ref.String())
+			return s3Uploader.UploadImage(s3Bucket, ref, layers, crane.WithTransport(registryRateLimit))
+		},
+		func(imageHash string) bool {
+			s, _ := s3Uploader.ImageAlreadyUploaded(s3Bucket, imageHash)
+			return s
+		})
+	if err == nil {
+		klog.Info("Done!")
 	}
 	klog.Info("Done!")
-	return nil
-}
-
-func copyImageLayers(s3Uploader *s3Uploader, bucket string, layers []v1.Layer) error {
-	// copy all layers
-	for _, layer := range layers {
-		if err := s3Uploader.CopyToS3(bucket, layer); err != nil {
-			return err
-		}
-	}
 	return nil
 }

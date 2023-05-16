@@ -45,7 +45,7 @@ type WalkImageLayersFunc func(ref name.Reference, layers []v1.Layer) error
 // It's also simpler and more efficient.
 //
 // See: https://github.com/opencontainers/distribution-spec/issues/222
-func WalkImageLayersGCP(transport http.RoundTripper, repo name.Repository, walkImageLayers WalkImageLayersFunc) error {
+func WalkImageLayersGCP(transport http.RoundTripper, repo name.Repository, walkImageLayers WalkImageLayersFunc, skipImage func(string) bool) error {
 	g := new(errgroup.Group)
 	// TODO: This is really just an approximation to avoid exceeding typical socket limits
 	// See also quota limits:
@@ -60,6 +60,9 @@ func WalkImageLayersGCP(transport http.RoundTripper, repo name.Repository, walkI
 				digest := digest
 				// google.Walk already walks the child manifests
 				if metadata.MediaType == string(types.DockerManifestList) || metadata.MediaType == string(types.OCIImageIndex) {
+					continue
+				}
+				if skipImage(digest) {
 					continue
 				}
 				ref, err := name.ParseReference(fmt.Sprintf("%s@%s", r, digest))
