@@ -62,14 +62,15 @@ func WalkImageLayersGCP(transport http.RoundTripper, repo name.Repository, walkI
 				if metadata.MediaType == string(types.DockerManifestList) || metadata.MediaType == string(types.OCIImageIndex) {
 					continue
 				}
-				if skipImage(digest) {
-					continue
-				}
 				ref, err := name.ParseReference(fmt.Sprintf("%s@%s", r, digest))
 				if err != nil {
 					return err
 				}
 				g.Go(func() error {
+					if skipImage(digest) {
+						klog.V(4).Infof("Skipping already-uploaded: %s", ref)
+						return nil
+					}
 					return walkManifestLayers(transport, ref, walkImageLayers)
 				})
 			}
