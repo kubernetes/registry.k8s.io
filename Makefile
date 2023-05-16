@@ -45,10 +45,13 @@ SHELL:=env PATH=$(subst $(SPACE),\$(SPACE),$(PATH)) $(SHELL)
 # ============================== OPTIONS =======================================
 # the output binary name, overridden when cross compiling
 ARCHEIO_BINARY_NAME?=archeio
+GERANOS_BINARY_NAME?=geranos
 # build flags for the archeio binary
 # - reproducible builds: -trimpath
 # - smaller binaries: -w (trim debugger data, but not panics)
-ARCHEIO_BUILD_FLAGS?=-trimpath -ldflags="-w"
+GO_BUILD_FLAGS?=-trimpath -ldflags="-w"
+ARCHEIO_BUILD_FLAGS?=$(GO_BUILD_FLAGS)
+GERANOS_BUILD_FLAGS?=$(GO_BUILD_FLAGS)
 ################################################################################
 # ================================= Building ===================================
 # standard "make" target -> builds
@@ -56,8 +59,11 @@ all: build
 # builds archeio, outputs to $(OUT_DIR)
 archeio:
 	go build -v -o "$(OUT_DIR)/$(ARCHEIO_BINARY_NAME)" $(ARCHEIO_BUILD_FLAGS) ./cmd/archeio
-# alias for building archeio
-build: archeio
+# builds geranos, outputs to $(OUT_DIR)
+geranos:
+	go build -v -o "$(OUT_DIR)/$(GERANOS_BINARY_NAME)" $(GERANOS_BUILD_FLAGS) ./cmd/geranos
+# alias for building binaries
+build: archeio geranos
 # build images to local tarball
 images:
 	hack/make-rules/images.sh
@@ -119,4 +125,4 @@ lint:
 shellcheck:
 	hack/make-rules/shellcheck.sh
 #################################################################################
-.PHONY: all archeio build unit integration test e2e-test clean update gofmt verify verify-generated lint shellcheck
+.PHONY: all archeio geranos build unit integration test e2e-test clean update gofmt verify verify-generated lint shellcheck
