@@ -78,6 +78,5 @@ func Run(_ []string) error {
 	if err == nil {
 		klog.Info("Done!")
 	}
-	klog.Info("Done!")
-	return nil
+	return err
 }
