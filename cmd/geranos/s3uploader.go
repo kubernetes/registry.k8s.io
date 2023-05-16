@@ -180,7 +180,7 @@ func (s *s3Uploader) copyToS3(bucket, key string, layer imageBlob) error {
 		uploadInput.ChecksumSHA256 = aws.String(base64.StdEncoding.EncodeToString(b))
 	}
 	// skip actually uploading if this is a dry-run, otherwise finally upload
-	klog.Infof("Uploading layer: %s", key)
+	klog.Infof("Uploading: %s", key)
 	if s.dryRun {
 		return nil
 	}
