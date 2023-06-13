@@ -14,6 +14,9 @@ When you are debugging issues, make sure you run these commands on the node that
 >
 > Please file an issue with your provider, the Kubernetes project does not
 > control this and it is not specific to us.
+>
+> If you are a cloud vendor / service provider please contact
+> [Google Edge Network](mailto:noc@google.com)
 
 ## Verify DNS resolution
 
@@ -31,7 +34,7 @@ If you cannot successfully resolve a domain, check your DNS configuration, often
 You may use `curl` or `wget` to validate HTTP connectivity. For example, running `curl -v https://registry.k8s.io/v2/` should return an answer that contains:
 
 ```log
-< HTTP/2 200 
+< HTTP/2 200
 < docker-distribution-api-version: registry/2.0
 < x-cloud-trace-context: ca200d1c5a504b919e999b0cf80e3b71
 < date: Fri, 17 Mar 2023 09:13:18 GMT
@@ -40,7 +43,7 @@ You may use `curl` or `wget` to validate HTTP connectivity. For example, running
 < content-length: 0
 < via: 1.1 google
 < alt-svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
-< 
+<
 ```
 
 If do not have HTTP connectivity, check your firewall or HTTP proxy settings.
