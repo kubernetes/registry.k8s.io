@@ -1,37 +1,36 @@
 # registry.k8s.io
 
-本项目实现了registry.k8s.io的后端，这是Kubernetes的容器镜像注册表。
+本项目实现了 registry.k8s.io 的后端，这是 Kubernetes 的容器镜像注册表。
 
 已知的面向用户的问题将在[我们的问题跟踪器][issues]顶部固定。
 
-有关实现的详细信息，请参阅cmd/archeio
+有关实现的详细信息，请参阅 cmd/archeio
 
-社区部署配置在k8s.io仓库中与其他社区基础设施部署一起记录，主要在[这里][infra-configs]。
+社区部署配置在 k8s.io 仓库中与其他社区基础设施部署一起记录，主要在[这里][infra-configs]。
 
-有关发布到registry.k8s.io的信息，请参考k8s.io下registry.k8s.io/的[文档][publishing]。
+有关发布到 registry.k8s.io 的信息，请参考 k8s.io 下 registry.k8s.io 的[文档][publishing]。
 
 ## 稳定性
 
-registry.k8s.io已经GA，我们要求所有用户尽快从k8s.gcr.io迁移过来。
+registry.k8s.io 已经GA，我们要求所有用户尽快从 k8s.gcr.io 迁移过来。
 
 然而，毫无疑问：不要依赖于此注册表的实现细节。
 
 **请注意，由于这是一个免费的、由志愿者管理的服务，所以没有正常运行时间SLA**。然而，我们会尽力回应问题，系统设计上也是可靠且低维护的。
 
-**If you need to allow-list domains or IPs in your environment, we highly recommend
-[mirroring] images to a location you control instead.**
+如果你需要更高的正常运行时间保证，请考虑将镜像[mirroring]同步到你控制的位置。
 
-**除了registry.k8s.io提供一个符合[OCI][distribution-spec]规范的注册表外：
+**除了 registry.k8s.io 提供一个符合[OCI][distribution-spec]规范的注册表外：
 
 API端点、IP地址和使用的后端服务可能会随着新资源的可用或者其他必要情况随时变化。**
 
-**如果你需要在你的环境中允许列出域名或IP，我们强烈建议将镜像[镜像]到你控制的位置。**
+**如果你需要在你的环境中允许列出域名或IP，我们强烈建议将镜像[mirroring]同步到你控制的位置。**
 
-Kubernetes项目目前正在向GCP和AWS发送流量
+Kubernetes 项目目前正在向 GCP 和 AWS 发送流量
 
 感谢他们的捐赠，但我们希望将来能够将流量重定向到更多
 
-赞助商和他们各自的API端点，以保持项目
+赞助商和他们各自的 API 端点，以保持项目
 
 可持续性。
 
@@ -45,7 +44,7 @@ Kubernetes项目目前正在向GCP和AWS发送流量
 
 ## 隐私
 
-本项目遵守Linux Foundation隐私政策，文档在
+本项目遵守 Linux Foundation 隐私政策，文档在
 
 https://registry.k8s.io/privacy
 
