@@ -1,4 +1,4 @@
-# registry.k8s.io
+# registry.k8s.io 中文说明
 
 本项目实现了 registry.k8s.io 的后端，这是 Kubernetes 的容器镜像注册表。
 
