@@ -12,7 +12,7 @@
 
 ## 稳定性
 
-registry.k8s.io 已经GA，我们要求所有用户尽快从 k8s.gcr.io 迁移过来。
+registry.k8s.io 已经 GA，我们要求所有用户尽快从 k8s.gcr.io 迁移过来。
 
 然而，毫无疑问：不要依赖于此注册表的实现细节。
 
