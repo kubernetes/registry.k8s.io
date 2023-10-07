@@ -6,7 +6,7 @@ If you're using [cri-o] as a Kubernetes [CRI] implementation, cri-o
 uses the ["pause" image][pause] from Kubernetes to implement pods.
 You may want to mirror this critical image to your own host.
 
-The pause image confiured can be found by running:
+The pause image configured can be found by running:
 ```shell
 cri-o config | grep pause_image
 ```
