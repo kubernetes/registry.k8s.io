@@ -40,7 +40,7 @@ sponsors and their respective API endpoints in the future to keep the project
 sustainable.
 
 See Also:
-- Pinned issues in our [our issue tracker][issues]
+- Pinned issues in our [issue tracker][issues]
 - Our [debugging guide][debugging] for identifying and resolving or reporting issues
 - Our [mirroring guide][mirroring] for how to mirror and use mirrored Kubernetes images
 
