@@ -8,7 +8,7 @@ Docs: https://kops.sigs.k8s.io/cli/kops_get_assets/
 
 ## Mirroring Images
 
-`kops get asssets --copy` can be used to mirror.
+`kops get assets --copy` can be used to mirror.
 
 See:
 - https://kops.sigs.k8s.io/cli/kops_get_assets/
