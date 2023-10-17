@@ -53,7 +53,8 @@ See: https://kubernetes.io/docs/contribute/style/content-guide/#dual-sourced-con
 
 Here are some options for copying images you wish to mirror to your own registry.
 
-<!-- FOSS Mirroring Tools First -->
+<!-- FOSS Mirroring Tools Go First Below Here! -->
+<!-- Commercial / Non-FOSS Mirroring Options Go Further Below -->
 
 ### Mirroring With `crane` Or `gcrane`
 
@@ -106,7 +107,15 @@ Docs: https://goharbor.io/docs/2.1.0/administration/configure-proxy-cache/
 
 Once you're done, see [Using Mirrored Images][using-mirrored-images].
 
-<!-- NON-FOSS Mirroring Tools Below Here -->
+<!-- NON-FOSS Mirroring Tools Go Below Here! -->
+
+#### Mirroring With ECR
+
+AWS ECR wrote a guide for configuring a `registry.k8s.io` pull-through cache here:
+
+https://aws.amazon.com/blogs/containers/announcing-pull-through-cache-for-registry-k8s-io-in-amazon-elastic-container-registry/
+
+After following this guide, you may additionally want to see our [Using Mirrored Images][using-mirrored-images] reference below.
 
 
 ## Using Mirrored Images
