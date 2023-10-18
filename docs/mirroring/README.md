@@ -109,7 +109,7 @@ Once you're done, see [Using Mirrored Images][using-mirrored-images].
 
 <!-- NON-FOSS Mirroring Tools Go Below Here! -->
 
-#### Mirroring With ECR
+### Mirroring With ECR
 
 AWS ECR wrote a guide for configuring a `registry.k8s.io` pull-through cache here:
 
