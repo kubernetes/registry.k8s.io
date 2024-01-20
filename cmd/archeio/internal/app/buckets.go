@@ -55,7 +55,7 @@ func awsRegionToHostURL(region, defaultURL string) string {
 	case "ap-northeast-1", "ap-northeast-2", "ap-northeast-3":
 		return "https://prod-registry-k8s-io-ap-northeast-1.s3.dualstack.ap-northeast-1.amazonaws.com"
 	// Asia Pacific (Singapore)
-	case "ap-southeast-1", "ap-southeast-2", "ap-southeast-3", "ap-southeast-4", "ap-southeast-6", "ap-east-1", "cn-northwest-1", "cn-north-1":
+	case "ap-southeast-1", "ap-southeast-2", "ap-southeast-3", "ap-southeast-4", "ap-southeast-5", "ap-southeast-6", "ap-east-1", "cn-northwest-1", "cn-north-1":
 		return "https://prod-registry-k8s-io-ap-southeast-1.s3.dualstack.ap-southeast-1.amazonaws.com"
 	// Europe (Frankfurt)
 	case "eu-central-1", "eu-central-2", "eu-south-1", "eu-south-2", "il-central-1":
