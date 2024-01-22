@@ -27,9 +27,9 @@ func TestRegionToAWSRegionToHostURL(t *testing.T) {
 	// ensure known regions return a configured bucket
 	regions := []string{}
 	for _, ipInfo := range cloudcidrs.AllIPInfos() {
-		// AWS regions, excluding "GLOBAL" meta region and govcloud
+		// AWS regions, excluding "GLOBAL" meta region, AWS US Gov Cloud and European Soveign Cloud
 		if ipInfo.Cloud == cloudcidrs.AWS &&
-			ipInfo.Region != "GLOBAL" && !strings.HasPrefix(ipInfo.Region, "us-gov-") {
+			ipInfo.Region != "GLOBAL" && !strings.HasPrefix(ipInfo.Region, "us-gov-") && !strings.HasPrefix(ipInfo.Region, "eusc-") {
 			regions = append(regions, ipInfo.Region)
 		}
 	}
