@@ -1,6 +1,6 @@
 module k8s.io/registry.k8s.io
 
-go 1.19
+go 1.22.4
 
 require (
 	github.com/aws/aws-sdk-go v1.44.199
@@ -20,7 +20,6 @@ require (
 	github.com/go-logr/logr v1.2.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
-	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
@@ -28,8 +27,6 @@ require (
 	github.com/opencontainers/image-spec v1.1.0-rc2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
-	github.com/spf13/cobra v1.6.0 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/vbatts/tar-split v0.11.2 // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/oauth2 v0.1.0 // indirect
