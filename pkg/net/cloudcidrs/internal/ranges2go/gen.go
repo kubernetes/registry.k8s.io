@@ -63,14 +63,13 @@ func generateRangesGo(w io.Writer, cloudToRTP map[string]regionsToPrefixes) erro
 
 	// generate constants for each cloud
 	for _, cloud := range clouds {
-		if _, err := fmt.Fprintf(w, "// %s cloud\nconst %s = %q\n", cloud, cloud, cloud); err != nil {
+		if _, err := fmt.Fprintf(w, "// %s cloud\nconst %s = %q\n\n", cloud, cloud, cloud); err != nil {
 			return err
 		}
 	}
 
 	// generate main data variable
-	if _, err := io.WriteString(w, `
-// regionToRanges contains a preparsed map of cloud IPInfo to netip.Prefix
+	if _, err := io.WriteString(w, `// regionToRanges contains a preparsed map of cloud IPInfo to netip.Prefix
 var regionToRanges = map[IPInfo][]netip.Prefix{
 `,
 	); err != nil {
