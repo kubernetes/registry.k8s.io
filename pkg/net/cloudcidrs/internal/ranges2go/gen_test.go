@@ -146,6 +146,7 @@ import (
 
 // AWS cloud
 const AWS = "AWS"
+
 // GCP cloud
 const GCP = "GCP"
 
