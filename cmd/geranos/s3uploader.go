@@ -18,6 +18,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
@@ -28,12 +29,12 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/smithy-go"
 
 	"k8s.io/klog/v2"
 )
@@ -47,29 +48,29 @@ const blobKeyPrefix = "containers/images/"
 const manifestKeyPrefix = "geranos/uploaded-images/"
 
 type s3Uploader struct {
-	svc            *s3.S3
-	uploader       *s3manager.Uploader
+	svc            *s3.Client
+	uploader       *manager.Uploader
 	reuploadLayers bool
 	dryRun         bool
 }
 
 func newS3Uploader(dryRun bool) (*s3Uploader, error) {
-	cfg := []*aws.Config{}
-	// force anonymous configs for dry run uploaders
-	if dryRun {
-		cfg = append(cfg, &aws.Config{
-			Credentials: credentials.AnonymousCredentials,
-		})
-	}
-	sess, err := session.NewSession(cfg...)
+	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return nil, err
 	}
+	if dryRun {
+		// Use anonymous credentials for dry run
+		cfg.Credentials = aws.AnonymousCredentials{}
+	}
+	// Create S3 client
+	client := s3.NewFromConfig(cfg)
 	r := &s3Uploader{
 		dryRun: dryRun,
-		svc:    s3.New(sess),
+		svc:    client,
 	}
-	r.uploader = s3manager.NewUploaderWithClient(r.svc)
+	// Create uploader
+	r.uploader = manager.NewUploader(client)
 	return r, nil
 }
 
@@ -166,7 +167,7 @@ func (s *s3Uploader) copyToS3(bucket, key string, layer imageBlob) error {
 		return err
 	}
 	defer r.Close()
-	uploadInput := &s3manager.UploadInput{
+	uploadInput := &s3.PutObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 		Body:   r,
@@ -184,7 +185,7 @@ func (s *s3Uploader) copyToS3(bucket, key string, layer imageBlob) error {
 	if s.dryRun {
 		return nil
 	}
-	_, err = s.uploader.Upload(uploadInput)
+	_, err = s.uploader.Upload(context.TODO(), uploadInput)
 	return err
 }
 
@@ -197,15 +198,19 @@ func keyForImageRecord(imageDigest string) string {
 }
 
 func (s *s3Uploader) blobExists(bucket, key string) (bool, error) {
-	_, err := s.svc.HeadObject(&s3.HeadObjectInput{
+	_, err := s.svc.HeadObject(context.TODO(), &s3.HeadObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		// yes, we really have to typecast to compare against an undocument string
-		// to check if the object doesn't exist vs an error making the call
-		if aerr, ok := err.(awserr.Error); ok && aerr.Code() == "NotFound" {
+		var notFound *types.NotFound
+		var apiErr smithy.APIError
+		if errors.As(err, &notFound) {
 			return false, nil
+		} else if errors.As(err, &apiErr) {
+			if apiErr.ErrorCode() == "NotFound" {
+				return false, nil
+			}
 		}
 		return false, err
 	}
