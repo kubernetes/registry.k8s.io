@@ -17,6 +17,8 @@
 # script to build container images with go
 set -o errexit -o nounset -o pipefail
 
+export KO_DEFAULTBASEIMAGE='gcr.io/distroless/static-debian12@sha256:ce46866b3a5170db3b49364900fb3168dc0833dfb46c26da5c77f22abb01d8c3'
+
 # cd to the repo root and setup go
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 cd "${REPO_ROOT}"
