@@ -92,7 +92,7 @@ func TestMain(m *testing.M) {
 // installs tool to binDir using go install
 func goInstall(t *testing.T, tool string) {
 	buildCmd := exec.Command("go", "install", tool)
-	buildCmd.Env = append(os.Environ(), "GOBIN="+binDir)
+	buildCmd.Env = append(os.Environ(), "GOBIN="+binDir, "GOTOOLCHAIN=auto")
 	if out, err := buildCmd.CombinedOutput(); err != nil {
 		t.Errorf("Failed to get %q: %v", tool, err)
 		t.Error("Output:")
