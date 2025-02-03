@@ -17,7 +17,7 @@
 # script to build container images with go
 set -o errexit -o nounset -o pipefail
 
-export KO_DEFAULTBASEIMAGE='gcr.io/distroless/static-debian12@sha256:ce46866b3a5170db3b49364900fb3168dc0833dfb46c26da5c77f22abb01d8c3'
+export KO_DEFAULTBASEIMAGE='gcr.io/distroless/static-debian12@sha256:3f2b64ef97bd285e36132c684e6b2ae8f2723293d09aae046196cca64251acac'
 
 # cd to the repo root and setup go
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
@@ -28,7 +28,7 @@ source hack/tools/setup-go.sh
 IMAGES="${IMAGES:-cmd/archeio}"
 IFS=" " read -r -a images <<< "$IMAGES"
 # overridable registry to use
-KO_DOCKER_REPO="${KO_DOCKER_REPO:-gcr.io/k8s-staging-infra-tools}"
+KO_DOCKER_REPO="${KO_DOCKER_REPO:-us-central1-docker.pkg.dev/k8s-staging-images/infra-tools}"
 export KO_DOCKER_REPO
 # push or local tar?
 PUSH="${PUSH:-false}"
