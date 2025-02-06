@@ -37,7 +37,7 @@ fi
 TAG="${TAG:-"$(date +v%Y%m%d)-$(git describe --always --dirty)"}"
 # TODO: this can't actually be overridden currently
 # the terraform always uses the default here
-IMAGE_REPO="${IMAGE_REPO:-gcr.io/k8s-staging-infra-tools/archeio}"
+IMAGE_REPO="${IMAGE_REPO:-us-central1-docker.pkg.dev/k8s-staging-images/infra-tools/archeio}"
 GOBIN="${REPO_ROOT}/bin" go install github.com/google/go-containerregistry/cmd/crane@latest
 IMAGE_DIGEST="${IMAGE_DIGEST:-$(bin/crane digest "${IMAGE_REPO}:${TAG}")}"
 export IMAGE_DIGEST
