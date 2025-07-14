@@ -36,7 +36,7 @@ cd "${REPO_ROOT}"
 (
   set -x;
   "${REPO_ROOT}/bin/gotestsum" --junitfile="${REPO_ROOT}/bin/e2e-junit.xml" \
-    -- '-run' '^TestE2E' './cmd/archeio/internal/e2e'
+    -- '-run' '^TestE2E' '-count=1' './cmd/archeio/internal/e2e'
 )
 
 # if we are in CI, copy to the artifact upload location
