@@ -20,7 +20,6 @@ linters:
     - gosec
     - revive # replaces golint for now
     - misspell
-    - exportloopref
     - unparam
 
 linters-settings:
