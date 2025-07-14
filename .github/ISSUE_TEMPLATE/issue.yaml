@@ -7,7 +7,14 @@ body:
       label: Is there an existing issue for this?
       description: Please search to see if an issue already exists for the bug you encountered.
       options:
-      - label: I have searched the existing issues
+      - label: I have searched the existing issues.
+        required: true
+  - type: checkboxes
+    attributes:
+      label: Have you checked the debugging guide [docs/debugging.md](https://github.com/kubernetes/registry.k8s.io/blob/main/docs/debugging.md)?
+      description: Please check the steps in our [debugging guide](https://github.com/kubernetes/registry.k8s.io/blob/main/docs/debugging.md) before filing an issue.
+      options:
+      - label: I have followed the debugging guide.
         required: true
   - type: textarea
     id: what-expected
@@ -37,5 +44,5 @@ body:
       label: Code of Conduct
       description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/kubernetes/community/blob/master/code-of-conduct.md)
       options:
-        - label: I agree to follow this project's Code of Conduct
+        - label: I agree to follow this project's Code of Conduct.
           required: true
