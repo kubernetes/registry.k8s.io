@@ -1,12 +1,17 @@
 # See the OWNERS docs at https://go.k8s.io/owners
 
 approvers:
-  - ameukam #SIG K8S Infra Chair
-  - bentheelder #SIG Testing Chair
-  - dims #SIG K8S Infra Chair
-  - spiffxp #SIG K8S Infra TL
-  - thockin #SIG K8S Infra TL
+  - ameukam
+  - GenPage
+  - hakman
+  - upodroid
+  - xmudrii
 
-reviewers:
-  - bentheelder
-  - hh
+emeritus_approvers:
+  - BenTheElder
+  - dims
+  - spiffxp
+  - thockin
+
+labels:
+- sig/k8s-infra
