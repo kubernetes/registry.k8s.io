@@ -43,7 +43,7 @@ func awsRegionToHostURL(region, defaultURL string) string {
 	case "us-east-2", "ca-central-1":
 		return "https://prod-registry-k8s-io-us-east-2.s3.dualstack.us-east-2.amazonaws.com"
 	// US West (N. California)
-	case "us-west-1":
+	case "us-west-1", "sa-west-1":
 		return "https://prod-registry-k8s-io-us-west-1.s3.dualstack.us-west-1.amazonaws.com"
 	// US West (Oregon)
 	case "us-west-2", "ca-west-1":
