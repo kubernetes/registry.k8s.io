@@ -1,5 +1,4 @@
 //go:build !nointegration
-// +build !nointegration
 
 /*
 Copyright 2022 The Kubernetes Authors.

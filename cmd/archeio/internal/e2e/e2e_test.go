@@ -1,5 +1,4 @@
 //go:build !noe2e
-// +build !noe2e
 
 /*
 Copyright 2023 The Kubernetes Authors.
@@ -70,8 +69,10 @@ var testCases = []testCase{
 	{Name: "pause:3.9", Digest: "sha256:7031c1b283388d2c2e09b57badb803c05ebed362dc88d84b480cc47f72a21097"},
 }
 
-var repoRoot = ""
-var binDir = ""
+var (
+	repoRoot = ""
+	binDir   = ""
+)
 
 func TestMain(m *testing.M) {
 	if e := os.Getenv("REGISTRY_ENDPOINT"); e != "" {

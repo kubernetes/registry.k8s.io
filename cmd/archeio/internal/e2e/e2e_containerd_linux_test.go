@@ -1,5 +1,4 @@
 //go:build linux && !noe2e
-// +build linux,!noe2e
 
 /*
 Copyright 2023 The Kubernetes Authors.
