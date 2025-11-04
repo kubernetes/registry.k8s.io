@@ -17,62 +17,39 @@ limitations under the License.
 package app
 
 import (
+	"context"
 	"net/http"
 	"sync"
 	"time"
 
+	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
 	"k8s.io/klog/v2"
 )
+
+// TODO: replace with a more dynamic way to get the bucket URL
+var knownS3Buckets = map[string]string{
+	"us-east-1":      "https://adel-us-east-1.s3.dualstack.us-east-1.amazonaws.com",
+	"us-east-2":      "https://adel-us-east-2.s3.dualstack.us-east-2.amazonaws.com",
+	"us-west-1":      "https://adel-us-west-1.s3.dualstack.us-west-1.amazonaws.com",
+	"ap-southeast-1": "https://adel-ap-southeast-1.s3.dualstack.ap-southeast-1.amazonaws.com",
+	"eu-central-1":   "https://adel-eu-central-1.s3.dualstack.eu-central-1.amazonaws.com",
+}
 
 // awsRegionToHostURL returns the base S3 bucket URL for an OCI layer blob given the AWS region
 //
 // blobs in the buckets should be stored at /containers/images/sha256:$hash
 func awsRegionToHostURL(region, defaultURL string) string {
-	switch region {
-	// each of these has the region in which we have a bucket listed first
-	// and then additional regions we're mapping to that bucket
-	// based roughly on physical adjacency (and therefore _presumed_ latency)
-	//
-	// if you add a bucket, add a case for the region it is in, and consider
-	// shifting other regions that do not have their own bucket
-
-	// US East (N. Virginia)
-	case "us-east-1", "sa-east-1", "mx-central-1":
-		return "https://prod-registry-k8s-io-us-east-1.s3.dualstack.us-east-1.amazonaws.com"
-	// US East (Ohio)
-	case "us-east-2", "ca-central-1":
-		return "https://prod-registry-k8s-io-us-east-2.s3.dualstack.us-east-2.amazonaws.com"
-	// US West (N. California)
-	case "us-west-1":
-		return "https://prod-registry-k8s-io-us-west-1.s3.dualstack.us-west-1.amazonaws.com"
-	// US West (Oregon)
-	case "us-west-2", "ca-west-1":
-		return "https://prod-registry-k8s-io-us-west-2.s3.dualstack.us-west-2.amazonaws.com"
-	// Asia Pacific (Mumbai)
-	case "ap-south-1", "ap-south-2", "me-south-1", "me-central-1", "me-west-1":
-		return "https://prod-registry-k8s-io-ap-south-1.s3.dualstack.ap-south-1.amazonaws.com"
-	// Asia Pacific (Tokyo)
-	case "ap-northeast-1", "ap-northeast-2", "ap-northeast-3":
-		return "https://prod-registry-k8s-io-ap-northeast-1.s3.dualstack.ap-northeast-1.amazonaws.com"
-	// Asia Pacific (Singapore)
-	case "ap-southeast-1", "ap-southeast-2", "ap-southeast-3", "ap-southeast-4", "ap-southeast-5", "ap-southeast-6", "ap-southeast-7", "ap-east-1", "ap-east-2", "cn-northwest-1", "cn-north-1":
-		return "https://prod-registry-k8s-io-ap-southeast-1.s3.dualstack.ap-southeast-1.amazonaws.com"
-	// Europe (Frankfurt)
-	case "eu-central-1", "eu-central-2", "eu-south-1", "eu-south-2", "il-central-1":
-		return "https://prod-registry-k8s-io-eu-central-1.s3.dualstack.eu-central-1.amazonaws.com"
-	// Europe (Ireland)
-	case "eu-west-1", "af-south-1", "eu-west-2", "eu-west-3", "eu-north-1":
-		return "https://prod-registry-k8s-io-eu-west-1.s3.dualstack.eu-west-1.amazonaws.com"
-	default:
-		return defaultURL
+	if url, ok := knownS3Buckets[region]; ok {
+		return url
 	}
+	return defaultURL
 }
 
 // blobChecker are used to check if a blob exists, possibly with caching
 type blobChecker interface {
-	// BlobExists should check that blobURL exists
+	// BlobExistsWithContext should check that blobURL exists
 	// bucket and layerHash may be used for caching purposes
-	BlobExists(blobURL string) bool
+	BlobExistsWithContext(ctx context.Context, blobURL string) bool
 }
 
 // cachedBlobChecker just performs an HTTP HEAD check against the blob
@@ -81,48 +58,105 @@ type blobChecker interface {
 // should be plenty fast for now, HTTP HEAD on s3 is cheap
 type cachedBlobChecker struct {
 	blobCache
+	client *http.Client
 }
 
 func newCachedBlobChecker() *cachedBlobChecker {
-	return &cachedBlobChecker{}
+	// Create and wrap the HTTP client once at initialization
+	// This ensures the tracer integration happens when the tracer is ready
+	client := &http.Client{
+		// Increased timeout to 10s for S3 HEAD requests
+		Timeout: time.Second * 10,
+	}
+	// Wrap with httptrace to instrument the HTTP request
+	httptrace.WrapClient(client)
+
+	return &cachedBlobChecker{
+		client: client,
+	}
+}
+
+// cacheEntry stores the result and expiration time
+type cacheEntry struct {
+	exists    bool
+	expiresAt time.Time
 }
 
 type blobCache struct {
 	m sync.Map
 }
 
-func (b *blobCache) Get(blobURL string) bool {
-	_, exists := b.m.Load(blobURL)
+// Get returns (exists, found) where found indicates if the URL is in cache
+func (b *blobCache) Get(blobURL string) (bool, bool) {
+	val, ok := b.m.Load(blobURL)
+	if !ok {
+		return false, false
+	}
+	entry := val.(cacheEntry)
+	// Check if entry has expired
+	if time.Now().After(entry.expiresAt) {
+		b.m.Delete(blobURL)
+		return false, false
+	}
+	return entry.exists, true
+}
+
+// Put stores the result with a TTL
+func (b *blobCache) Put(blobURL string, exists bool) {
+	var ttl time.Duration
+	ttl = 5 * time.Minute
+	entry := cacheEntry{
+		exists:    exists,
+		expiresAt: time.Now().Add(ttl),
+	}
+	b.m.Store(blobURL, entry)
+}
+
+func (c *cachedBlobChecker) BlobExistsWithContext(ctx context.Context, blobURL string) bool {
+	// Check cache first
+	if exists, found := c.blobCache.Get(blobURL); found {
+		klog.V(3).InfoS("blob existence cache hit", "url", blobURL, "exists", exists)
+		// Cache hit - no need for a span, very fast operation
+		return exists
+	}
+
+	klog.V(3).InfoS("blob existence cache miss", "url", blobURL)
+
+	// Perform HTTP HEAD (this will create its own span)
+	exists := c.performHeadCheck(ctx, blobURL)
+
+	// Cache the result (both positive and negative)
+	c.blobCache.Put(blobURL, exists)
+
 	return exists
 }
 
-func (b *blobCache) Put(blobURL string) {
-	b.m.Store(blobURL, struct{}{})
-}
-
-func (c *cachedBlobChecker) BlobExists(blobURL string) bool {
-	if c.blobCache.Get(blobURL) {
-		klog.V(3).InfoS("blob existence cache hit", "url", blobURL)
-		return true
-	}
-	klog.V(3).InfoS("blob existence cache miss", "url", blobURL)
-	// NOTE: this client will still share http.DefaultTransport
-	// We do not wish to share the rest of the client state currently
-	client := &http.Client{
-		// ensure sensible timeouts
-		Timeout: time.Second * 5,
-	}
-	r, err := client.Head(blobURL)
-	// fallback to assuming blob is unavailable on errors
+func (c *cachedBlobChecker) performHeadCheck(ctx context.Context, blobURL string) bool {
+	// Use the pre-wrapped client
+	req, err := http.NewRequestWithContext(ctx, "HEAD", blobURL, nil)
 	if err != nil {
+		klog.Errorf("failed to create HEAD request for %s: %v", blobURL, err)
 		return false
 	}
-	r.Body.Close()
+
+	startTime := time.Now()
+	r, err := c.client.Do(req)
+	duration := time.Since(startTime)
+
+	// fallback to assuming blob is unavailable on errors
+	if err != nil {
+		klog.Errorf("failed to HEAD %s (took %v): %v", blobURL, duration, err)
+		return false
+	}
+	defer r.Body.Close()
+
 	// if the blob exists it HEAD should return 200 OK
 	// this is true for S3 and for OCI registries
 	if r.StatusCode == http.StatusOK {
-		c.blobCache.Put(blobURL)
+		klog.V(3).InfoS("blob exists", "url", blobURL, "duration", duration)
 		return true
 	}
+
+	klog.V(3).InfoS("blob does not exist", "url", blobURL, "status", r.StatusCode, "duration", duration)
 	return false
 }
