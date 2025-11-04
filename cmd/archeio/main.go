@@ -17,14 +17,11 @@ limitations under the License.
 package main
 
 import (
-	"context"
 	"flag"
-	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/awslabs/aws-lambda-go-api-proxy/httpadapter"
 	"k8s.io/klog/v2"
 
 	"k8s.io/registry.k8s.io/cmd/archeio/internal/app"
@@ -36,48 +33,40 @@ func main() {
 	flag.Parse()
 	defer klog.Flush()
 
-	// cloud run expects us to listen to HTTP on $PORT
-	// https://cloud.google.com/run/docs/container-contract#port
-	port := getEnv("PORT", "8080")
-
 	// make it possible to override k8s.gcr.io without rebuilding in the future
 	registryConfig := app.RegistryConfig{
-		UpstreamRegistryEndpoint: getEnv("UPSTREAM_REGISTRY_ENDPOINT", "https://us-central1-docker.pkg.dev"),
-		UpstreamRegistryPath:     getEnv("UPSTREAM_REGISTRY_PATH", "k8s-artifacts-prod/images"),
-		InfoURL:                  "https://github.com/kubernetes/registry.k8s.io",
-		PrivacyURL:               "https://www.linuxfoundation.org/privacy-policy/",
-		DefaultAWSBaseURL:        getEnv("DEFAULT_AWS_BASE_URL", "https://prod-registry-k8s-io-us-east-1.s3.dualstack.us-east-1.amazonaws.com"),
+		UpstreamUsGAR: app.Registry{
+			Endpoint:  getEnv("UPSTREAM_US_GCP_ENDPOINT", "https://gcr.io"),
+			Namespace: getEnv("UPSTREAM_US_GCP_NAMESPACE", "datadoghq"),
+		},
+		UpstreamEuGAR: app.Registry{
+			Endpoint:  getEnv("UPSTREAM_EU_GCP_ENDPOINT", "https://eu.gcr.io"),
+			Namespace: getEnv("UPSTREAM_EU_GCP_NAMESPACE", "datadoghq"),
+		},
+		UpstreamAsiaGAR: app.Registry{
+			Endpoint:  getEnv("UPSTREAM_AP_GCP_GCR_ENDPOINT", "https://asia.gcr.io"),
+			Namespace: getEnv("UPSTREAM_AP_GCP_GCR_NAMESPACE", "datadoghq"),
+		},
+		UpstreamACR: app.Registry{
+			// Azure does not use a registry path, the endpoint is already datadoghq.azurecr.io
+			Endpoint: getEnv("UPSTREAM_AZ_ENDPOINT", "https://datadoghq.azurecr.io"),
+		},
+		UpstreamCDN: app.Registry{
+			// CloudFront does not use a registry path, the endpoint is already d3o2h7i3xf2t1t.cloudfront.net
+			Endpoint: getEnv("UPSTREAM_CDN_ENDPOINT", "https://d3o2h7i3xf2t1t.cloudfront.net"),
+		},
+		InfoURL:    "https://docs.datadoghq.com/",
+		PrivacyURL: "https://www.datadoghq.com/legal/privacy/",
 	}
 
-	// configure server with reasonable timeout
-	// we only serve redirects, 10s should be sufficient
-	server := &http.Server{
-		Addr:              ":" + port,
-		Handler:           app.MakeHandler(registryConfig),
-		ReadTimeout:       10 * time.Second,
-		ReadHeaderTimeout: 2 * time.Second,
-	}
+	handler := app.MakeHandler(registryConfig)
 
-	// signal handler for graceful shutdown
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-
-	// start serving
-	go func() {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			klog.Fatal(err)
-		}
-	}()
-	klog.InfoS("listening", "port", port)
+	klog.InfoS("Starting AWS Lambda handler with API Gateway v1")
 	klog.InfoS("registry", "configuration", registryConfig)
 
-	// Graceful shutdown
-	<-done
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := server.Shutdown(ctx); err != nil {
-		klog.Fatalf("Server didn't exit gracefully %v", err)
-	}
+	// Lambda mode - use the API Gateway v1 adapter
+	adapter := httpadapter.New(handler)
+	lambda.Start(adapter.ProxyWithContext)
 }
 
 // getEnv returns defaultValue if key is not set, else the value of os.LookupEnv(key)
