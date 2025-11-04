@@ -36,6 +36,7 @@ func main() {
 	// read in data
 	awsRaw := mustReadFile(filepath.Join(dataDir, "aws-ip-ranges.json"))
 	gcpRaw := mustReadFile(filepath.Join(dataDir, "gcp-cloud.json"))
+	azRaw := mustReadFile(filepath.Join(dataDir, "azure-cloud.json"))
 	// parse raw AWS IP range data
 	awsRTP, err := parseAWS(awsRaw)
 	if err != nil {
@@ -43,6 +44,11 @@ func main() {
 	}
 	// parse GCP IP range data
 	gcpRTP, err := parseGCP(gcpRaw)
+	if err != nil {
+		panic(err)
+	}
+	// parse Azure IP range data
+	azRTP, err := parseAZ(azRaw)
 	if err != nil {
 		panic(err)
 	}
@@ -54,6 +60,7 @@ func main() {
 	cloudToRTP := map[string]regionsToPrefixes{
 		"AWS": awsRTP,
 		"GCP": gcpRTP,
+		"AZ":  azRTP,
 	}
 	if err := generateRangesGo(f, cloudToRTP); err != nil {
 		panic(err)

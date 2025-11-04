@@ -28,6 +28,9 @@ const AWS = "AWS"
 // GCP cloud
 const GCP = "GCP"
 
+// Azure cloud
+const AZ = "AZ"
+
 // regionToRanges contains a preparsed map of cloud IPInfo to netip.Prefix
 var regionToRanges = map[IPInfo][]netip.Prefix{
 	{Cloud: AWS, Region: "GLOBAL"}: {
