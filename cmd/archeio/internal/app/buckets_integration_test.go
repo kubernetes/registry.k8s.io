@@ -20,6 +20,7 @@ package app
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"io"
@@ -69,7 +70,7 @@ func TestIntegrationCachedBlobChecker(t *testing.T) {
 		tc := testCases[i]
 		t.Run(tc.Name, func(t *testing.T) {
 			url := tc.BlobURL
-			exists := blobs.BlobExists(url)
+			exists := blobs.BlobExistsWithContext(context.Background(), url)
 			if exists != tc.ExpectExists {
 				t.Fatalf("expected: %v but got: %v", tc.ExpectExists, exists)
 			}
@@ -79,7 +80,7 @@ func TestIntegrationCachedBlobChecker(t *testing.T) {
 		tc := testCases[i]
 		t.Run(tc.Name, func(t *testing.T) {
 			url := tc.BlobURL
-			exists := blobs.BlobExists(url)
+			exists := blobs.BlobExistsWithContext(context.Background(), url)
 			if exists != tc.ExpectExists {
 				t.Fatalf("expected: %v but got: %v", tc.ExpectExists, exists)
 			}

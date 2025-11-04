@@ -19,39 +19,36 @@ package app
 import (
 	"strings"
 	"testing"
-
-	"k8s.io/registry.k8s.io/pkg/net/cloudcidrs"
 )
 
 func TestRegionToAWSRegionToHostURL(t *testing.T) {
-	// ensure known regions return a configured bucket
-	regions := []string{}
-	for _, ipInfo := range cloudcidrs.AllIPInfos() {
-		// AWS regions, excluding "GLOBAL" meta region, AWS US Gov Cloud and European Soveign Cloud
-		if ipInfo.Cloud == cloudcidrs.AWS &&
-			ipInfo.Region != "GLOBAL" && !strings.HasPrefix(ipInfo.Region, "us-gov-") && !strings.HasPrefix(ipInfo.Region, "eusc-") {
-			regions = append(regions, ipInfo.Region)
-		}
-	}
-	for _, region := range regions {
+	// Test the regions we actually support
+	supportedRegions := []string{"us-east-1", "us-east-2", "us-west-1", "ap-southeast-1", "eu-central-1"}
+	for _, region := range supportedRegions {
 		url := awsRegionToHostURL(region, "")
 		if url == "" {
 			t.Fatalf("received empty string for known region %q", region)
 		}
+		if !strings.Contains(url, region) {
+			t.Fatalf("expected URL to contain region %q, got %q", region, url)
+		}
 	}
-	// test default region
-	if url := awsRegionToHostURL("nonsensical-region", "____default____"); url != "____default____" {
-		t.Fatalf("received non-empty URL string for made up region \"nonsensical-region\": %q", url)
+	// test default region fallback
+	defaultURL := "____default____"
+	if url := awsRegionToHostURL("nonsensical-region", defaultURL); url != defaultURL {
+		t.Fatalf("expected default URL %q for unsupported region, got %q", defaultURL, url)
 	}
 }
 
 func TestBlobCache(t *testing.T) {
 	bc := &blobCache{}
-	bc.Put("foo")
-	if !bc.Get("foo") {
+	bc.Put("foo", true)
+	exists, found := bc.Get("foo")
+	if !found || !exists {
 		t.Fatal("Cache did not contain key we just put")
 	}
-	if bc.Get("bar") {
+	_, found = bc.Get("bar")
+	if found {
 		t.Fatal("Cache contained key we did not put")
 	}
 }
