@@ -14,6 +14,34 @@ the rest of the community infra deployments, but primarily
 For publishing to registry.k8s.io, refer to [the docs][publishing] at in k8s.io 
 under `registry.k8s.io/`.
 
+## Building
+
+### Build Lambda Docker Image
+
+To build the Docker image for AWS Lambda deployment:
+
+```bash
+docker build -f Dockerfile.lambda -t <tag> .
+```
+
+The image is built for ARM64 architecture (Graviton2) and includes the Datadog Lambda Extension for tracing.
+
+### Generate Cloud CIDR Fixtures
+
+To update the cloud IP range data and regenerate the generated Go code:
+
+1. Update the IP range data files:
+```bash
+./pkg/net/cloudcidrs/internal/ranges2go/update-data.sh
+```
+
+2. Generate the Go code from the updated data:
+```bash
+go generate ./pkg/net/cloudcidrs/...
+```
+
+This will regenerate `pkg/net/cloudcidrs/zz_generated_range_data.go` with the latest IP ranges from AWS, GCP, and Azure.
+
 ## Stability
 
 registry.k8s.io is GA and we ask that all users migrate from k8s.gcr.io as
