@@ -1,0 +1,46 @@
+# Multi-stage build for AWS Lambda with Datadog Extension
+# Stage 1: Build the Go binary
+FROM public.ecr.aws/docker/library/golang:1.24.0 AS builder
+
+WORKDIR /build
+
+# Copy Go module files and download dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the Go binary for Lambda
+# Must be statically linked and named 'bootstrap' for Lambda custom runtime
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build \
+    -ldflags="-w -s" \
+    -tags lambda.norpc \
+    -o bootstrap \
+    ./cmd/archeio
+
+# Stage 2: Create the Lambda runtime image
+# Use ARM64 base image for Graviton2 processors
+FROM public.ecr.aws/lambda/provided:al2023-arm64
+
+# Copy the built binary to /var/runtime (where Lambda expects it)
+COPY --from=builder /build/bootstrap /var/runtime/bootstrap
+
+# Ensure bootstrap is executable
+RUN chmod +x /var/runtime/bootstrap
+
+# Install the Datadog Lambda Extension
+# The extension runs as a sidecar and automatically instruments Lambda functions
+# It captures traces, metrics, and logs without code changes
+# The multi-arch image automatically selects the correct architecture (ARM64)
+COPY --from=public.ecr.aws/datadog/lambda-extension:latest /opt/. /opt/
+
+# Set Lambda-specific environment variables
+ENV DD_FLUSH_TO_LOG=true \
+    DD_TRACE_ENABLED=true \
+    DD_MERGE_XRAY_TRACES=false
+
+# For custom runtime, specify the handler as the bootstrap function
+# The Lambda runtime will execute /var/task/bootstrap
+CMD ["bootstrap"]
+
