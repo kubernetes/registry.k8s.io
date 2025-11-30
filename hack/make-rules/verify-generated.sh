@@ -30,10 +30,10 @@ OUT_FILE="${tmpdir}"/zz_generated_range_data.go
 export OUT_FILE
 DATA_DIR="${REPO_ROOT}"/pkg/net/cloudcidrs/internal/ranges2go/data
 export DATA_DIR
-./pkg/net/cloudcidrs/internal/ranges2go/run.sh
+go run ./pkg/net/cloudcidrs/internal/ranges2go
 
 if ! diff "${OUT_FILE}" ./pkg/net/cloudcidrs/zz_generated_range_data.go; then
     >&2 echo ""
-    >&2 echo "generated file is out of date, please run 'go generate ./...' to regenerate"
+    >&2 echo "generated file is out of date, please run 'make codegen' to regenerate"
     exit 1
 fi

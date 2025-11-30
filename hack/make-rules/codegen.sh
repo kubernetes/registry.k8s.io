@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright 2022 The Kubernetes Authors.
+# Copyright 2025 The Kubernetes Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,13 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# wrapper script so we can go:generate with this tool
-
+# script to run all codegen
 set -o errexit -o nounset -o pipefail
 
-SELF_DIR="$(dirname "${BASH_SOURCE[0]}")"
-REPO_ROOT="$(cd "${SELF_DIR}/../../../../../.." && pwd -P)"
-BIN_PATH="${REPO_ROOT}/bin/ranges2go"
+# cd to the repo root
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." &> /dev/null && pwd -P)"
+cd "${REPO_ROOT}"
 
-go build -o "${BIN_PATH}" "${SELF_DIR}"
-"${BIN_PATH}" "$@"
+source hack/tools/setup-go.sh
+
+echo "Downloading AWS & GCP IP ranges data..."
+curl -fLo 'pkg/net/cloudcidrs/internal/ranges2go/data/aws-ip-ranges.json' 'https://ip-ranges.amazonaws.com/ip-ranges.json'
+curl -fLo 'pkg/net/cloudcidrs/internal/ranges2go/data/gcp-cloud.json' 'https://www.gstatic.com/ipranges/cloud.json'
+
+go generate ./...
