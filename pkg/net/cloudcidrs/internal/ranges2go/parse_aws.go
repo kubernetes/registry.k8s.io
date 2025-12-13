@@ -19,22 +19,23 @@ package main
 import (
 	"encoding/json"
 	"net/netip"
+	"slices"
 	"sort"
 )
 
 // parseAWS parses raw AWS IP ranges JSON data
 // and processes it to a regionsToPrefixes map
-func parseAWS(raw string) (regionsToPrefixes, error) {
+func parseAWS(raw string, excludedRegions []string) (regionsToPrefixes, error) {
 	parsed, err := parseAWSIPRangesJSON([]byte(raw))
 	if err != nil {
 		return nil, err
 	}
-	return awsRegionsToPrefixesFromData(parsed)
+	return awsRegionsToPrefixesFromData(parsed, excludedRegions)
 }
 
 /*
 	For more on these datatypes see:
-	https://docs.aws.amazon.com/general/latest/gr/aws-ip-ranges.html
+	https://docs.aws.amazon.com/vpc/latest/userguide/aws-ip-ranges.html
 */
 
 type AWSIPRangesJSON struct {
@@ -68,7 +69,7 @@ func parseAWSIPRangesJSON(rawJSON []byte) (*AWSIPRangesJSON, error) {
 }
 
 // awsRegionsToPrefixesFromData processes the raw unmarshalled JSON into regionsToPrefixes map
-func awsRegionsToPrefixesFromData(data *AWSIPRangesJSON) (regionsToPrefixes, error) {
+func awsRegionsToPrefixesFromData(data *AWSIPRangesJSON, excludedRegions []string) (regionsToPrefixes, error) {
 	// convert from AWS published structure to a map by region, parse Prefixes
 	rtp := regionsToPrefixes{}
 	for _, prefix := range data.Prefixes {
@@ -77,6 +78,9 @@ func awsRegionsToPrefixesFromData(data *AWSIPRangesJSON) (regionsToPrefixes, err
 		if err != nil {
 			return nil, err
 		}
+		if slices.Contains(excludedRegions, region) {
+			continue
+		}
 		rtp[region] = append(rtp[region], ipPrefix)
 	}
 	for _, prefix := range data.IPv6Prefixes {
@@ -84,6 +88,9 @@ func awsRegionsToPrefixesFromData(data *AWSIPRangesJSON) (regionsToPrefixes, err
 		ipPrefix, err := netip.ParsePrefix(prefix.IPv6Prefix)
 		if err != nil {
 			return nil, err
+		}
+		if slices.Contains(excludedRegions, region) {
+			continue
 		}
 		rtp[region] = append(rtp[region], ipPrefix)
 	}

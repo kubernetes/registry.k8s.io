@@ -50,6 +50,12 @@ func TestGenerateRangesGo(t *testing.T) {
       "region": "me-south-1",
       "service": "AMAZON",
       "network_border_group": "me-south-1"
+    },
+    {
+      "ip_prefix": "79.107.7.136/29",
+      "region": "me-south-10",
+      "service": "AMAZON",
+      "network_border_group": "me-south-10"
     }
   ],
   "ipv6_prefixes": [
@@ -76,11 +82,17 @@ func TestGenerateRangesGo(t *testing.T) {
       "region": "eu-south-1",
       "service": "AMAZON",
       "network_border_group": "eu-south-1"
+    },
+    {
+      "ipv6_prefix": "2a06:d03a:a000::/56",
+      "region": "eu-south-10",
+      "service": "AMAZON",
+      "network_border_group": "eu-south-10"
     }
   ]
 }
 `
-	awsRTP, err := parseAWS(rawAWSData)
+	awsRTP, err := parseAWS(rawAWSData, []string{"me-south-10", "eu-south-10"})
 	if err != nil {
 		t.Fatalf("unexpected error parsing test data: %v", err)
 	}

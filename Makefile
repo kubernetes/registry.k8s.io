@@ -124,5 +124,9 @@ lint:
 # shell linter
 shellcheck:
 	hack/make-rules/shellcheck.sh
+
+# Run all the code generators
+codegen:
+	hack/make-rules/codegen.sh
 #################################################################################
 .PHONY: all archeio geranos build unit integration test e2e-test clean update gofmt verify verify-generated lint shellcheck

@@ -17,4 +17,4 @@ limitations under the License.
 // cloudcidrs contains Cloud CIDR matching
 package cloudcidrs
 
-//go:generate ./internal/ranges2go/run.sh
+//go:generate go run ./internal/ranges2go
