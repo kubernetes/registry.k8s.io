@@ -19,14 +19,20 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func main() {
 	// overridable for make verify
 	outputPath := os.Getenv("OUT_FILE")
 	dataDir := os.Getenv("DATA_DIR")
+	excludedAWSRegions := strings.Split(os.Getenv("EXCLUDED_AWS_REGIONS"), ",")
+	if len(excludedAWSRegions) > 0 {
+		fmt.Printf("Please make sure the following excluded AWS regions are added after they have been released: %v", excludedAWSRegions)
+	}
 	if outputPath == "" {
 		outputPath = "./zz_generated_range_data.go"
 	}
@@ -37,7 +43,7 @@ func main() {
 	awsRaw := mustReadFile(filepath.Join(dataDir, "aws-ip-ranges.json"))
 	gcpRaw := mustReadFile(filepath.Join(dataDir, "gcp-cloud.json"))
 	// parse raw AWS IP range data
-	awsRTP, err := parseAWS(awsRaw)
+	awsRTP, err := parseAWS(awsRaw, excludedAWSRegions)
 	if err != nil {
 		panic(err)
 	}

@@ -28,9 +28,10 @@ trap 'rm -rf ${tmpdir?}' EXIT
 # generate and compare
 OUT_FILE="${tmpdir}"/zz_generated_range_data.go
 export OUT_FILE
-DATA_DIR="${REPO_ROOT}"/pkg/net/cloudcidrs/internal/ranges2go/data
-export DATA_DIR
-go run ./pkg/net/cloudcidrs/internal/ranges2go
+# keep excluded list in sync with hack/make-rules/codegen.sh
+EXCLUDED_AWS_REGIONS="me-west-1,sa-west-1" \
+DATA_DIR="${REPO_ROOT}"/pkg/net/cloudcidrs/internal/ranges2go/data \
+    go run ./pkg/net/cloudcidrs/internal/ranges2go
 
 if ! diff "${OUT_FILE}" ./pkg/net/cloudcidrs/zz_generated_range_data.go; then
     >&2 echo ""

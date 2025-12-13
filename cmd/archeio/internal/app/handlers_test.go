@@ -26,8 +26,8 @@ import (
 func TestMakeHandler(t *testing.T) {
 	registryConfig := RegistryConfig{
 		// the v2 test below tests being redirected to k8s.gcr.io as that one doesn't have UpstreamRegistryPath
-		UpstreamRegistryEndpoint: "https://us.gcr.io",
-		UpstreamRegistryPath:     "k8s-artifacts-prod",
+		UpstreamRegistryEndpoint: "https://us-central1-docker.pkg.dev",
+		UpstreamRegistryPath:     "k8s-artifacts-prod/images",
 		InfoURL:                  "https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io",
 		PrivacyURL:               "https://www.linuxfoundation.org/privacy-policy/",
 	}
@@ -79,23 +79,23 @@ func TestMakeHandler(t *testing.T) {
 			Name:           "/v2/pause/manifests/latest",
 			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/manifests/latest", nil),
 			ExpectedStatus: http.StatusTemporaryRedirect,
-			ExpectedURL:    "https://us.gcr.io/v2/k8s-artifacts-prod/pause/manifests/latest",
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/k8s-artifacts-prod/images/pause/manifests/latest",
 		},
 		{
 			Name:           "/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil),
 			ExpectedStatus: http.StatusTemporaryRedirect,
-			ExpectedURL:    "https://us.gcr.io/v2/k8s-artifacts-prod/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/k8s-artifacts-prod/images/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 		},
 		{
-			Name: "AWS IP, /v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			Name: "AWS eu-west-3 IP, /v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 			Request: func() *http.Request {
 				r := httptest.NewRequest("GET", "http://localhost:8080/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil)
 				r.RemoteAddr = "35.180.1.1:888"
 				return r
 			}(),
 			ExpectedStatus: http.StatusTemporaryRedirect,
-			ExpectedURL:    "https://prod-registry-k8s-io-eu-west-1.s3.dualstack.eu-west-1.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			ExpectedURL:    "https://prod-registry-k8s-io-eu-west-3.s3.dualstack.eu-west-3.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 		},
 		{
 			Name: "GCP IP, /v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
@@ -105,7 +105,7 @@ func TestMakeHandler(t *testing.T) {
 				return r
 			}(),
 			ExpectedStatus: http.StatusTemporaryRedirect,
-			ExpectedURL:    "https://us.gcr.io/v2/k8s-artifacts-prod/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/k8s-artifacts-prod/images/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 		},
 	}
 	for i := range testCases {
@@ -164,6 +164,7 @@ func TestMakeV2Handler(t *testing.T) {
 			"https://prod-registry-k8s-io-ap-southeast-1.s3.dualstack.ap-southeast-1.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e": true,
 			"https://prod-registry-k8s-io-eu-central-1.s3.dualstack.eu-central-1.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":     true,
 			"https://prod-registry-k8s-io-eu-west-1.s3.dualstack.eu-west-1.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
+			"https://prod-registry-k8s-io-eu-west-3.s3.dualstack.eu-west-3.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
 			"https://prod-registry-k8s-io-us-east-1.s3.dualstack.us-east-2.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
 			"https://prod-registry-k8s-io-us-east-2.s3.dualstack.us-east-2.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
 			"https://prod-registry-k8s-io-us-west-1.s3.dualstack.us-west-1.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
@@ -210,23 +211,23 @@ func TestMakeV2Handler(t *testing.T) {
 			ExpectedStatus: http.StatusNotFound,
 		},
 		{
-			Name: "AWS IP, /v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			Name: "AWS eu-west-3 IP, /v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 			Request: func() *http.Request {
 				r := httptest.NewRequest("GET", "http://localhost:8080/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil)
 				r.RemoteAddr = "35.180.1.1:888"
 				return r
 			}(),
 			ExpectedStatus: http.StatusTemporaryRedirect,
-			ExpectedURL:    "https://prod-registry-k8s-io-eu-west-1.s3.dualstack.eu-west-1.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			ExpectedURL:    "https://prod-registry-k8s-io-eu-west-3.s3.dualstack.eu-west-3.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 		},
 		{
-			Name:           "AWS IP, /v2/pause/manifests/latest",
+			Name:           "Fetching image manifest, /v2/pause/manifests/latest",
 			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/manifests/latest", nil),
 			ExpectedStatus: http.StatusTemporaryRedirect,
 			ExpectedURL:    "https://k8s.gcr.io/v2/pause/manifests/latest",
 		},
 		{
-			Name: "AWS IP, /v2/pause/blobs/sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1234567",
+			Name: "AWS eu-west-3 IP, /v2/pause/blobs/sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1234567",
 			Request: func() *http.Request {
 				r := httptest.NewRequest("GET", "http://localhost:8080/v2/pause/blobs/sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1234567", nil)
 				r.RemoteAddr = "35.180.1.1:888"

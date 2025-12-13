@@ -27,4 +27,8 @@ echo "Downloading AWS & GCP IP ranges data..."
 curl -fLo 'pkg/net/cloudcidrs/internal/ranges2go/data/aws-ip-ranges.json' 'https://ip-ranges.amazonaws.com/ip-ranges.json'
 curl -fLo 'pkg/net/cloudcidrs/internal/ranges2go/data/gcp-cloud.json' 'https://www.gstatic.com/ipranges/cloud.json'
 
-go generate ./...
+# AWS adds IP ranges for unreleased regions which we want to exclude
+EXCLUDED_AWS_REGIONS="me-west-1,sa-west-1" \
+OUT_FILE=pkg/net/cloudcidrs/zz_generated_range_data.go \
+DATA_DIR=pkg/net/cloudcidrs/internal/ranges2go/data \
+    go run ./pkg/net/cloudcidrs/internal/ranges2go

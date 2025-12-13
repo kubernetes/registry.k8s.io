@@ -33,36 +33,112 @@ func awsRegionToHostURL(region, defaultURL string) string {
 	// and then additional regions we're mapping to that bucket
 	// based roughly on physical adjacency (and therefore _presumed_ latency)
 	//
-	// if you add a bucket, add a case for the region it is in, and consider
-	// shifting other regions that do not have their own bucket
+	// As of late 2025, we don't have access to cn-northwest-1 or cn-north-1 regions as they are part of the aws-cn partition.
+	// So we are mapping them to ap-east-1(Hong Kong) for now.
+	// aws ec2 describe-regions --all-regions --query "Regions[].RegionName" --output json | jq .[] | awk '{print $0","}' | sort --version-sort
 
+	// Africa (Cape Town)
+	case "af-south-1":
+		return "https://prod-registry-k8s-io-af-south-1.s3.dualstack.af-south-1.amazonaws.com"
+	// Asia Pacific (Hong Kong) and China Regions
+	case "ap-east-1", "cn-northwest-1", "cn-north-1":
+		return "https://prod-registry-k8s-io-ap-east-1.s3.dualstack.ap-east-1.amazonaws.com"
+	// Asia Pacific (Taipei)
+	case "ap-east-2":
+		return "https://prod-registry-k8s-io-ap-east-1.s3.dualstack.ap-east-1.amazonaws.com"
+	// Asia Pacific (Tokyo)
+	case "ap-northeast-1":
+		return "https://prod-registry-k8s-io-ap-northeast-1.s3.dualstack.ap-northeast-1.amazonaws.com"
+	// Asia Pacific (Seoul)
+	case "ap-northeast-2":
+		return "https://prod-registry-k8s-io-ap-northeast-2.s3.dualstack.ap-northeast-2.amazonaws.com"
+	// Asia Pacific (Osaka)
+	case "ap-northeast-3":
+		return "https://prod-registry-k8s-io-ap-northeast-3.s3.dualstack.ap-northeast-3.amazonaws.com"
+	// Asia Pacific (Singapore)
+	case "ap-southeast-1":
+		return "https://prod-registry-k8s-io-ap-southeast-1.s3.dualstack.ap-southeast-1.amazonaws.com"
+	// Asia Pacific (Sydney)
+	case "ap-southeast-2":
+		return "https://prod-registry-k8s-io-ap-southeast-2.s3.dualstack.ap-southeast-2.amazonaws.com"
+	// Asia Pacific (Jakarta)
+	case "ap-southeast-3":
+		return "https://prod-registry-k8s-io-ap-southeast-3.s3.dualstack.ap-southeast-3.amazonaws.com"
+	// Asia Pacific (Melbourne)
+	case "ap-southeast-4":
+		return "https://prod-registry-k8s-io-ap-southeast-4.s3.dualstack.ap-southeast-4.amazonaws.com"
+	// Asia Pacific (Singapore)
+	case "ap-southeast-5":
+		return "https://prod-registry-k8s-io-ap-southeast-5.s3.dualstack.ap-southeast-5.amazonaws.com"
+	// Asia Pacific (New Zealand)
+	case "ap-southeast-6":
+		return "https://prod-registry-k8s-io-ap-southeast-6.s3.dualstack.ap-southeast-6.amazonaws.com"
+	// Asia Pacific (Thailand)
+	case "ap-southeast-7":
+		return "https://prod-registry-k8s-io-ap-southeast-7.s3.dualstack.ap-southeast-7.amazonaws.com"
+	// Asia Pacific (Mumbai)
+	case "ap-south-1":
+		return "https://prod-registry-k8s-io-ap-south-1.s3.dualstack.ap-south-1.amazonaws.com"
+	// Asia Pacific (Hyderabad)
+	case "ap-south-2":
+		return "https://prod-registry-k8s-io-ap-south-2.s3.dualstack.ap-south-2.amazonaws.com"
+	// Canada (Central)
+	case "ca-central-1":
+		return "https://prod-registry-k8s-io-ca-central-1.s3.dualstack.ca-central-1.amazonaws.com"
+	// Canada (Calgary)
+	case "ca-west-1":
+		return "https://prod-registry-k8s-io-ca-west-1.s3.dualstack.ca-west-1.amazonaws.com"
+	// Europe (Frankfurt)
+	case "eu-central-1":
+		return "https://prod-registry-k8s-io-eu-central-1.s3.dualstack.eu-central-1.amazonaws.com"
+	// Europe (Zurich)
+	case "eu-central-2":
+		return "https://prod-registry-k8s-io-eu-central-2.s3.dualstack.eu-central-2.amazonaws.com"
+	// Europe (Stockholm)
+	case "eu-north-1":
+		return "https://prod-registry-k8s-io-eu-north-1.s3.dualstack.eu-north-1.amazonaws.com"
+	// Europe (Milan)
+	case "eu-south-1":
+		return "https://prod-registry-k8s-io-eu-south-1.s3.dualstack.eu-south-1.amazonaws.com"
+	// Europe (Spain)
+	case "eu-south-2":
+		return "https://prod-registry-k8s-io-eu-south-2.s3.dualstack.eu-south-2.amazonaws.com"
+	// Europe (Ireland)
+	case "eu-west-1":
+		return "https://prod-registry-k8s-io-eu-west-1.s3.dualstack.eu-west-1.amazonaws.com"
+	// Europe (London)
+	case "eu-west-2":
+		return "https://767373bbdcb8270361b96548387bf2a9ad0d48758c35-eu-west-2.s3.dualstack.eu-west-2.amazonaws.com"
+	// Europe (Paris)
+	case "eu-west-3":
+		return "https://prod-registry-k8s-io-eu-west-3.s3.dualstack.eu-west-3.amazonaws.com"
+	// Israel (Tel Aviv)
+	case "il-central-1":
+		return "https://prod-registry-k8s-io-il-central-1.s3.dualstack.il-central-1.amazonaws.com"
+	// Middle East (UAE)
+	case "me-central-1":
+		return "https://prod-registry-k8s-io-me-central-1.s3.dualstack.me-central-1.amazonaws.com"
+	// Middle East (Bahrain)
+	case "me-south-1":
+		return "https://prod-registry-k8s-io-me-south-1.s3.dualstack.me-south-1.amazonaws.com"
+	// Mexico (Central)
+	case "mx-central-1":
+		return "https://prod-registry-k8s-io-mx-central-1.s3.dualstack.mx-central-1.amazonaws.com"
+	// South America (São Paulo)
+	case "sa-east-1":
+		return "https://prod-registry-k8s-io-sa-east-1.s3.dualstack.sa-east-1.amazonaws.com"
 	// US East (N. Virginia)
-	case "us-east-1", "sa-east-1", "mx-central-1":
+	case "us-east-1":
 		return "https://prod-registry-k8s-io-us-east-1.s3.dualstack.us-east-1.amazonaws.com"
 	// US East (Ohio)
-	case "us-east-2", "ca-central-1":
+	case "us-east-2":
 		return "https://prod-registry-k8s-io-us-east-2.s3.dualstack.us-east-2.amazonaws.com"
 	// US West (N. California)
 	case "us-west-1":
 		return "https://prod-registry-k8s-io-us-west-1.s3.dualstack.us-west-1.amazonaws.com"
 	// US West (Oregon)
-	case "us-west-2", "ca-west-1":
+	case "us-west-2":
 		return "https://prod-registry-k8s-io-us-west-2.s3.dualstack.us-west-2.amazonaws.com"
-	// Asia Pacific (Mumbai)
-	case "ap-south-1", "ap-south-2", "me-south-1", "me-central-1", "me-west-1":
-		return "https://prod-registry-k8s-io-ap-south-1.s3.dualstack.ap-south-1.amazonaws.com"
-	// Asia Pacific (Tokyo)
-	case "ap-northeast-1", "ap-northeast-2", "ap-northeast-3":
-		return "https://prod-registry-k8s-io-ap-northeast-1.s3.dualstack.ap-northeast-1.amazonaws.com"
-	// Asia Pacific (Singapore)
-	case "ap-southeast-1", "ap-southeast-2", "ap-southeast-3", "ap-southeast-4", "ap-southeast-5", "ap-southeast-6", "ap-southeast-7", "ap-east-1", "ap-east-2", "cn-northwest-1", "cn-north-1":
-		return "https://prod-registry-k8s-io-ap-southeast-1.s3.dualstack.ap-southeast-1.amazonaws.com"
-	// Europe (Frankfurt)
-	case "eu-central-1", "eu-central-2", "eu-south-1", "eu-south-2", "il-central-1":
-		return "https://prod-registry-k8s-io-eu-central-1.s3.dualstack.eu-central-1.amazonaws.com"
-	// Europe (Ireland)
-	case "eu-west-1", "af-south-1", "eu-west-2", "eu-west-3", "eu-north-1":
-		return "https://prod-registry-k8s-io-eu-west-1.s3.dualstack.eu-west-1.amazonaws.com"
 	default:
 		return defaultURL
 	}

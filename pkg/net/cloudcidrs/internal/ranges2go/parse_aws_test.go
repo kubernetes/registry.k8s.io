@@ -90,7 +90,7 @@ func TestAWSRegionsToPrefixesFromData(t *testing.T) {
 				},
 			},
 		}
-		_, err := awsRegionsToPrefixesFromData(badV4Prefixes)
+		_, err := awsRegionsToPrefixesFromData(badV4Prefixes, nil)
 		if err == nil {
 			t.Fatal("expected error parsing bogus prefix but got none")
 		}
@@ -113,7 +113,7 @@ func TestAWSRegionsToPrefixesFromData(t *testing.T) {
 				},
 			},
 		}
-		_, err := awsRegionsToPrefixesFromData(badV6Prefixes)
+		_, err := awsRegionsToPrefixesFromData(badV6Prefixes, nil)
 		if err == nil {
 			t.Fatal("expected error parsing bogus prefix but got none")
 		}
@@ -124,7 +124,7 @@ func TestParseAWS(t *testing.T) {
 	t.Run("unparsable data", func(t *testing.T) {
 		t.Parallel()
 		badJSON := `{"prefixes":false}`
-		_, err := parseAWS(badJSON)
+		_, err := parseAWS(badJSON, nil)
 		if err == nil {
 			t.Fatal("expected error parsing bogus raw JSON but got none")
 		}
