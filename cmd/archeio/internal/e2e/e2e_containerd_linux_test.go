@@ -22,13 +22,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 )
 
 func TestE2EContainerdPull(t *testing.T) {
 	t.Parallel()
-	containerdVersions := []string{"1.6.20", "1.7.0", "2.1.3"}
+	containerdVersions := []string{"1.7.29", "2.1.5", "2.2.0"}
 	for i := range containerdVersions {
 		containerdVersion := containerdVersions[i]
 		t.Run("v"+containerdVersion, func(t *testing.T) {
@@ -46,6 +47,7 @@ func testE2EContainerdPull(t *testing.T, containerdVersion string) {
 	installCmd.Env = append(installCmd.Env,
 		"CONTAINERD_VERSION="+containerdVersion,
 		"CONTAINERD_INSTALL_DIR="+installDir,
+		"CONTAINERD_ARCH="+runtime.GOARCH,
 	)
 	installCmd.Stderr = os.Stderr
 	if err := installCmd.Run(); err != nil {

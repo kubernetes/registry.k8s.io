@@ -23,6 +23,7 @@ cd "${REPO_ROOT}"
 # script inputs, install dir should be versioned
 readonly CONTAINERD_VERSION="${CONTAINERD_VERSION:?}"
 readonly CONTAINERD_INSTALL_DIR="${CONTAINERD_INSTALL_DIR:?}"
+readonly CONTAINERD_ARCH="${CONTAINERD_ARCH:?}"
 
 containerd_path="${CONTAINERD_INSTALL_DIR}/containerd"
 if [[ -f "${containerd_path}" ]] && "${containerd_path}" --version | grep -q "${CONTAINERD_VERSION}"; then
@@ -31,7 +32,7 @@ else
     # downlod containerd to bindir
     mkdir -p "${CONTAINERD_INSTALL_DIR}"
     curl -sSL \
-        "https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}-linux-amd64.tar.gz" \
+        "https://github.com/containerd/containerd/releases/download/v${CONTAINERD_VERSION}/containerd-${CONTAINERD_VERSION}-linux-${CONTAINERD_ARCH}.tar.gz" \
     | tar -C "${CONTAINERD_INSTALL_DIR}/" -zxvf - --strip-components=1
 fi
 
