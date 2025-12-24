@@ -27,6 +27,16 @@ cd 'hack/tools'
 go build -o "${REPO_ROOT}/bin/gotestsum" gotest.tools/gotestsum
 cd "${REPO_ROOT}"
 
+function copy() {
+  # if we are in CI, copy to the artifact upload location
+  if [[ -n "${ARTIFACTS:-}" ]]; then
+    cp "bin/e2e-junit.xml" "${ARTIFACTS:?}/junit.xml"
+  fi
+
+}
+
+trap copy EXIT
+
 # run e2e tests with junit output
 # TODO: because we expect relatively few packages to have e2e we only
 # test those packages to limit CI noise, but this approach would work with ./...
@@ -38,8 +48,3 @@ cd "${REPO_ROOT}"
   "${REPO_ROOT}/bin/gotestsum" --junitfile="${REPO_ROOT}/bin/e2e-junit.xml" \
     -- '-run' '^TestE2E' '-count=1' './cmd/archeio/internal/e2e'
 )
-
-# if we are in CI, copy to the artifact upload location
-if [[ -n "${ARTIFACTS:-}" ]]; then
-  cp "bin/e2e-junit.xml" "${ARTIFACTS:?}/junit.xml"
-fi
