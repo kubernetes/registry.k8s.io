@@ -103,7 +103,7 @@ func testE2EContainerdPull(t *testing.T, containerdVersion string) {
 			containerdReady = true
 			break
 		}
-		time.Sleep(time.Duration(i) * time.Second)
+		time.Sleep(time.Duration(i*i) * time.Second)
 	}
 	if !containerdReady {
 		t.Fatalf("Failed to wait for containerd to be ready")
