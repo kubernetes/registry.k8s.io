@@ -42,11 +42,12 @@ func main() {
 
 	// make it possible to override k8s.gcr.io without rebuilding in the future
 	registryConfig := app.RegistryConfig{
-		UpstreamRegistryEndpoint: getEnv("UPSTREAM_REGISTRY_ENDPOINT", "https://us-central1-docker.pkg.dev"),
-		UpstreamRegistryPath:     getEnv("UPSTREAM_REGISTRY_PATH", "k8s-artifacts-prod/images"),
-		InfoURL:                  "https://github.com/kubernetes/registry.k8s.io",
-		PrivacyURL:               "https://www.linuxfoundation.org/privacy-policy/",
-		DefaultAWSBaseURL:        getEnv("DEFAULT_AWS_BASE_URL", "https://prod-registry-k8s-io-us-east-1.s3.dualstack.us-east-1.amazonaws.com"),
+		UpstreamRegistryEndpoint:  getEnv("UPSTREAM_REGISTRY_ENDPOINT", "https://us-central1-docker.pkg.dev"),
+		UpstreamRegistryPath:      getEnv("UPSTREAM_REGISTRY_PATH", "k8s-artifacts-prod/images"),
+		SignatureUpstreamEndpoint: getEnv("SIGNATURE_UPSTREAM_ENDPOINT", ""),
+		InfoURL:                   "https://github.com/kubernetes/registry.k8s.io",
+		PrivacyURL:                "https://www.linuxfoundation.org/privacy-policy/",
+		DefaultAWSBaseURL:         getEnv("DEFAULT_AWS_BASE_URL", "https://prod-registry-k8s-io-us-east-1.s3.dualstack.us-east-1.amazonaws.com"),
 	}
 
 	// configure server with reasonable timeout

@@ -29,11 +29,12 @@ import (
 )
 
 type RegistryConfig struct {
-	UpstreamRegistryEndpoint string
-	UpstreamRegistryPath     string
-	InfoURL                  string
-	PrivacyURL               string
-	DefaultAWSBaseURL        string
+	UpstreamRegistryEndpoint  string
+	UpstreamRegistryPath      string
+	SignatureUpstreamEndpoint string
+	InfoURL                   string
+	PrivacyURL                string
+	DefaultAWSBaseURL         string
 }
 
 // MakeHandler returns the root archeio HTTP handler
@@ -78,6 +79,8 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 	// <digest> also cannot contain `/` so we can use a relatively simple and cheap regex
 	// to match blob requests and capture the digest
 	reBlob := regexp.MustCompile("^/v2/.*/blobs/([^/]+:[a-zA-Z0-9=_-]+)$")
+	// matches cosign signature and attestation tag requests
+	reCosignTag := regexp.MustCompile(`^/v2/.*/manifests/sha256-[a-f0-9]{64}\.(sig|att)$`)
 	// initialize map of clientIP to AWS region
 	regionMapper := cloudcidrs.NewIPMapper()
 	// capture these in a http handler lambda
@@ -114,6 +117,13 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		// check if blob request
 		matches := reBlob.FindStringSubmatch(rPath)
 		if len(matches) != 2 {
+			// check if this is a cosign signature/attestation request
+			if rc.SignatureUpstreamEndpoint != "" && reCosignTag.MatchString(rPath) {
+				redirectURL := signatureRedirectURL(rc, rPath)
+				klog.V(2).InfoS("redirecting cosign signature request to canonical upstream", "path", rPath, "redirect", redirectURL)
+				http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
+				return
+			}
 			// not a blob request so forward it to the main upstream registry
 			redirectURL := upstreamRedirectURL(rc, rPath)
 			klog.V(2).InfoS("redirecting manifest request to upstream registry", "path", rPath, "redirect", redirectURL)
@@ -165,4 +175,8 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 
 func upstreamRedirectURL(rc RegistryConfig, originalPath string) string {
 	return rc.UpstreamRegistryEndpoint + path.Join("/v2/", rc.UpstreamRegistryPath, strings.TrimPrefix(originalPath, "/v2"))
+}
+
+func signatureRedirectURL(rc RegistryConfig, originalPath string) string {
+	return rc.SignatureUpstreamEndpoint + path.Join("/v2/", rc.UpstreamRegistryPath, strings.TrimPrefix(originalPath, "/v2"))
 }
