@@ -7,14 +7,16 @@ Requests to archeio follows the following flow:
 1. If it's not a request for `/` or `/privacy` and does not start with `/v2/`: 404 error
 1. For registry API requests, all of which start with `/v2/`:
     - If it's a non-standard API call (`/v2/_catalog`): 404 error
+    - If it's a cosign signature/attestation manifest request (`sha256-*.sig` or `sha256-*.att`) and `SIGNATURE_UPSTREAM_ENDPOINT` is set: Redirect to Signature Upstream
     - If it's a manifest request: Redirect to Upstream Registry
     - If it's from a known GCP IP: Redirect to Upstream Registry
-    -  If it's a known AWS IP AND HEAD request for the layer succeeeds in S3: Redirect to S3
-    -  If it's a known AWS IP AND HEAD fails: Redirect to Upstream Registry
+    - If it's a known AWS IP AND HEAD request for the layer succeeds in S3: Redirect to S3
+    - If it's a known AWS IP AND HEAD fails: Redirect to Upstream Registry
 
 See also: OCI Distribution [Specification](https://github.com/opencontainers/distribution-spec/blob/main/spec.md)
 
 Currently the `Upstream Registry` is a region specific Artifact Registry backend.
+The `Signature Upstream` is an optional single canonical registry (configured via `SIGNATURE_UPSTREAM_ENDPOINT`) used to serve cosign signatures and attestations from one location, avoiding the need to replicate them across all regions.
 
 Or in chart form:
 ```mermaid
@@ -28,7 +30,9 @@ B -->|Yes| E[Serve redirect to registry wiki page]
 A -->|Yes, it is a registry API call| L(Is it an OCI Distribution Standard API Call?)
 L -->|No, it is a non-standard API call.<br>Currently: `/v2/_catalog`.| M[Serve 404 error]
 L -->|Yes, it is a standard API call| F(Is it a blob request?)
-F -->|No| G[Serve redirect to Source Registry on GCP]
+F -->|No| N(Is it a cosign .sig/.att manifest<br/>and SIGNATURE_UPSTREAM_ENDPOINT set?)
+N -->|Yes| O[Serve redirect to Signature Upstream]
+N -->|No| G[Serve redirect to Source Registry on GCP]
 F -->|Yes, it matches known blob request format| H(Is the client IP known to be from GCP?)
 H -->|Yes| G
 H -->|No| I(Does the blob exist in S3?<br/>Check by way of cached HEAD on the bucket we've selected based on client IP.)

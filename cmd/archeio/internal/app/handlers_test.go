@@ -30,6 +30,7 @@ func TestMakeHandler(t *testing.T) {
 		UpstreamRegistryPath:     "k8s-artifacts-prod/images",
 		InfoURL:                  "https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io",
 		PrivacyURL:               "https://www.linuxfoundation.org/privacy-policy/",
+		// SignatureUpstreamEndpoint intentionally unset to test fallback behavior
 	}
 	handler := MakeHandler(registryConfig)
 	testCases := []struct {
@@ -107,6 +108,13 @@ func TestMakeHandler(t *testing.T) {
 			ExpectedStatus: http.StatusTemporaryRedirect,
 			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/k8s-artifacts-prod/images/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 		},
+		{
+			// Without SignatureUpstreamEndpoint, .sig tags fall through to the regional upstream
+			Name:           "Cosign .sig tag without canonical upstream falls back to regional",
+			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/manifests/sha256-da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e.sig", nil),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/k8s-artifacts-prod/images/pause/manifests/sha256-da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e.sig",
+		},
 	}
 	for i := range testCases {
 		tc := testCases[i]
@@ -153,10 +161,11 @@ func (f *fakeBlobsChecker) BlobExists(blobURL string) bool {
 
 func TestMakeV2Handler(t *testing.T) {
 	registryConfig := RegistryConfig{
-		UpstreamRegistryEndpoint: "https://k8s.gcr.io",
-		UpstreamRegistryPath:     "",
-		InfoURL:                  "https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io",
-		PrivacyURL:               "https://www.linuxfoundation.org/privacy-policy/",
+		UpstreamRegistryEndpoint:  "https://k8s.gcr.io",
+		UpstreamRegistryPath:      "",
+		SignatureUpstreamEndpoint: "https://us-central1-docker.pkg.dev",
+		InfoURL:                   "https://github.com/kubernetes/k8s.io/tree/main/registry.k8s.io",
+		PrivacyURL:                "https://www.linuxfoundation.org/privacy-policy/",
 	}
 	blobs := fakeBlobsChecker{
 		knownURLs: map[string]bool{
@@ -235,6 +244,36 @@ func TestMakeV2Handler(t *testing.T) {
 			}(),
 			ExpectedStatus: http.StatusTemporaryRedirect,
 			ExpectedURL:    "https://k8s.gcr.io/v2/pause/blobs/sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1234567",
+		},
+		{
+			Name:           "Cosign .sig tag redirects to canonical upstream",
+			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/manifests/sha256-da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e.sig", nil),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/pause/manifests/sha256-da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e.sig",
+		},
+		{
+			Name:           "Cosign .att tag redirects to canonical upstream",
+			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/manifests/sha256-da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e.att", nil),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/pause/manifests/sha256-da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e.att",
+		},
+		{
+			Name:           "HEAD on .sig tag redirects to canonical upstream",
+			Request:        httptest.NewRequest("HEAD", "http://localhost:8080/v2/pause/manifests/sha256-da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e.sig", nil),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/pause/manifests/sha256-da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e.sig",
+		},
+		{
+			Name:           "Cosign .sig tag for nested image name",
+			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/kubernetes/pause/manifests/sha256-da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e.sig", nil),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/kubernetes/pause/manifests/sha256-da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e.sig",
+		},
+		{
+			Name:           "Tag list still redirects to regional upstream",
+			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/tags/list", nil),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://k8s.gcr.io/v2/pause/tags/list",
 		},
 	}
 	for i := range testCases {
