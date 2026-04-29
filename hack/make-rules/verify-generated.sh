@@ -29,7 +29,7 @@ trap 'rm -rf ${tmpdir?}' EXIT
 OUT_FILE="${tmpdir}"/zz_generated_range_data.go
 export OUT_FILE
 # keep excluded list in sync with hack/make-rules/codegen.sh
-EXCLUDED_AWS_REGIONS="me-west-1,sa-west-1" \
+EXCLUDED_AWS_REGIONS="me-west-1,sa-west-1,us-south-1" \
 DATA_DIR="${REPO_ROOT}"/pkg/net/cloudcidrs/internal/ranges2go/data \
     go run ./pkg/net/cloudcidrs/internal/ranges2go
 
