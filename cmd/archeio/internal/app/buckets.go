@@ -115,12 +115,9 @@ func awsRegionToHostURL(region, defaultURL string) string {
 	// Israel (Tel Aviv)
 	case "il-central-1":
 		return "https://prod-registry-k8s-io-il-central-1.s3.dualstack.il-central-1.amazonaws.com"
-	// Middle East (UAE)
-	case "me-central-1":
+	// Middle East (UAE) and Middle East (Bahrain)
+	case "me-central-1", "me-south-1":
 		return "https://prod-registry-k8s-io-me-central-1.s3.dualstack.me-central-1.amazonaws.com"
-	// Middle East (Bahrain)
-	case "me-south-1":
-		return "https://prod-registry-k8s-io-me-south-1.s3.dualstack.me-south-1.amazonaws.com"
 	// Mexico (Central)
 	case "mx-central-1":
 		return "https://prod-registry-k8s-io-mx-central-1.s3.dualstack.mx-central-1.amazonaws.com"
