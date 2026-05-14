@@ -45,6 +45,7 @@ steps:
       - "e2e-test"
     waitFor:
       - deploy-staging
+serviceAccount: projects/k8s-staging-images/serviceAccounts/infra-tools-sa@k8s-staging-images.iam.gserviceaccount.com
 substitutions:
   # variables set by kubernetes/test-infra/images/builder
   # set by image-builder to vYYYYMMDD-hash
