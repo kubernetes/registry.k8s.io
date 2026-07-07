@@ -86,6 +86,7 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 	// capture these in a http handler lambda
 	return func(w http.ResponseWriter, r *http.Request) {
 		rPath := r.URL.Path
+		rQuery := r.URL.RawQuery
 
 		// we only care about publicly readable GCR as the backing registry
 		// or publicly readable blob storage
@@ -125,7 +126,7 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 				return
 			}
 			// not a blob request so forward it to the main upstream registry
-			redirectURL := upstreamRedirectURL(rc, rPath)
+			redirectURL := upstreamRedirectURL(rc, rPath, rQuery)
 			klog.V(2).InfoS("redirecting manifest request to upstream registry", "path", rPath, "redirect", redirectURL)
 			http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 			return
@@ -145,7 +146,7 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		// if client is coming from GCP, stay in GCP
 		ipInfo, ipIsKnown := regionMapper.GetIP(clientIP)
 		if ipIsKnown && ipInfo.Cloud == cloudcidrs.GCP {
-			redirectURL := upstreamRedirectURL(rc, rPath)
+			redirectURL := upstreamRedirectURL(rc, rPath, rQuery)
 			klog.V(2).InfoS("redirecting GCP blob request to upstream registry", "path", rPath, "redirect", redirectURL)
 			http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 			return
@@ -167,14 +168,18 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker) func(w http.ResponseWri
 		}
 
 		// fall back to redirect to upstream
-		redirectURL := upstreamRedirectURL(rc, rPath)
+		redirectURL := upstreamRedirectURL(rc, rPath, rQuery)
 		klog.V(2).InfoS("redirecting blob request to upstream registry", "path", rPath, "redirect", redirectURL)
 		http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
 	}
 }
 
-func upstreamRedirectURL(rc RegistryConfig, originalPath string) string {
-	return rc.UpstreamRegistryEndpoint + path.Join("/v2/", rc.UpstreamRegistryPath, strings.TrimPrefix(originalPath, "/v2"))
+func upstreamRedirectURL(rc RegistryConfig, originalPath string, originalQuery string) string {
+	s := rc.UpstreamRegistryEndpoint + path.Join("/v2/", rc.UpstreamRegistryPath, strings.TrimPrefix(originalPath, "/v2"))
+	if originalQuery != "" {
+		s += "?" + originalQuery
+	}
+	return s
 }
 
 func signatureRedirectURL(rc RegistryConfig, originalPath string) string {
