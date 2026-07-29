@@ -174,11 +174,11 @@ func (b *blobCache) Put(blobURL string) {
 }
 
 func (c *cachedBlobChecker) BlobExists(blobURL string) bool {
-	if c.blobCache.Get(blobURL) {
-		klog.V(3).InfoS("blob existence cache hit", "url", blobURL)
+	if c.Get(blobURL) {
+		klog.V(3).InfoS("blob found in existence cache", "url", blobURL)
 		return true
 	}
-	klog.V(3).InfoS("blob existence cache miss", "url", blobURL)
+	klog.V(3).InfoS("blob not yet in existence cache; checking remote", "url", blobURL)
 	// NOTE: this client will still share http.DefaultTransport
 	// We do not wish to share the rest of the client state currently
 	client := &http.Client{
@@ -188,14 +188,16 @@ func (c *cachedBlobChecker) BlobExists(blobURL string) bool {
 	r, err := client.Head(blobURL)
 	// fallback to assuming blob is unavailable on errors
 	if err != nil {
+		klog.V(3).InfoS("failed to check remote blob", "url", blobURL, "err", err)
 		return false
 	}
 	r.Body.Close()
 	// if the blob exists it HEAD should return 200 OK
 	// this is true for S3 and for OCI registries
 	if r.StatusCode == http.StatusOK {
-		c.blobCache.Put(blobURL)
+		c.Put(blobURL)
 		return true
 	}
+	klog.V(3).InfoS("remote blob check returned non-OK status", "url", blobURL, "status", r.StatusCode)
 	return false
 }

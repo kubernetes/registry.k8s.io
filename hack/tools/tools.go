@@ -25,7 +25,7 @@ package tools
 
 import (
 	// linter(s)
-	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
+	_ "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
 
 	// test runner
 	_ "gotest.tools/gotestsum"
