@@ -25,7 +25,7 @@ import (
 
 	"golang.org/x/tools/cover"
 
-	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/set"
 )
 
 // TODO: instead of fully excluding files, maybe we should have a more
@@ -35,7 +35,7 @@ import (
 // See also: cmd/archeio/docs/testing.md
 //
 // Reviewers should be wary of approving additions to this list.
-var knownFailingFiles = sets.NewString(
+var knownFailingFiles = set.New[string](
 	// this code is used only at development time and integration testing it
 	// is probably excessive
 	"k8s.io/registry.k8s.io/pkg/net/cloudcidrs/internal/ranges2go/main.go",

@@ -1,25 +1,45 @@
+version: "2"
+
 run:
   timeout: 2m
 
 linters:
-  disable-all: true
+  default: none
   enable:
     # default golangci-lint lints
     # NOTE: https://github.com/golangci/golangci-lint/issues/1841
     - errcheck
-    - gosimple
     - govet
     - ineffassign
     - staticcheck
-    - typecheck
     - unused
 
     # additional lints
     - gochecknoinits
-    - gofmt
     - gosec
     - revive # replaces golint for now
     - misspell
     - unparam
+  exclusions:
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: cmd/archeio/internal/app/handlers\.go
+        linters:
+          - gosec
+        text: "G710:"
+      - path: pkg/net/cloudcidrs/internal/ranges2go/main\.go
+        linters:
+          - gosec
+        text: "G703:"
+      - path: cmd/geranos/s3uploader\.go
+        linters:
+          - staticcheck
+        text: "SA1019:"
 
-linters-settings:
+formatters:
+  enable:
+    - gofmt
