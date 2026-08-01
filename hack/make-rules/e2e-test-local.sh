@@ -23,6 +23,6 @@ cd "${REPO_ROOT}"
 # and merge them even if staging is currently broken
 set -x;
 make archeio
-bin/archeio &>"${ARTIFACTS:-./bin}"/archeio-log.txt &
+bin/archeio -v=9 &>"${ARTIFACTS:-./bin}"/archeio-log.txt &
 trap 'kill $(jobs -p)' EXIT
 make e2e-test "REGISTRY_ENDPOINT=localhost:8080"

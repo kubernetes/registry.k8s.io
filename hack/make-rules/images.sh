@@ -17,7 +17,7 @@
 # script to build container images with go
 set -o errexit -o nounset -o pipefail
 
-export KO_DEFAULTBASEIMAGE='gcr.io/distroless/static-debian12@sha256:3f2b64ef97bd285e36132c684e6b2ae8f2723293d09aae046196cca64251acac'
+export KO_DEFAULTBASEIMAGE='gcr.io/distroless/static-debian13@sha256:9197324ba51d9cd071af8505989365c006adf9d6d2067eada25aef00abbb5278'
 
 # cd to the repo root and setup go
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
@@ -33,7 +33,7 @@ export KO_DOCKER_REPO
 # push or local tar?
 PUSH="${PUSH:-false}"
 # overridable auto-tag
-TAG="${TAG:-"$(date +v%Y%m%d)-$(git describe --always --dirty)"}"
+TAG="${TAG:-"$(git describe --always --dirty --tags)"}"
 
 # build ko
 cd 'hack/tools'

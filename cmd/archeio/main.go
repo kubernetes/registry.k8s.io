@@ -22,9 +22,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
+	"github.com/go-logr/zapr"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"k8s.io/klog/v2"
 
 	"k8s.io/registry.k8s.io/cmd/archeio/internal/app"
@@ -35,6 +39,11 @@ func main() {
 	klog.InitFlags(nil)
 	flag.Parse()
 	defer klog.Flush()
+
+	// route klog through zap for JSON structured logs
+	// Cloud Logging parses JSON on stderr into jsonPayload with these keys
+	// https://cloud.google.com/logging/docs/structured-logging
+	setupJSONLogging()
 
 	// cloud run expects us to listen to HTTP on $PORT
 	// https://cloud.google.com/run/docs/container-contract#port
@@ -86,4 +95,40 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+// setupJSONLogging replaces klog's default text output with zap JSON output
+// via zapr, using Cloud Logging's special field names so entries are parsed
+// into severity / message / timestamp instead of a text blob
+//
+// the klog -v flag still controls verbosity: klog.V(n) maps to zap level -n
+func setupJSONLogging() {
+	verbosity := 0
+	if f := flag.Lookup("v"); f != nil {
+		if v, err := strconv.Atoi(f.Value.String()); err == nil {
+			verbosity = v
+		}
+	}
+	zc := zap.NewProductionConfig()
+	zc.EncoderConfig.MessageKey = "message"
+	zc.EncoderConfig.LevelKey = "severity"
+	// map zap levels to Cloud Logging severities, klog.V(n) logs at zap
+	// level -n which would otherwise render as unparseable "LEVEL(-n)"
+	zc.EncoderConfig.EncodeLevel = func(l zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
+		if l < zapcore.InfoLevel {
+			enc.AppendString("DEBUG")
+			return
+		}
+		zapcore.CapitalLevelEncoder(l, enc)
+	}
+	zc.EncoderConfig.TimeKey = "timestamp"
+	zc.EncoderConfig.EncodeTime = zapcore.RFC3339NanoTimeEncoder
+	// allow klog.V(verbosity) and below
+	zc.Level = zap.NewAtomicLevelAt(zapcore.Level(-verbosity)) //nolint:gosec // verbosity is a small flag value
+	zc.Sampling = nil                                          // never drop logs
+	zLogger, err := zc.Build()
+	if err != nil {
+		klog.Fatalf("failed to build zap logger: %v", err)
+	}
+	klog.SetLogger(zapr.NewLogger(zLogger))
 }

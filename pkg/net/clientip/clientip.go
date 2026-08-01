@@ -26,15 +26,10 @@ import (
 
 // Get gets the client IP for an http.Request
 //
-// NOTE: currently only two scenarios are supported:
+// NOTE: currently these scenarios are supported:
 // 1. no loadbalancer, local testing
 // 2. behind Google Cloud LoadBalancer (as in cloudrun)
-//
-// Note that in particular we do not support hitting the CloudRun endpoint
-// directly (though we could easily do so here). Cloud Armor is on the GCLB,
-// so directly accessing the CloudRun endpoint would bypass that.
-//
-// At this time we have no need to complicate it further.
+// 3. direct access to the Cloud Run endpoint (single X-Forwarded-For value)
 func Get(r *http.Request) (netip.Addr, error) {
 	// Upstream docs:
 	// https://cloud.google.com/load-balancing/docs/https#x-forwarded-for_header
@@ -70,10 +65,16 @@ func Get(r *http.Request) (netip.Addr, error) {
 	keys := strings.FieldsFunc(rawXFwdFor, func(r rune) bool {
 		return r == ',' || r == ' '
 	})
-	// there should be at least two values: <client-ip>,<load-balancer-ip>
-	if len(keys) < 2 {
+	switch len(keys) {
+	case 0:
 		return netip.Addr{}, fmt.Errorf("invalid X-Forwarded-For value: %s", rawXFwdFor)
+	case 1:
+		// direct access to the Cloud Run endpoint (no GCLB in front):
+		// Cloud Run's frontend sets X-Forwarded-For to just <client-ip>
+		return netip.ParseAddr(keys[0])
+	default:
+		// behind GCLB: <client-ip>,<load-balancer-ip> so the client-ip is
+		// 2 from the end
+		return netip.ParseAddr(keys[len(keys)-2])
 	}
-	// normal case, we expect the client-ip to be 2 from the end
-	return netip.ParseAddr(keys[len(keys)-2])
 }
