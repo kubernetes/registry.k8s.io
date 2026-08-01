@@ -19,7 +19,7 @@ package cloudcidrs
 import "k8s.io/registry.k8s.io/pkg/net/cidrs"
 
 // NewIPMapper returns cidrs.IPMapper populated with cloud region info
-// for the clouds we have resources for, currently GCP and AWS
+// for the clouds we have data for, currently GCP, AWS, and Azure
 func NewIPMapper() cidrs.IPMapper[IPInfo] {
 	t := cidrs.NewTrieMap[IPInfo]()
 	for info, cidrs := range regionToRanges {

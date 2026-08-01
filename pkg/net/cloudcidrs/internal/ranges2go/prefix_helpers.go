@@ -24,8 +24,9 @@ func dedupeSortedPrefixes(s []netip.Prefix) []netip.Prefix {
 	if l <= 1 {
 		return s
 	}
-	// for 1..len(s) if previous entry does not match, keep current
-	j := 0
+	// the first entry is always kept, for 1..len(s) if the entry does not
+	// match the previous entry, keep it
+	j := 1
 	for i := 1; i < l; i++ {
 		if s[i].String() != s[i-1].String() {
 			s[j] = s[i]

@@ -23,9 +23,13 @@ cd "${REPO_ROOT}"
 
 source hack/tools/setup-go.sh
 
-echo "Downloading AWS & GCP IP ranges data..."
+echo "Downloading AWS, GCP & Azure IP ranges data..."
 curl -fLo 'pkg/net/cloudcidrs/internal/ranges2go/data/aws-ip-ranges.json' 'https://ip-ranges.amazonaws.com/ip-ranges.json'
 curl -fLo 'pkg/net/cloudcidrs/internal/ranges2go/data/gcp-cloud.json' 'https://www.gstatic.com/ipranges/cloud.json'
+# NOTE: Azure Service Tags download URLs are dated and rotate weekly, this URL
+# must be periodically refreshed from:
+# https://www.microsoft.com/en-us/download/details.aspx?id=56519
+curl -fLo 'pkg/net/cloudcidrs/internal/ranges2go/data/azure-service-tags.json' 'https://download.microsoft.com/download/7/1/d/71d86715-5596-4529-9b13-da13a5de5b63/ServiceTags_Public_20260727.json'
 
 # AWS adds IP ranges for unreleased regions which we want to exclude
 EXCLUDED_AWS_REGIONS="me-west-1,sa-west-1,us-south-1" \
