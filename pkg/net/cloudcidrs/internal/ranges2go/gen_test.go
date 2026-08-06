@@ -131,6 +131,12 @@ func TestGenerateRangesGo(t *testing.T) {
 		t.Fatalf("unexpected error parsing test data: %v", err)
 	}
 
+	// reuse the Azure test data from parse_azure_test.go
+	azureRTP, err := parseAzure(azureTestData)
+	if err != nil {
+		t.Fatalf("unexpected error parsing test data: %v", err)
+	}
+
 	// expected generated result
 	const goldenText = `/*
 Copyright The Kubernetes Authors.
@@ -159,6 +165,9 @@ import (
 // AWS cloud
 const AWS = "AWS"
 
+// Azure cloud
+const Azure = "Azure"
+
 // GCP cloud
 const GCP = "GCP"
 
@@ -168,15 +177,25 @@ var regionToRanges = map[IPInfo][]netip.Prefix{
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{3, 5, 140, 0}), 22),
 	},
 	{Cloud: AWS, Region: "eu-south-1"}: {
+		netip.PrefixFrom(netip.AddrFrom16([16]byte{42, 5, 208, 58, 160, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0}), 56),
 		netip.PrefixFrom(netip.AddrFrom16([16]byte{42, 5, 208, 58, 160, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0}), 56),
 		netip.PrefixFrom(netip.AddrFrom16([16]byte{42, 5, 208, 58, 160, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}), 56),
 		netip.PrefixFrom(netip.AddrFrom16([16]byte{42, 5, 208, 122, 160, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}), 40),
 	},
 	{Cloud: AWS, Region: "me-south-1"}: {
+		netip.PrefixFrom(netip.AddrFrom4([4]byte{15, 185, 0, 0}), 16),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{52, 95, 174, 0}), 24),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{69, 107, 7, 136}), 29),
 	},
+	{Cloud: Azure, Region: "eastus"}: {
+		netip.PrefixFrom(netip.AddrFrom16([16]byte{38, 3, 16, 48, 2, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}), 48),
+		netip.PrefixFrom(netip.AddrFrom4([4]byte{4, 156, 0, 0}), 15),
+	},
+	{Cloud: Azure, Region: "westeurope"}: {
+		netip.PrefixFrom(netip.AddrFrom4([4]byte{13, 69, 0, 0}), 17),
+	},
 	{Cloud: GCP, Region: "asia-east1"}: {
+		netip.PrefixFrom(netip.AddrFrom4([4]byte{130, 211, 240, 0}), 20),
 		netip.PrefixFrom(netip.AddrFrom16([16]byte{38, 0, 25, 0, 64, 48, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}), 44),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{34, 137, 0, 0}), 16),
 		netip.PrefixFrom(netip.AddrFrom4([4]byte{34, 80, 0, 0}), 15),
@@ -189,8 +208,9 @@ var regionToRanges = map[IPInfo][]netip.Prefix{
 `
 
 	cloudToRTP := map[string]regionsToPrefixes{
-		"AWS": awsRTP,
-		"GCP": gcpRTP,
+		"AWS":   awsRTP,
+		"GCP":   gcpRTP,
+		"Azure": azureRTP,
 	}
 	// generate and compare
 	w := &bytes.Buffer{}
