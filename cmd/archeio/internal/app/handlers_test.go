@@ -83,6 +83,19 @@ func TestMakeHandler(t *testing.T) {
 			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/k8s-artifacts-prod/images/pause/manifests/latest",
 		},
 		{
+			// Special case required in the OCI Distribution spec: When n is zero, this endpoint MUST return an empty list
+			Name:           "/v2/pause/tags/list?n=0",
+			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/tags/list?n=0", nil),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/k8s-artifacts-prod/images/pause/tags/list?n=0",
+		},
+		{
+			Name:           "/v2/pause/tags/list?n=1000&after=v1.2.3",
+			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/tags/list?n=1000&after=v1.2.3", nil),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/k8s-artifacts-prod/images/pause/tags/list?n=1000&after=v1.2.3",
+		},
+		{
 			Name:           "/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil),
 			ExpectedStatus: http.StatusTemporaryRedirect,
