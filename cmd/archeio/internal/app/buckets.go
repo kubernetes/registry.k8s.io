@@ -145,7 +145,9 @@ func awsRegionToHostURL(region, defaultURL string) string {
 type blobChecker interface {
 	// BlobExists should check that blobURL exists
 	// bucket and layerHash may be used for caching purposes
-	BlobExists(blobURL string) bool
+	// traceID is propagated on the outbound existence probe for log
+	// correlation and must not affect caching
+	BlobExists(blobURL, traceID string) bool
 }
 
 // cachedBlobChecker just performs an HTTP HEAD check against the blob
@@ -173,22 +175,24 @@ func (b *blobCache) Put(blobURL string) {
 	b.m.Store(blobURL, struct{}{})
 }
 
-func (c *cachedBlobChecker) BlobExists(blobURL string) bool {
+func (c *cachedBlobChecker) BlobExists(blobURL, traceID string) bool {
 	if c.Get(blobURL) {
-		klog.V(3).InfoS("blob found in existence cache", "url", blobURL)
+		klog.V(3).InfoS("blob found in existence cache", "url", blobURL, "traceID", traceID)
 		return true
 	}
-	klog.V(3).InfoS("blob not yet in existence cache; checking remote", "url", blobURL)
+	klog.V(3).InfoS("blob not yet in existence cache; checking remote", "url", blobURL, "traceID", traceID)
 	// NOTE: this client will still share http.DefaultTransport
 	// We do not wish to share the rest of the client state currently
 	client := &http.Client{
 		// ensure sensible timeouts
 		Timeout: time.Second * 5,
 	}
-	r, err := client.Head(blobURL)
+	// carry the trace ID on the probe so backend access logs can be
+	// correlated, the bare blobURL remains the cache key
+	r, err := client.Head(withTraceID(blobURL, traceID))
 	// fallback to assuming blob is unavailable on errors
 	if err != nil {
-		klog.V(3).InfoS("failed to check remote blob", "url", blobURL, "err", err)
+		klog.V(3).InfoS("failed to check remote blob", "url", blobURL, "err", err, "traceID", traceID)
 		return false
 	}
 	r.Body.Close()
@@ -198,6 +202,6 @@ func (c *cachedBlobChecker) BlobExists(blobURL string) bool {
 		c.Put(blobURL)
 		return true
 	}
-	klog.V(3).InfoS("remote blob check returned non-OK status", "url", blobURL, "status", r.StatusCode)
+	klog.V(3).InfoS("remote blob check returned non-OK status", "url", blobURL, "status", r.StatusCode, "traceID", traceID)
 	return false
 }

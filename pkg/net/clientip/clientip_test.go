@@ -74,10 +74,20 @@ func TestGet(t *testing.T) {
 			ExpectedIP: netip.MustParseAddr("8.8.8.8"),
 		},
 		{
-			Name: "Bogus crafted non-cloud X-Forwarded-For with no commas",
+			Name: "X-Forwarded-For with no commas (direct Cloud Run access)",
 			Request: http.Request{
 				Header: http.Header{
 					"X-Forwarded-For": []string{"8.8.8.8"},
+				},
+				RemoteAddr: "127.0.0.1:8888",
+			},
+			ExpectedIP: netip.MustParseAddr("8.8.8.8"),
+		},
+		{
+			Name: "X-Forwarded-For with only separators",
+			Request: http.Request{
+				Header: http.Header{
+					"X-Forwarded-For": []string{", ,"},
 				},
 				RemoteAddr: "127.0.0.1:8888",
 			},
@@ -101,8 +111,8 @@ func TestGet(t *testing.T) {
 				},
 				RemoteAddr: "127.0.0.1:8888",
 			},
-			// We could accept this, we choose to require the load balancer
-			ExpectError: true,
+			// direct Cloud Run access sets a single client IP value
+			ExpectedIP: netip.MustParseAddr("2001:0db8:1234:5678:abcd:1234:5678:abcd"),
 		},
 	}
 	for i := range testCases {
