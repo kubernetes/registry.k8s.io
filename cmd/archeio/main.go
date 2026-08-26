@@ -55,7 +55,7 @@ func main() {
 		SignatureUpstreamEndpoint: getEnv("SIGNATURE_UPSTREAM_ENDPOINT", ""),
 		InfoURL:                   "https://github.com/kubernetes/registry.k8s.io",
 		PrivacyURL:                "https://www.linuxfoundation.org/privacy-policy/",
-		DefaultAWSBaseURL:         getEnv("DEFAULT_AWS_BASE_URL", "https://d1be1w964nk82h.cloudfront.net"),
+		DefaultAWSBaseURL:         getEnv("DEFAULT_AWS_BASE_URL", "https://cdn.registry.k8s.io"),
 	}
 
 	// snapshot the repositories that exist upstream so we can 404 requests for

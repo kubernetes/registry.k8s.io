@@ -31,7 +31,7 @@ import (
 
 func TestE2EContainerdPull(t *testing.T) {
 	t.Parallel()
-	containerdVersions := []string{"1.7.29", "2.1.5", "2.2.0"}
+	containerdVersions := []string{"1.7.34", "2.0.11", "2.3.3"}
 	for i := range containerdVersions {
 		containerdVersion := containerdVersions[i]
 		t.Run("v"+containerdVersion, func(t *testing.T) {
