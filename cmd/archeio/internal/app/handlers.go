@@ -106,6 +106,7 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker, knownRepositories map[s
 	// capture these in a http handler lambda
 	return func(w http.ResponseWriter, r *http.Request) {
 		rPath := r.URL.Path
+		rQuery := r.URL.RawQuery
 
 		// correlation ID for tracing this request across redirects
 		// a Bearer token issued by /token identifies the whole pull session,
@@ -138,12 +139,12 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker, knownRepositories map[s
 			// Docker distribution v2 clients may fallback to an older version if this is not set.
 			w.Header().Set("Docker-Distribution-Api-Version", "registry/2.0")
 			if bearerPullID(r) != "" {
-				klog.V(2).InfoS("serving 200 OK for /v2/ check", "path", rPath, "traceID", traceID)
+				klog.V(2).InfoS("serving 200 OK for /v2/ check", "path", rPath, "query", rQuery, "traceID", traceID)
 				w.WriteHeader(http.StatusOK)
 				return
 			}
 			// challenge the client to fetch a pull correlation token
-			klog.V(2).InfoS("serving 401 challenge for /v2/ check", "path", rPath, "traceID", traceID)
+			klog.V(2).InfoS("serving 401 challenge for /v2/ check", "path", rPath, "query", rQuery, "traceID", traceID)
 			w.Header().Set("WWW-Authenticate", `Bearer realm="`+requestScheme(r)+`://`+r.Host+`/token",service="`+r.Host+`"`)
 			http.Error(w, "authentication required", http.StatusUnauthorized)
 			return
@@ -160,7 +161,7 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker, knownRepositories map[s
 		if len(knownRepositories) > 0 && rPath != rootTagsListPath {
 			repository := topLevelRepository(rPath)
 			if _, known := knownRepositories[repository]; !known {
-				klog.V(2).InfoS("serving 404 for unknown repository", "path", rPath, "repository", repository, "traceID", traceID)
+				klog.V(2).InfoS("serving 404 for unknown repository", "path", rPath, "query", rQuery, "repository", repository, "traceID", traceID)
 				http.Error(w, "repository does not exist", http.StatusNotFound)
 				return
 			}
@@ -183,14 +184,14 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker, knownRepositories map[s
 			// check if this is a cosign signature/attestation request
 			if rc.SignatureUpstreamEndpoint != "" && reCosignTag.MatchString(rPath) {
 				redirectURL := signatureRedirectURL(rc, rPath)
-				klog.V(2).InfoS("redirecting cosign signature request to canonical upstream", "path", rPath, "redirect", redirectURL, "traceID", traceID)
+				klog.V(2).InfoS("redirecting cosign signature request to canonical upstream", "path", rPath, "query", rQuery, "redirect", redirectURL, "traceID", traceID)
 				trackPullEvent(r, traceID, "signature-upstream", ipInfo)
 				http.Redirect(w, r, withTraceID(redirectURL, traceID), http.StatusTemporaryRedirect)
 				return
 			}
 			// not a blob request so forward it to the main upstream registry
-			redirectURL := upstreamRedirectURL(rc, rPath)
-			klog.V(2).InfoS("redirecting manifest request to upstream registry", "path", rPath, "redirect", redirectURL, "traceID", traceID)
+			redirectURL := upstreamRedirectURL(rc, rPath, rQuery)
+			klog.V(2).InfoS("redirecting manifest request to upstream registry", "path", rPath, "query", rQuery, "redirect", redirectURL, "traceID", traceID)
 			trackPullEvent(r, traceID, "upstream", ipInfo)
 			http.Redirect(w, r, withTraceID(redirectURL, traceID), http.StatusTemporaryRedirect)
 			return
@@ -208,8 +209,8 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker, knownRepositories map[s
 
 		// if client is coming from GCP, stay in GCP
 		if ipInfo != nil && ipInfo.Cloud == cloudcidrs.GCP {
-			redirectURL := upstreamRedirectURL(rc, rPath)
-			klog.V(2).InfoS("redirecting GCP blob request to upstream registry", "path", rPath, "redirect", redirectURL, "traceID", traceID)
+			redirectURL := upstreamRedirectURL(rc, rPath, rQuery)
+			klog.V(2).InfoS("redirecting GCP blob request to upstream registry", "path", rPath, "query", rQuery, "redirect", redirectURL, "traceID", traceID)
 			trackPullEvent(r, traceID, "upstream", ipInfo)
 			http.Redirect(w, r, withTraceID(redirectURL, traceID), http.StatusTemporaryRedirect)
 			return
@@ -227,22 +228,26 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker, knownRepositories map[s
 			// blob known to be available in AWS, redirect client there
 			// NOTE: the trace ID is appended only after the existence check
 			// so cached existence keys remain stable
-			klog.V(2).InfoS("redirecting blob request to AWS", "path", rPath, "digest", digest, "traceID", traceID)
+			klog.V(2).InfoS("redirecting blob request to AWS", "path", rPath, "query", rQuery, "digest", digest, "traceID", traceID)
 			trackPullEvent(r, traceID, "s3", ipInfo)
 			http.Redirect(w, r, withTraceID(blobURL, traceID), http.StatusTemporaryRedirect)
 			return
 		}
 
 		// fall back to redirect to upstream
-		redirectURL := upstreamRedirectURL(rc, rPath)
-		klog.V(2).InfoS("redirecting blob request to upstream registry", "path", rPath, "redirect", redirectURL, "traceID", traceID)
+		redirectURL := upstreamRedirectURL(rc, rPath, rQuery)
+		klog.V(2).InfoS("redirecting blob request to upstream registry", "path", rPath, "query", rQuery, "redirect", redirectURL, "traceID", traceID)
 		trackPullEvent(r, traceID, "upstream", ipInfo)
 		http.Redirect(w, r, withTraceID(redirectURL, traceID), http.StatusTemporaryRedirect)
 	}
 }
 
-func upstreamRedirectURL(rc RegistryConfig, originalPath string) string {
-	return rc.UpstreamRegistryEndpoint + path.Join("/v2/", rc.UpstreamRegistryPath, strings.TrimPrefix(originalPath, "/v2"))
+func upstreamRedirectURL(rc RegistryConfig, originalPath string, originalQuery string) string {
+	s := rc.UpstreamRegistryEndpoint + path.Join("/v2/", rc.UpstreamRegistryPath, strings.TrimPrefix(originalPath, "/v2"))
+	if originalQuery != "" {
+		s += "?" + originalQuery
+	}
+	return s
 }
 
 func signatureRedirectURL(rc RegistryConfig, originalPath string) string {
