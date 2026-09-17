@@ -63,7 +63,7 @@ const (
 // Exact behavior should be documented in docs/request-handling.md
 func MakeHandler(rc RegistryConfig, knownRepositories map[string]struct{}) http.Handler {
 	blobs := newCachedBlobChecker()
-	doV2 := makeV2Handler(rc, blobs, knownRepositories)
+	doV2 := makeV2Handler(rc, blobs, newCachedUpstreamChecker(), knownRepositories)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// only allow GET, HEAD
 		// this is all a client needs to pull images
@@ -91,7 +91,7 @@ func MakeHandler(rc RegistryConfig, knownRepositories map[string]struct{}) http.
 	})
 }
 
-func makeV2Handler(rc RegistryConfig, blobs blobChecker, knownRepositories map[string]struct{}) func(w http.ResponseWriter, r *http.Request) {
+func makeV2Handler(rc RegistryConfig, blobs blobChecker, upstream upstreamChecker, knownRepositories map[string]struct{}) func(w http.ResponseWriter, r *http.Request) {
 	// matches blob requests, captures the requested blob hash
 	// https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pull
 	// Blobs are at `/v2/<name>/blobs/<digest>`
@@ -105,6 +105,21 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker, knownRepositories map[s
 	// attestations attached to a manifest
 	// https://github.com/opencontainers/distribution-spec/blob/main/spec.md#listing-referrers
 	reReferrers := regexp.MustCompile("^/v2/.*/referrers/[^/]+:[a-zA-Z0-9=_-]+$")
+	// matches manifest requests by digest, the same digest format as blobs
+	reManifestDigest := regexp.MustCompile("^/v2/.*/manifests/[^/]+:[a-zA-Z0-9=_-]+$")
+	// signatures, attestations and their blobs are only pushed to the
+	// canonical registry, so they are missing in the regional upstream
+	checkUpstream := rc.SignatureUpstreamEndpoint != "" && rc.SignatureUpstreamEndpoint != rc.UpstreamRegistryEndpoint
+	// upstreamOrSignatureURL returns the upstream registry URL for content
+	// addressed requests, unless the regional upstream is checked and
+	// doesn't have the content
+	upstreamOrSignatureURL := func(rPath, traceID string) (string, string) {
+		redirectURL := upstreamRedirectURL(rc, rPath)
+		if checkUpstream && upstream.Missing(redirectURL, traceID) {
+			return signatureRedirectURL(rc, rPath), "signature-upstream"
+		}
+		return redirectURL, "upstream"
+	}
 	// initialize map of clientIP to AWS region
 	regionMapper := cloudcidrs.NewIPMapper()
 	// capture these in a http handler lambda
@@ -200,6 +215,14 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker, knownRepositories map[s
 					return
 				}
 			}
+			// manifests by digest may only exist at the signature upstream
+			if checkUpstream && reManifestDigest.MatchString(rPath) {
+				redirectURL, source := upstreamOrSignatureURL(rPath, traceID)
+				klog.V(2).InfoS("redirecting manifest request by digest", "path", rPath, "redirect", redirectURL, "source", source, "traceID", traceID)
+				trackPullEvent(r, traceID, source, ipInfo)
+				http.Redirect(w, r, withTraceID(redirectURL, traceID), http.StatusTemporaryRedirect)
+				return
+			}
 			// not a blob request so forward it to the main upstream registry
 			redirectURL := upstreamRedirectURL(rc, rPath)
 			klog.V(2).InfoS("redirecting manifest request to upstream registry", "path", rPath, "redirect", redirectURL, "traceID", traceID)
@@ -220,9 +243,9 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker, knownRepositories map[s
 
 		// if client is coming from GCP, stay in GCP
 		if ipInfo != nil && ipInfo.Cloud == cloudcidrs.GCP {
-			redirectURL := upstreamRedirectURL(rc, rPath)
-			klog.V(2).InfoS("redirecting GCP blob request to upstream registry", "path", rPath, "redirect", redirectURL, "traceID", traceID)
-			trackPullEvent(r, traceID, "upstream", ipInfo)
+			redirectURL, source := upstreamOrSignatureURL(rPath, traceID)
+			klog.V(2).InfoS("redirecting GCP blob request to upstream registry", "path", rPath, "redirect", redirectURL, "source", source, "traceID", traceID)
+			trackPullEvent(r, traceID, source, ipInfo)
 			http.Redirect(w, r, withTraceID(redirectURL, traceID), http.StatusTemporaryRedirect)
 			return
 		}
@@ -246,9 +269,9 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker, knownRepositories map[s
 		}
 
 		// fall back to redirect to upstream
-		redirectURL := upstreamRedirectURL(rc, rPath)
-		klog.V(2).InfoS("redirecting blob request to upstream registry", "path", rPath, "redirect", redirectURL, "traceID", traceID)
-		trackPullEvent(r, traceID, "upstream", ipInfo)
+		redirectURL, source := upstreamOrSignatureURL(rPath, traceID)
+		klog.V(2).InfoS("redirecting blob request to upstream registry", "path", rPath, "redirect", redirectURL, "source", source, "traceID", traceID)
+		trackPullEvent(r, traceID, source, ipInfo)
 		http.Redirect(w, r, withTraceID(redirectURL, traceID), http.StatusTemporaryRedirect)
 	}
 }

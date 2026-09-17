@@ -24,6 +24,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -257,6 +258,92 @@ func (f *fakeBlobsChecker) BlobExists(blobURL, _ string) bool {
 	return f.knownURLs[blobURL]
 }
 
+type fakeUpstreamChecker struct {
+	missingURLs map[string]bool
+}
+
+func (f *fakeUpstreamChecker) Missing(contentURL, _ string) bool {
+	return f.missingURLs[contentURL]
+}
+
+type recordingUpstreamChecker struct {
+	mu      sync.Mutex
+	checked []string
+}
+
+func (r *recordingUpstreamChecker) Missing(contentURL, _ string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.checked = append(r.checked, contentURL)
+	return true
+}
+
+func TestSignatureUpstreamFallbackSkipsChecks(t *testing.T) {
+	manifest := "http://localhost:8080/v2/pause/manifests/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e"
+	testCases := []struct {
+		Name           string
+		Config         RegistryConfig
+		URL            string
+		ExpectedURL    string
+		ExpectedChecks int
+	}{
+		{
+			Name:        "no signature upstream",
+			Config:      RegistryConfig{UpstreamRegistryEndpoint: "https://europe-west1-docker.pkg.dev"},
+			URL:         manifest,
+			ExpectedURL: "https://europe-west1-docker.pkg.dev/v2/pause/manifests/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+		},
+		{
+			Name: "signature upstream is the regional upstream",
+			Config: RegistryConfig{
+				UpstreamRegistryEndpoint:  "https://us-central1-docker.pkg.dev",
+				SignatureUpstreamEndpoint: "https://us-central1-docker.pkg.dev",
+			},
+			URL:         manifest,
+			ExpectedURL: "https://us-central1-docker.pkg.dev/v2/pause/manifests/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+		},
+		{
+			Name: "manifest by tag",
+			Config: RegistryConfig{
+				UpstreamRegistryEndpoint:  "https://europe-west1-docker.pkg.dev",
+				SignatureUpstreamEndpoint: "https://us-central1-docker.pkg.dev",
+			},
+			URL:         "http://localhost:8080/v2/pause/manifests/3.10",
+			ExpectedURL: "https://europe-west1-docker.pkg.dev/v2/pause/manifests/3.10",
+		},
+		{
+			Name: "manifest by digest is checked",
+			Config: RegistryConfig{
+				UpstreamRegistryEndpoint:  "https://europe-west1-docker.pkg.dev",
+				SignatureUpstreamEndpoint: "https://us-central1-docker.pkg.dev",
+			},
+			URL:            manifest,
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/pause/manifests/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			ExpectedChecks: 1,
+		},
+	}
+	for i := range testCases {
+		tc := testCases[i]
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+			upstream := &recordingUpstreamChecker{}
+			handler := makeV2Handler(tc.Config, &fakeBlobsChecker{}, upstream, nil)
+			recorder := httptest.NewRecorder()
+			handler(recorder, httptest.NewRequest("GET", tc.URL, nil))
+			location, err := recorder.Result().Location()
+			if err != nil {
+				t.Fatalf("failed to get response location: %v", err)
+			}
+			if got := stripTraceID(t, location); got != tc.ExpectedURL {
+				t.Fatalf("expected url: %q, but got: %q", tc.ExpectedURL, got)
+			}
+			if len(upstream.checked) != tc.ExpectedChecks {
+				t.Fatalf("expected %d existence checks, got: %v", tc.ExpectedChecks, upstream.checked)
+			}
+		})
+	}
+}
+
 func TestMakeV2Handler(t *testing.T) {
 	registryConfig := RegistryConfig{
 		UpstreamRegistryEndpoint:  "https://k8s.gcr.io",
@@ -277,7 +364,14 @@ func TestMakeV2Handler(t *testing.T) {
 			"https://prod-registry-k8s-io-us-west-1.s3.dualstack.us-west-1.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e":           true,
 		},
 	}
-	handler := makeV2Handler(registryConfig, &blobs, map[string]struct{}{
+	upstream := fakeUpstreamChecker{
+		missingURLs: map[string]bool{
+			// content only available at the signature upstream
+			"https://k8s.gcr.io/v2/kubernetes/pause/manifests/sha256:04d3ed4d0000000000000000000000000000000000000000000000000000000000": true,
+			"https://k8s.gcr.io/v2/pause/blobs/sha256:c4dfce520000000000000000000000000000000000000000000000000000000000":                true,
+		},
+	}
+	handler := makeV2Handler(registryConfig, &blobs, &upstream, map[string]struct{}{
 		"pause":      {},
 		"kubernetes": {},
 	})
@@ -389,10 +483,46 @@ func TestMakeV2Handler(t *testing.T) {
 			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/kubernetes/pause/referrers/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 		},
 		{
-			Name:           "Manifest by digest still redirects to regional upstream",
+			Name:           "Manifest by digest available in the regional upstream",
 			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/manifests/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil),
 			ExpectedStatus: http.StatusTemporaryRedirect,
 			ExpectedURL:    "https://k8s.gcr.io/v2/pause/manifests/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+		},
+		{
+			Name:           "Manifest by digest missing in the regional upstream redirects to canonical upstream",
+			Request:        httptest.NewRequest("HEAD", "http://localhost:8080/v2/kubernetes/pause/manifests/sha256:04d3ed4d0000000000000000000000000000000000000000000000000000000000", nil),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/kubernetes/pause/manifests/sha256:04d3ed4d0000000000000000000000000000000000000000000000000000000000",
+		},
+		{
+			Name: "GCP IP, blob available in the regional upstream",
+			Request: func() *http.Request {
+				r := httptest.NewRequest("GET", "http://localhost:8080/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil)
+				r.RemoteAddr = "35.220.26.1:888"
+				return r
+			}(),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://k8s.gcr.io/v2/pause/blobs/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+		},
+		{
+			Name: "GCP IP, blob missing in the regional upstream redirects to canonical upstream",
+			Request: func() *http.Request {
+				r := httptest.NewRequest("GET", "http://localhost:8080/v2/pause/blobs/sha256:c4dfce520000000000000000000000000000000000000000000000000000000000", nil)
+				r.RemoteAddr = "35.220.26.1:888"
+				return r
+			}(),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/pause/blobs/sha256:c4dfce520000000000000000000000000000000000000000000000000000000000",
+		},
+		{
+			Name: "AWS eu-west-3 IP, blob missing in S3 and the regional upstream redirects to canonical upstream",
+			Request: func() *http.Request {
+				r := httptest.NewRequest("GET", "http://localhost:8080/v2/pause/blobs/sha256:c4dfce520000000000000000000000000000000000000000000000000000000000", nil)
+				r.RemoteAddr = "35.180.1.1:888"
+				return r
+			}(),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/pause/blobs/sha256:c4dfce520000000000000000000000000000000000000000000000000000000000",
 		},
 		{
 			Name:           "Tag list still redirects to regional upstream",
@@ -458,7 +588,7 @@ func TestTraceIDCorrelation(t *testing.T) {
 			"https://prod-registry-k8s-io-eu-west-3.s3.dualstack.eu-west-3.amazonaws.com/containers/images/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e": true,
 		},
 	}
-	handler := makeV2Handler(registryConfig, &blobs, nil)
+	handler := makeV2Handler(registryConfig, &blobs, &fakeUpstreamChecker{}, nil)
 
 	const wantTraceID = "4bf92f3577b34da6a3ce929d0e0e4736"
 	testCases := []struct {
