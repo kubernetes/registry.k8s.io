@@ -70,6 +70,14 @@ func TestParsePullEvent(t *testing.T) {
 			ExpectOK:          true,
 		},
 		{
+			Name:              "referrers",
+			Path:              "/v2/kubernetes/pause/referrers/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			ExpectedImage:     "kubernetes/pause",
+			ExpectedKind:      "referrers",
+			ExpectedReference: "sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+			ExpectOK:          true,
+		},
+		{
 			Name:     "v2 check",
 			Path:     "/v2/",
 			ExpectOK: false,

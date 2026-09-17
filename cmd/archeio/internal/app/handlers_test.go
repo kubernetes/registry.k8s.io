@@ -133,6 +133,13 @@ func TestMakeHandler(t *testing.T) {
 			ExpectedStatus: http.StatusTemporaryRedirect,
 			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/k8s-artifacts-prod/images/pause/manifests/sha256-da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e.sig",
 		},
+		{
+			// Without SignatureUpstreamEndpoint, referrers fall through to the regional upstream
+			Name:           "Referrers without canonical upstream falls back to regional",
+			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/referrers/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/k8s-artifacts-prod/images/pause/referrers/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+		},
 	}
 	for i := range testCases {
 		tc := testCases[i]
@@ -362,6 +369,30 @@ func TestMakeV2Handler(t *testing.T) {
 			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/kubernetes/pause/manifests/sha256-da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e.sig", nil),
 			ExpectedStatus: http.StatusTemporaryRedirect,
 			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/kubernetes/pause/manifests/sha256-da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e.sig",
+		},
+		{
+			Name:           "Referrers redirect to canonical upstream",
+			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/referrers/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/pause/referrers/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+		},
+		{
+			Name:           "Referrers keep the artifactType filter",
+			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/referrers/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e?artifactType=application%2Fvnd.dev.sigstore.bundle.v0.3%2Bjson", nil),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/pause/referrers/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e?artifactType=application%2Fvnd.dev.sigstore.bundle.v0.3%2Bjson",
+		},
+		{
+			Name:           "HEAD on referrers redirects to canonical upstream",
+			Request:        httptest.NewRequest("HEAD", "http://localhost:8080/v2/kubernetes/pause/referrers/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://us-central1-docker.pkg.dev/v2/kubernetes/pause/referrers/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
+		},
+		{
+			Name:           "Manifest by digest still redirects to regional upstream",
+			Request:        httptest.NewRequest("GET", "http://localhost:8080/v2/pause/manifests/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e", nil),
+			ExpectedStatus: http.StatusTemporaryRedirect,
+			ExpectedURL:    "https://k8s.gcr.io/v2/pause/manifests/sha256:da86e6ba6ca197bf6bc5e9d900febd906b133eaa4750e6bed647b0fbe50ed43e",
 		},
 		{
 			Name:           "Tag list still redirects to regional upstream",

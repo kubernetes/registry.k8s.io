@@ -101,6 +101,10 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker, knownRepositories map[s
 	reBlob := regexp.MustCompile("^/v2/.*/blobs/([^/]+:[a-zA-Z0-9=_-]+)$")
 	// matches cosign signature and attestation tag requests
 	reCosignTag := regexp.MustCompile(`^/v2/.*/manifests/sha256-[a-f0-9]{64}\.(sig|att)$`)
+	// matches OCI referrers API requests, which list the signatures and
+	// attestations attached to a manifest
+	// https://github.com/opencontainers/distribution-spec/blob/main/spec.md#listing-referrers
+	reReferrers := regexp.MustCompile("^/v2/.*/referrers/[^/]+:[a-zA-Z0-9=_-]+$")
 	// initialize map of clientIP to AWS region
 	regionMapper := cloudcidrs.NewIPMapper()
 	// capture these in a http handler lambda
@@ -180,13 +184,21 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker, knownRepositories map[s
 		// check if blob request
 		matches := reBlob.FindStringSubmatch(rPath)
 		if len(matches) != 2 {
-			// check if this is a cosign signature/attestation request
-			if rc.SignatureUpstreamEndpoint != "" && reCosignTag.MatchString(rPath) {
-				redirectURL := signatureRedirectURL(rc, rPath)
-				klog.V(2).InfoS("redirecting cosign signature request to canonical upstream", "path", rPath, "redirect", redirectURL, "traceID", traceID)
-				trackPullEvent(r, traceID, "signature-upstream", ipInfo)
-				http.Redirect(w, r, withTraceID(redirectURL, traceID), http.StatusTemporaryRedirect)
-				return
+			// cosign signature/attestation tags and referrers only exist
+			// where the signatures and attestations were pushed
+			if rc.SignatureUpstreamEndpoint != "" {
+				isReferrers := reReferrers.MatchString(rPath)
+				if isReferrers || reCosignTag.MatchString(rPath) {
+					redirectURL := signatureRedirectURL(rc, rPath)
+					// keep the query to preserve artifactType filters
+					if isReferrers && r.URL.RawQuery != "" {
+						redirectURL += "?" + r.URL.RawQuery
+					}
+					klog.V(2).InfoS("redirecting signature request to canonical upstream", "path", rPath, "redirect", redirectURL, "traceID", traceID)
+					trackPullEvent(r, traceID, "signature-upstream", ipInfo)
+					http.Redirect(w, r, withTraceID(redirectURL, traceID), http.StatusTemporaryRedirect)
+					return
+				}
 			}
 			// not a blob request so forward it to the main upstream registry
 			redirectURL := upstreamRedirectURL(rc, rPath)
