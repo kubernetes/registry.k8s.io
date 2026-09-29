@@ -29,7 +29,7 @@ import (
 // reImagePath matches image requests per the OCI distribution spec and
 // captures the image name, the request kind, and the reference (tag/digest)
 // https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pull
-var reImagePath = regexp.MustCompile(`^/v2/(.+)/(manifests|blobs|tags)/([^/]+)$`)
+var reImagePath = regexp.MustCompile(`^/v2/(.+)/(manifests|blobs|tags|referrers)/([^/]+)$`)
 
 // parsePullEvent parses a registry API path into analytics event fields,
 // returning ok=false for paths that are not image requests
@@ -46,6 +46,8 @@ func parsePullEvent(path string) (image, kind, reference string, ok bool) {
 		kind = "blob"
 	case "tags":
 		kind = "tag"
+	case "referrers":
+		kind = "referrers"
 	}
 	return m[1], kind, m[3], true
 }
