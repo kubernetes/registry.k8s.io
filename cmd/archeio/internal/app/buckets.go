@@ -181,6 +181,25 @@ func (c *cachedBlobChecker) BlobExists(blobURL, traceID string) bool {
 		return true
 	}
 	klog.V(3).InfoS("blob not yet in existence cache; checking remote", "url", blobURL, "traceID", traceID)
+	status, err := headStatus(blobURL, traceID)
+	// fallback to assuming blob is unavailable on errors
+	if err != nil {
+		klog.V(3).InfoS("failed to check remote blob", "url", blobURL, "err", err, "traceID", traceID)
+		return false
+	}
+	// if the blob exists it HEAD should return 200 OK
+	// this is true for S3 and for OCI registries
+	if status == http.StatusOK {
+		c.Put(blobURL)
+		return true
+	}
+	klog.V(3).InfoS("remote blob check returned non-OK status", "url", blobURL, "status", status, "traceID", traceID)
+	return false
+}
+
+// headStatus performs an HTTP HEAD request against url and returns the
+// response status code
+func headStatus(url, traceID string) (int, error) {
 	// NOTE: this client will still share http.DefaultTransport
 	// We do not wish to share the rest of the client state currently
 	client := &http.Client{
@@ -188,26 +207,16 @@ func (c *cachedBlobChecker) BlobExists(blobURL, traceID string) bool {
 		Timeout: time.Second * 5,
 	}
 	// carry the trace ID on the probe so backend access logs can be
-	// correlated, the bare blobURL remains the cache key
-	req, err := http.NewRequest(http.MethodHead, withTraceID(blobURL, traceID), nil)
+	// correlated, the bare url remains the cache key
+	req, err := http.NewRequest(http.MethodHead, withTraceID(url, traceID), nil)
 	if err != nil {
-		klog.V(3).InfoS("failed to create remote blob check request", "url", blobURL, "err", err, "traceID", traceID)
-		return false
+		return 0, err
 	}
 	req.Header.Set("User-Agent", "archeio/1.0")
 	r, err := client.Do(req)
-	// fallback to assuming blob is unavailable on errors
 	if err != nil {
-		klog.V(3).InfoS("failed to check remote blob", "url", blobURL, "err", err, "traceID", traceID)
-		return false
+		return 0, err
 	}
 	r.Body.Close()
-	// if the blob exists it HEAD should return 200 OK
-	// this is true for S3 and for OCI registries
-	if r.StatusCode == http.StatusOK {
-		c.Put(blobURL)
-		return true
-	}
-	klog.V(3).InfoS("remote blob check returned non-OK status", "url", blobURL, "status", r.StatusCode, "traceID", traceID)
-	return false
+	return r.StatusCode, nil
 }

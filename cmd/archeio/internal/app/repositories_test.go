@@ -132,7 +132,7 @@ func TestV2HandlerUnknownRepository(t *testing.T) {
 		"pause":       {},
 		"sig-storage": {},
 	}
-	handler := makeV2Handler(registryConfig, &fakeBlobsChecker{}, knownRepositories)
+	handler := makeV2Handler(registryConfig, &fakeBlobsChecker{}, &fakeUpstreamChecker{}, knownRepositories)
 
 	testCases := []struct {
 		Name           string
