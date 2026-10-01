@@ -117,6 +117,12 @@ func (c *cachedUpstreamChecker) check(contentURL, traceID string) bool {
 		c.failures = 0
 		c.putMissing(contentURL, now)
 		return true
+	case err == nil && status >= 400 && status < 500 && status != http.StatusTooManyRequests:
+		// the upstream answered, for example 400 for a malformed digest,
+		// which clients can send at will, so it must not trip the breaker
+		klog.V(3).InfoS("upstream rejected content check", "url", contentURL, "status", status, "traceID", traceID)
+		c.failures = 0
+		return false
 	}
 	klog.V(3).InfoS("failed to check upstream content", "url", contentURL, "status", status, "err", err, "traceID", traceID)
 	c.failures++

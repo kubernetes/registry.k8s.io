@@ -197,6 +197,16 @@ func (c *cachedBlobChecker) BlobExists(blobURL, traceID string) bool {
 	return false
 }
 
+// headAccept is the Accept header of HEAD checks. Artifact Registry answers
+// manifest requests with 404 if the media type of the manifest is not
+// accepted, even if the manifest exists. */* covers the remaining types, for
+// example Docker schema1. Blob requests ignore it.
+const headAccept = "application/vnd.oci.image.index.v1+json, " +
+	"application/vnd.oci.image.manifest.v1+json, " +
+	"application/vnd.docker.distribution.manifest.list.v2+json, " +
+	"application/vnd.docker.distribution.manifest.v2+json, " +
+	"*/*"
+
 // headStatus performs an HTTP HEAD request against url and returns the
 // response status code
 func headStatus(url, traceID string) (int, error) {
@@ -213,6 +223,7 @@ func headStatus(url, traceID string) (int, error) {
 		return 0, err
 	}
 	req.Header.Set("User-Agent", "archeio/1.0")
+	req.Header.Set("Accept", headAccept)
 	r, err := client.Do(req)
 	if err != nil {
 		return 0, err
