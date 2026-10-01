@@ -24,9 +24,10 @@ See also: OCI Distribution [Specification](https://github.com/opencontainers/dis
 Currently the `Upstream Registry` is a region specific Artifact Registry backend.
 The `Signature Upstream` is an optional single canonical registry (configured via `SIGNATURE_UPSTREAM_ENDPOINT`) used to serve cosign signatures and attestations, and the referrers listing them, from one location, avoiding the need to replicate them across all regions.
 Their manifests and blobs are fetched by digest and only exist there, so content addressed requests fall back to the Signature Upstream when the Upstream Registry answers 404.
+The checks send an `Accept` header listing the manifest media types and `*/*`, because Artifact Registry answers 404 for a manifest whose media type is not accepted.
 Found content is cached, because it is immutable, so each archeio instance checks a digest at most once.
 Missing content is cached for 10 minutes (up to 10000 entries), because it may still be replicated to the Upstream Registry, and concurrent checks for the same digest are deduplicated.
-Failed checks redirect to the Upstream Registry as without a check, and after 5 consecutive failures checks are skipped for 30 seconds, so an unavailable Upstream Registry neither stalls requests nor shifts its traffic to the Signature Upstream.
+Failed checks redirect to the Upstream Registry as without a check, and after 5 consecutive failures (errors, 5xx or 429 answers, not other 4xx answers like a 400 for a malformed digest) checks are skipped for 30 seconds, so an unavailable Upstream Registry neither stalls requests nor shifts its traffic to the Signature Upstream.
 The check is skipped when both endpoints are the same.
 
 ## Known Repositories
@@ -67,8 +68,8 @@ token, `traceparent`, `X-Cloud-Trace-Context`, freshly generated) is:
 - echoed back to the client in the `X-Request-ID` response header
 - included as `traceID` in archeio's structured logs
 - appended to every redirect `Location` as the `rid` query parameter, and to the
-  outbound S3 blob existence `HEAD` probe, so backend/CDN access logs can be
-  joined back to archeio's logs
+  outbound existence `HEAD` probes against S3 and the Upstream Registry, so
+  backend/CDN access logs can be joined back to archeio's logs
 
 Notes:
 

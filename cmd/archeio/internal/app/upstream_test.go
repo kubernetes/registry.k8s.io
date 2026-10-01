@@ -207,6 +207,29 @@ func TestUpstreamCheckerCircuitBreaker(t *testing.T) {
 	}
 }
 
+func TestUpstreamCheckerClientErrorsDoNotTripBreaker(t *testing.T) {
+	now := time.Now()
+	h := &fakeHead{status: http.StatusBadRequest}
+	c := newTestUpstreamChecker(h, &now)
+	for range upstreamFailureThreshold * 2 {
+		if c.Missing(testContentURL, "") {
+			t.Fatal("expected rejected check to not report missing content")
+		}
+	}
+	if calls := h.callCount(); calls != upstreamFailureThreshold*2 {
+		t.Fatalf("expected every rejected check to reach the upstream, got: %d", calls)
+	}
+	// a real failure after them still needs the full threshold
+	h.set(0, errors.New("timeout"))
+	for range upstreamFailureThreshold - 1 {
+		c.Missing(testContentURL, "")
+	}
+	h.set(http.StatusNotFound, nil)
+	if !c.Missing(testContentURL, "") {
+		t.Fatal("expected checks to continue below the failure threshold")
+	}
+}
+
 func TestUpstreamCheckerDeduplicatesConcurrentChecks(t *testing.T) {
 	release := make(chan struct{})
 	var calls atomic.Int32

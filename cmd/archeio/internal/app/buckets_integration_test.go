@@ -93,6 +93,20 @@ func TestIntegrationCachedBlobChecker(t *testing.T) {
 	}
 }
 
+func TestIntegrationHeadStatusManifest(t *testing.T) {
+	t.Parallel()
+	// a known pause image index, Artifact Registry answers 404 if its media
+	// type is not accepted
+	const manifestURL = "https://europe-west3-docker.pkg.dev/v2/k8s-artifacts-prod/images/pause/manifests/sha256:ee6521f290b2168b6e0935a181d4cff9be1ac3f505666ef0e3c98fae8199917a"
+	status, err := headStatus(manifestURL, "4bf92f3577b34da6a3ce929d0e0e4736")
+	if err != nil {
+		t.Fatalf("Failed to check %q: %v", manifestURL, err)
+	}
+	if status != http.StatusOK {
+		t.Fatalf("expected status %d for %q, got: %d", http.StatusOK, manifestURL, status)
+	}
+}
+
 func TestIntegrationAllBucketsValid(t *testing.T) {
 	t.Parallel()
 	// a known pause image blob
