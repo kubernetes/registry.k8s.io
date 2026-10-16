@@ -115,8 +115,32 @@ AWS ECR wrote a guide for configuring a `registry.k8s.io` pull-through cache her
 
 https://aws.amazon.com/blogs/containers/announcing-pull-through-cache-for-registry-k8s-io-in-amazon-elastic-container-registry/
 
-After following this guide, you may additionally want to see our [Using Mirrored Images][using-mirrored-images] reference below.
+Once you're done, see [Using Mirrored Images][using-mirrored-images].
 
+### Mirroring With Artifact Registry
+
+GCP Artifact Registry supports remote repositories, which act as a pull-through cache
+for an upstream registry. To use `registry.k8s.io` as the upstream, create a Docker
+remote repository with a custom upstream URL of `https://registry.k8s.io`, for example:
+
+```shell
+gcloud artifacts repositories create registry-k8s-io \
+    --project=PROJECT_ID \
+    --repository-format=docker \
+    --location=LOCATION \
+    --mode=remote-repository \
+    --remote-docker-repo=https://registry.k8s.io
+```
+
+Docs: https://docs.cloud.google.com/artifact-registry/docs/repositories/remote-repo
+
+Images will then be available at `LOCATION-docker.pkg.dev/PROJECT_ID/registry-k8s-io`,
+e.g. `LOCATION-docker.pkg.dev/PROJECT_ID/registry-k8s-io/pause:3.9`.
+
+Pulling from Artifact Registry requires authentication by default, see:
+https://docs.cloud.google.com/artifact-registry/docs/access-control
+
+Once you're done, see [Using Mirrored Images][using-mirrored-images].
 
 ## Using Mirrored Images
 <!--
