@@ -19,6 +19,7 @@ package app
 import (
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 )
 
@@ -105,6 +106,55 @@ func TestListUpstreamRepositoriesUnreachable(t *testing.T) {
 	}
 }
 
+func newKnownRepositories(repositories map[string]struct{}) *KnownRepositories {
+	k := &KnownRepositories{}
+	k.repositories.Store(&repositories)
+	return k
+}
+
+func TestKnownRepositoriesRefresh(t *testing.T) {
+	t.Parallel()
+	var nilKnown *KnownRepositories
+	if got := nilKnown.Get(); got != nil {
+		t.Fatalf("expected nil from nil KnownRepositories but got %v", got)
+	}
+
+	var body atomic.Value
+	body.Store(`{"child":["pause"]}`)
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(body.Load().(string)))
+	}))
+	defer s.Close()
+	rc := RegistryConfig{UpstreamRegistryEndpoint: s.URL}
+
+	known := &KnownRepositories{}
+	if got := known.Get(); got != nil {
+		t.Fatalf("expected nil before refresh but got %v", got)
+	}
+	if err := known.Refresh(rc); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, ok := known.Get()["pause"]; !ok || len(known.Get()) != 1 {
+		t.Fatalf("expected only pause but got %v", known.Get())
+	}
+
+	body.Store(`{"child":["pause","sig-storage"]}`)
+	if err := known.Refresh(rc); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, ok := known.Get()["sig-storage"]; !ok || len(known.Get()) != 2 {
+		t.Fatalf("expected pause and sig-storage but got %v", known.Get())
+	}
+
+	body.Store(`not json`)
+	if err := known.Refresh(rc); err == nil {
+		t.Fatal("expected error for invalid listing")
+	}
+	if len(known.Get()) != 2 {
+		t.Fatalf("expected previous list to be kept but got %v", known.Get())
+	}
+}
+
 func TestTopLevelRepository(t *testing.T) {
 	t.Parallel()
 	testCases := map[string]string{
@@ -132,7 +182,7 @@ func TestV2HandlerUnknownRepository(t *testing.T) {
 		"pause":       {},
 		"sig-storage": {},
 	}
-	handler := makeV2Handler(registryConfig, &fakeBlobsChecker{}, &fakeUpstreamChecker{}, knownRepositories)
+	handler := makeV2Handler(registryConfig, &fakeBlobsChecker{}, &fakeUpstreamChecker{}, newKnownRepositories(knownRepositories))
 
 	testCases := []struct {
 		Name           string

@@ -371,10 +371,10 @@ func TestMakeV2Handler(t *testing.T) {
 			"https://k8s.gcr.io/v2/pause/blobs/sha256:c4dfce520000000000000000000000000000000000000000000000000000000000":                true,
 		},
 	}
-	handler := makeV2Handler(registryConfig, &blobs, &upstream, map[string]struct{}{
+	handler := makeV2Handler(registryConfig, &blobs, &upstream, newKnownRepositories(map[string]struct{}{
 		"pause":      {},
 		"kubernetes": {},
-	})
+	}))
 	testCases := []struct {
 		Name           string
 		Request        *http.Request

@@ -57,11 +57,11 @@ const (
 // archeio is fronting.
 //
 // knownRepositories is the set of top level repositories available upstream,
-// see ListUpstreamRepositories. Requests for anything else are served 404.
+// see KnownRepositories. Requests for anything else are served 404.
 // Pass nil / empty to serve without this check.
 //
 // Exact behavior should be documented in docs/request-handling.md
-func MakeHandler(rc RegistryConfig, knownRepositories map[string]struct{}) http.Handler {
+func MakeHandler(rc RegistryConfig, knownRepositories *KnownRepositories) http.Handler {
 	blobs := newCachedBlobChecker()
 	doV2 := makeV2Handler(rc, blobs, newCachedUpstreamChecker(), knownRepositories)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +91,7 @@ func MakeHandler(rc RegistryConfig, knownRepositories map[string]struct{}) http.
 	})
 }
 
-func makeV2Handler(rc RegistryConfig, blobs blobChecker, upstream upstreamChecker, knownRepositories map[string]struct{}) func(w http.ResponseWriter, r *http.Request) {
+func makeV2Handler(rc RegistryConfig, blobs blobChecker, upstream upstreamChecker, knownRepositories *KnownRepositories) func(w http.ResponseWriter, r *http.Request) {
 	// matches blob requests, captures the requested blob hash
 	// https://github.com/opencontainers/distribution-spec/blob/main/spec.md#pull
 	// Blobs are at `/v2/<name>/blobs/<digest>`
@@ -174,11 +174,11 @@ func makeV2Handler(rc RegistryConfig, blobs blobChecker, upstream upstreamChecke
 			return
 		}
 
-		// fail fast for images that did not exist upstream at startup instead
-		// of sending the client on a redirect that can only end in a 404
-		if len(knownRepositories) > 0 && rPath != rootTagsListPath {
+		// fail fast for images that did not exist upstream at the last refresh
+		// instead of sending the client on a redirect that can only end in a 404
+		if known := knownRepositories.Get(); len(known) > 0 && rPath != rootTagsListPath {
 			repository := topLevelRepository(rPath)
-			if _, known := knownRepositories[repository]; !known {
+			if _, ok := known[repository]; !ok {
 				klog.V(2).InfoS("serving 404 for unknown repository", "path", rPath, "repository", repository, "traceID", traceID)
 				http.Error(w, "repository does not exist", http.StatusNotFound)
 				return
