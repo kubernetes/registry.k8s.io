@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"path"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -39,7 +40,7 @@ const maxRepositoryListBytes = 8 << 20
 // list response. Only immediate children are listed, so nested images like
 // sig-storage/csi-provisioner are represented by their sig-storage parent.
 //
-// This is meant to be called once at startup, see MakeHandler.
+// See KnownRepositories for keeping the result up to date.
 func ListUpstreamRepositories(rc RegistryConfig) (map[string]struct{}, error) {
 	listURL := rc.UpstreamRegistryEndpoint + path.Join("/v2/", rc.UpstreamRegistryPath, "tags/list")
 	client := &http.Client{
@@ -67,6 +68,34 @@ func ListUpstreamRepositories(rc RegistryConfig) (map[string]struct{}, error) {
 		repositories[child] = struct{}{}
 	}
 	return repositories, nil
+}
+
+// KnownRepositories is the concurrency safe, refreshable set of upstream
+// repositories, the zero value is an empty set
+type KnownRepositories struct {
+	repositories atomic.Pointer[map[string]struct{}]
+}
+
+// Get returns the current set, nil if never successfully refreshed
+func (k *KnownRepositories) Get() map[string]struct{} {
+	if k == nil {
+		return nil
+	}
+	if repositories := k.repositories.Load(); repositories != nil {
+		return *repositories
+	}
+	return nil
+}
+
+// Refresh replaces the set with ListUpstreamRepositories, keeping the
+// previous set on failure
+func (k *KnownRepositories) Refresh(rc RegistryConfig) error {
+	repositories, err := ListUpstreamRepositories(rc)
+	if err != nil {
+		return err
+	}
+	k.repositories.Store(&repositories)
+	return nil
 }
 
 // topLevelRepository returns the first segment of the image name in a

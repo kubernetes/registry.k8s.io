@@ -11,7 +11,7 @@ Requests to archeio follows the following flow:
    - If it's the version check with a `Bearer` token: 200 OK
    - If it's a non-standard API call (`/v2/_catalog`): 404 error
    - If it's the root repository listing (`/v2/tags/list`): Redirect to Upstream Registry
-   - If the image's top level repository did not exist upstream at startup: 404 error (see [Known Repositories](#known-repositories) below)
+   - If the image's top level repository did not exist upstream at the last listing: 404 error (see [Known Repositories](#known-repositories) below)
    - If it's a cosign signature/attestation manifest request (`sha256-*.sig` or `sha256-*.att`) or an OCI referrers request (`/v2/<name>/referrers/<digest>`, query kept for `artifactType` filters) and `SIGNATURE_UPSTREAM_ENDPOINT` is set: Redirect to Signature Upstream
    - If it's a manifest request by digest and `SIGNATURE_UPSTREAM_ENDPOINT` is set to a different endpoint: Redirect to Signature Upstream if a cached HEAD request returns 404 at the Upstream Registry, otherwise to Upstream Registry
    - If it's a manifest request: Redirect to Upstream Registry
@@ -32,7 +32,7 @@ The check is skipped when both endpoints are the same.
 
 ## Known Repositories
 
-At startup archeio lists the repositories available upstream from
+At startup, and then every hour, archeio lists the repositories available upstream from
 `${UPSTREAM_REGISTRY_ENDPOINT}/v2/${UPSTREAM_REGISTRY_PATH}/tags/list`, using the
 `child` field GCR / Artifact Registry add to the tags list response, e.g.
 <https://us-central1-docker.pkg.dev/v2/k8s-artifacts-prod/images/tags/list>.
@@ -45,9 +45,10 @@ Notes:
 - Only immediate children are listed, so nested images such as
   `sig-storage/csi-provisioner` are matched by their `sig-storage` parent.
 - `/v2/tags/list` itself is exempt, clients can always list the root directly.
-- The list is a startup snapshot, it is not refreshed. Images added upstream
-  afterwards require a restart (Cloud Run revisions are short lived).
-- If the listing fails archeio serves without this check rather than not serving.
+- The list is refreshed hourly, so images added upstream may be served a `404`
+  for up to an hour.
+- If a refresh fails the previous list is kept. If no listing has succeeded yet
+  archeio serves without this check rather than not serving.
 
 ## Trace Correlation
 

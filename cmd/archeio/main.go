@@ -58,15 +58,16 @@ func main() {
 		DefaultAWSBaseURL:         getEnv("DEFAULT_AWS_BASE_URL", "https://cdn.registry.k8s.io"),
 	}
 
-	// snapshot the repositories that exist upstream so we can 404 requests for
+	// track the repositories that exist upstream so we can 404 requests for
 	// images that don't exist instead of redirecting clients to a 404
 	// this is best effort: if we can't list them we serve without the check
-	knownRepositories, err := app.ListUpstreamRepositories(registryConfig)
-	if err != nil {
-		klog.ErrorS(err, "failed to list upstream repositories, serving without unknown image filtering")
-	} else {
-		klog.InfoS("listed upstream repositories", "count", len(knownRepositories))
-	}
+	knownRepositories := &app.KnownRepositories{}
+	refreshKnownRepositories(knownRepositories, registryConfig)
+	go func() {
+		for range time.Tick(knownRepositoriesRefreshInterval) {
+			refreshKnownRepositories(knownRepositories, registryConfig)
+		}
+	}()
 
 	// configure server with reasonable timeout
 	// we only serve redirects, 10s should be sufficient
@@ -97,6 +98,16 @@ func main() {
 	if err := server.Shutdown(ctx); err != nil {
 		klog.Fatalf("Server didn't exit gracefully %v", err)
 	}
+}
+
+const knownRepositoriesRefreshInterval = time.Hour
+
+func refreshKnownRepositories(known *app.KnownRepositories, rc app.RegistryConfig) {
+	if err := known.Refresh(rc); err != nil {
+		klog.ErrorS(err, "failed to list upstream repositories, keeping previous list", "count", len(known.Get()))
+		return
+	}
+	klog.InfoS("listed upstream repositories", "count", len(known.Get()))
 }
 
 // getEnv returns defaultValue if key is not set, else the value of os.LookupEnv(key)
